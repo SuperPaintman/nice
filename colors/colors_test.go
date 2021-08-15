@@ -5,37 +5,37 @@ import (
 	"testing"
 )
 
-func TestStyle_Reset(t *testing.T) {
+func TestAttribute_Reset(t *testing.T) {
 	tt := []struct {
-		name  string
-		style Style
-		want  Style
+		name      string
+		attribute Attribute
+		want      Attribute
 	}{
 		{
-			name:  "Reset",
-			style: Reset,
-			want:  Reset,
+			name:      "Reset",
+			attribute: Reset,
+			want:      Reset,
 		},
 		{
-			name:  "Bold",
-			style: Bold,
-			want:  ResetBold,
+			name:      "Bold",
+			attribute: Bold,
+			want:      ResetBold,
 		},
 		{
-			name:  "Red",
-			style: Red,
-			want:  ResetColor,
+			name:      "Red",
+			attribute: Red,
+			want:      ResetColor,
 		},
 		{
-			name:  "BgRed",
-			style: BgRed,
-			want:  ResetBgColor,
+			name:      "BgRed",
+			attribute: BgRed,
+			want:      ResetBgColor,
 		},
 	}
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			got := tc.style.Reset()
+			got := tc.attribute.Reset()
 			if got != tc.want {
 				t.Errorf("Reset(): got = %q, want = %q", got, tc.want)
 			}
@@ -43,11 +43,11 @@ func TestStyle_Reset(t *testing.T) {
 	}
 }
 
-func TestStyleToString(t *testing.T) {
+func TestAttributeToString(t *testing.T) {
 	const maxUint8 = int(^uint8(0))
 
 	for i := 0; i < maxUint8+1; i++ {
-		got := styleToString(uint8(i))
+		got := attributeToString(uint8(i))
 
 		want := "\x1b[" + strconv.Itoa(i) + "m"
 
