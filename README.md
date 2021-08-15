@@ -1,5 +1,7 @@
 # Nice 👌
 
+<pre><code>Hello, <span style="color: #c678dd;">World</span>!</code></pre>
+
 ---
 
 ## Simulator projects
