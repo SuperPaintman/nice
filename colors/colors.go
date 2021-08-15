@@ -103,7 +103,7 @@ const (
 
 // styleToString converts Style to string.
 //
-// Hack from fast and inlinable Style to string converion (like what the
+// A hack for fast and inlinable Style to string converion (like what the
 // stringer does).
 //
 // Unfortunately Go can't inline strconv.Itoa (at least Go 1.16) and we can't
