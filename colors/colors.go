@@ -146,12 +146,14 @@ func attributeToString(i uint8) string {
 func ANSI256(color uint8) string {
 	// TODO(SuperPaintman): check TTY.
 	// TODO(SuperPaintman): if terminal supports ANSI 256.
+	// TODO(SuperPaintman): optimize it with a preassembled slice.
 	return "\x1b[38;5;" + strconv.Itoa(int(color)) + "m"
 }
 
 func BgANSI256(color uint8) string {
 	// TODO(SuperPaintman): check TTY.
 	// TODO(SuperPaintman): if terminal supports ANSI 256.
+	// TODO(SuperPaintman): optimize it with a preassembled slice.
 	return "\x1b[48;5;" + strconv.Itoa(int(color)) + "m"
 }
 
@@ -159,6 +161,7 @@ func BgANSI256(color uint8) string {
 func TrueColor(r, g, b uint8) string {
 	// TODO(SuperPaintman): check TTY.
 	// TODO(SuperPaintman): if terminal supports True Color.
+	// TODO(SuperPaintman): optimize it with a preassembled slice.
 	return "\x1b[38;2;" +
 		strconv.Itoa(int(r)) + ";" +
 		strconv.Itoa(int(g)) + ";" +
@@ -168,6 +171,7 @@ func TrueColor(r, g, b uint8) string {
 func BgTrueColor(r, g, b uint8) string {
 	// TODO(SuperPaintman): check TTY.
 	// TODO(SuperPaintman): if terminal supports True Color.
+	// TODO(SuperPaintman): optimize it with a preassembled slice for uint8.
 	return "\x1b[48;2;" +
 		strconv.Itoa(int(r)) + ";" +
 		strconv.Itoa(int(g)) + ";" +
