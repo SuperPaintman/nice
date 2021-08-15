@@ -3,8 +3,11 @@
 // See: https://en.wikipedia.org/wiki/ANSI_escape_code .
 // See: https://misc.flogisoft.com/bash/tip_colors_and_formatting .
 // See: https://www.npmjs.com/package/ansi-styles .
+// See: https://github.com/termstandard/colors .
 
 package colors
+
+import "strconv"
 
 type Mode uint8
 
@@ -12,9 +15,17 @@ const (
 	Auto Mode = iota
 	Never
 	Always
+
+	// Aliases.
+	No  = Never
+	Yes = Always
 )
 
-var Colors Mode = Auto
+var (
+	Colors            Mode = Auto
+	SupportsANSI256   Mode = Auto
+	SupportsTrueColor Mode = Auto
+)
 
 type Attribute uint8
 
@@ -130,4 +141,47 @@ func attributeToString(i uint8) string {
 	}
 
 	return ansiAttributeString[offset3d+(int(i)-100)*size3d : offset3d+(int(i)-100+1)*size3d]
+}
+
+func ANSI256(color uint8) string {
+	// TODO(SuperPaintman): check TTY.
+	// TODO(SuperPaintman): if terminal supports ANSI 256.
+	return "\x1b[38;5;" + strconv.Itoa(int(color)) + "m"
+}
+
+func BgANSI256(color uint8) string {
+	// TODO(SuperPaintman): check TTY.
+	// TODO(SuperPaintman): if terminal supports ANSI 256.
+	return "\x1b[48;5;" + strconv.Itoa(int(color)) + "m"
+}
+
+// 24-bit or truecolor or ANSI 16 millions.
+func TrueColor(r, g, b uint8) string {
+	// TODO(SuperPaintman): check TTY.
+	// TODO(SuperPaintman): if terminal supports True Color.
+	return "\x1b[38;2;" +
+		strconv.Itoa(int(r)) + ";" +
+		strconv.Itoa(int(g)) + ";" +
+		strconv.Itoa(int(b)) + "m"
+}
+
+func BgTrueColor(r, g, b uint8) string {
+	// TODO(SuperPaintman): check TTY.
+	// TODO(SuperPaintman): if terminal supports True Color.
+	return "\x1b[48;2;" +
+		strconv.Itoa(int(r)) + ";" +
+		strconv.Itoa(int(g)) + ";" +
+		strconv.Itoa(int(b)) + "m"
+}
+
+type RGB struct {
+	R, G, B uint8
+}
+
+func TrueColorRGB(color RGB) string {
+	return TrueColor(color.R, color.G, color.B)
+}
+
+func BgTrueColorRGB(color RGB) string {
+	return BgTrueColor(color.R, color.G, color.B)
 }

@@ -6,6 +6,8 @@ import (
 	"github.com/SuperPaintman/nice/colors"
 )
 
+const trueColorEnabled = false
+
 func main() {
 	// Modifier.
 	fmt.Printf(":%s[ X ]%s: ", colors.Bold, colors.Bold.Reset())
@@ -56,4 +58,64 @@ func main() {
 	fmt.Printf(":%s[ X ]%s: ", colors.BgMagentaBright, colors.BgMagentaBright.Reset())
 	fmt.Printf(":%s[ X ]%s: ", colors.BgCyanBright, colors.BgCyanBright.Reset())
 	fmt.Printf(":%s[ X ]%s:\n", colors.BgWhiteBright, colors.BgWhiteBright.Reset())
+
+	// ANSI 256.
+	for i := 0; i < 256; i++ {
+		if i != 0 && i%16 == 0 {
+			fmt.Print("\n")
+		} else if i != 0 {
+			fmt.Print(" ")
+		}
+
+		fmt.Printf(":%s[ %03d ]%s:", colors.ANSI256(uint8(i)), i, colors.Reset)
+	}
+	fmt.Print("\n")
+
+	// BgANSI 256.
+	for i := 0; i < 256; i++ {
+		if i != 0 && i%16 == 0 {
+			fmt.Print("\n")
+		} else if i != 0 {
+			fmt.Print(" ")
+		}
+
+		fmt.Printf(":%s[ %3d ]%s:", colors.BgANSI256(uint8(i)), i, colors.Reset)
+	}
+	fmt.Print("\n")
+
+	// TrueColor.
+	if trueColorEnabled {
+		for i := 0; i < 1<<24; i++ {
+			if i != 0 && i%16 == 0 {
+				fmt.Print("\n")
+			} else if i != 0 {
+				fmt.Print(" ")
+			}
+
+			r := uint8((i >> 0) & 255)
+			g := uint8((i >> 8) & 255)
+			b := uint8((i >> 16) & 255)
+
+			fmt.Printf(":%s[ %3d %3d %3d ]%s:", colors.TrueColor(r, g, b), r, g, b, colors.Reset)
+		}
+		fmt.Print("\n")
+	}
+
+	// BgTrueColor.
+	if trueColorEnabled {
+		for i := 0; i < 1<<24; i++ {
+			if i != 0 && i%16 == 0 {
+				fmt.Print("\n")
+			} else if i != 0 {
+				fmt.Print(" ")
+			}
+
+			r := uint8((i >> 0) & 255)
+			g := uint8((i >> 8) & 255)
+			b := uint8((i >> 16) & 255)
+
+			fmt.Printf(":%s[ %3d %3d %3d ]%s:", colors.BgTrueColor(r, g, b), r, g, b, colors.Reset)
+		}
+		fmt.Print("\n")
+	}
 }
