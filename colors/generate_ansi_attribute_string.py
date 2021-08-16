@@ -15,10 +15,13 @@ for i in range(MAX_UINT8 + 1):
         res += " "
 
     # TODO(SuperPaintman):
-    #     try it with '"\\x1b[%03dm"'. It might simplify the attributeToString
+    #     Try it with '"\\x1b[%03dm"'. It might simplify the attributeToString
     #     function.
     #
     #     But maybe some terminals don't support it.
+    #
+    #     Or do it like the stringer by generating the second array with
+    #     positions.
     res += '"\\x1b[%dm"' % i
 
     if i != MAX_UINT8:
