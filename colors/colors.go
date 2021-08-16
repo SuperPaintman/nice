@@ -1,13 +1,100 @@
-// This package is inspired by the chalk's ansi-styles (JavaScript).
+// This package is inspired by the chalk's ansi-styles and supports-color
+// (JavaScript).
 //
 // See: https://en.wikipedia.org/wiki/ANSI_escape_code .
 // See: https://misc.flogisoft.com/bash/tip_colors_and_formatting .
 // See: https://www.npmjs.com/package/ansi-styles .
+// See: https://www.npmjs.com/package/supports-color .
 // See: https://github.com/termstandard/colors .
 
 package colors
 
-import "strconv"
+import (
+	"os"
+	"strconv"
+
+	"github.com/mattn/go-isatty"
+)
+
+var (
+	supportsColor     bool
+	supportsANSI256   bool
+	supportsTrueColor bool
+)
+
+func init() {
+	// Check is TTY.
+	isTTY := isatty.IsTerminal(os.Stdout.Fd()) ||
+		isatty.IsCygwinTerminal(os.Stdout.Fd())
+
+	if !isTTY {
+		return
+	}
+
+	// Terminals.
+	term := os.Getenv("TERM")
+
+	if term == "dumb" {
+		return
+	}
+
+	if colorTerm, ok := os.LookupEnv("COLORTERM"); ok {
+		supportsColor = true
+
+		if colorTerm == "truecolor" {
+			supportsANSI256 = true
+			supportsTrueColor = true
+		}
+		return
+	}
+
+	if termProg, ok := os.LookupEnv("TERM_PROGRAM"); ok {
+		if termProg == "Apple_Terminal" {
+			supportsColor = true
+			supportsANSI256 = true
+			return
+		}
+
+		// TODO(SuperPaintman): add iTerm.app
+	}
+
+	// TODO(SuperPaintman): /-256(color)?$/i
+
+	// TODO(SuperPaintman): /^screen|^xterm|^vt100|^vt220|^rxvt|color|ansi|cygwin|linux/i
+
+	// TODO(SuperPaintman): add win32 checker.
+
+	// CI.
+	if _, ok := os.LookupEnv("CI"); ok {
+		cis := [...]string{
+			"TRAVIS",
+			"CIRCLECI",
+			"APPVEYOR",
+			"GITLAB_CI",
+			"GITHUB_ACTIONS",
+			"BUILDKITE",
+			"DRONE",
+		}
+
+		for _, name := range cis {
+			if _, ok := os.LookupEnv(name); ok {
+				supportsColor = true
+				return
+			}
+		}
+
+		if os.Getenv("CI_NAME") == "codeship" {
+			supportsColor = true
+			return
+		}
+	}
+
+	// TODO(SuperPaintman): add TeamCity checker.
+}
+
+func SupportsColor() bool     { return supportsColor }
+func SupportsANSI256() bool   { return supportsANSI256 }
+func SupportsTrueColor() bool { return supportsTrueColor }
 
 type Mode uint8
 
@@ -15,22 +102,37 @@ const (
 	Auto Mode = iota
 	Never
 	Always
-
-	// Aliases.
-	No  = Never
-	Yes = Always
 )
+
+var Colors Mode = Auto
 
 var (
-	Colors            Mode = Auto
-	SupportsANSI256   Mode = Auto
-	SupportsTrueColor Mode = Auto
+	ForceANSI256   bool
+	ForceTrueColor bool
 )
+
+func shouldUseColors(clrs Mode) bool {
+	return clrs == Always ||
+		(clrs == Auto && supportsColor)
+}
+
+func shouldUseANSI256(clrs Mode, force bool) bool {
+	return (supportsANSI256 || force) &&
+		shouldUseColors(clrs)
+}
+
+func shouldUseTrueColor(clrs Mode, force bool) bool {
+	return (supportsTrueColor || force) &&
+		shouldUseColors(clrs)
+}
 
 type Attribute uint8
 
 func (a Attribute) String() string {
-	// TODO(SuperPaintman): check TTY.
+	if !shouldUseColors(Colors) {
+		return ""
+	}
+
 	return attributeToString(uint8(a))
 }
 
@@ -143,24 +245,32 @@ func attributeToString(i uint8) string {
 	return ansiAttributeString[offset3d+(int(i)-100)*size3d : offset3d+(int(i)-100+1)*size3d]
 }
 
+// TODO(SuperPaintman): make it inlinable.
 func ANSI256(color uint8) string {
-	// TODO(SuperPaintman): check TTY.
-	// TODO(SuperPaintman): if terminal supports ANSI 256.
+	if !shouldUseANSI256(Colors, ForceANSI256) {
+		return ""
+	}
+
 	// TODO(SuperPaintman): optimize it with a preassembled slice.
 	return "\x1b[38;5;" + strconv.Itoa(int(color)) + "m"
 }
 
+// TODO(SuperPaintman): make it inlinable.
 func BgANSI256(color uint8) string {
-	// TODO(SuperPaintman): check TTY.
-	// TODO(SuperPaintman): if terminal supports ANSI 256.
+	if !shouldUseANSI256(Colors, ForceANSI256) {
+		return ""
+	}
+
 	// TODO(SuperPaintman): optimize it with a preassembled slice.
 	return "\x1b[48;5;" + strconv.Itoa(int(color)) + "m"
 }
 
 // 24-bit or truecolor or ANSI 16 millions.
 func TrueColor(r, g, b uint8) string {
-	// TODO(SuperPaintman): check TTY.
-	// TODO(SuperPaintman): if terminal supports True Color.
+	if !shouldUseTrueColor(Colors, ForceTrueColor) {
+		return ""
+	}
+
 	// TODO(SuperPaintman): optimize it with a preassembled slice.
 	return "\x1b[38;2;" +
 		strconv.Itoa(int(r)) + ";" +
@@ -169,8 +279,10 @@ func TrueColor(r, g, b uint8) string {
 }
 
 func BgTrueColor(r, g, b uint8) string {
-	// TODO(SuperPaintman): check TTY.
-	// TODO(SuperPaintman): if terminal supports True Color.
+	if !shouldUseTrueColor(Colors, ForceTrueColor) {
+		return ""
+	}
+
 	// TODO(SuperPaintman): optimize it with a preassembled slice for uint8.
 	return "\x1b[48;2;" +
 		strconv.Itoa(int(r)) + ";" +

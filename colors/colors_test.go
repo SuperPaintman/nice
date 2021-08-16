@@ -8,6 +8,13 @@ import (
 // TODO(SuperPaintman): change it on the CI.
 const trueColorTestStep = 1<<8 - 1
 
+func init() {
+	// TODO(SuperPaintman): add tests for cases when terminal does not support colors.
+	supportsColor = true
+	supportsANSI256 = true
+	supportsTrueColor = true
+}
+
 func TestAttribute_Reset(t *testing.T) {
 	tt := []struct {
 		name      string
