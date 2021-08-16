@@ -14,7 +14,12 @@ for i in range(MAX_UINT8 + 1):
     elif i != 0:
         res += " "
 
-    res += '"\\x1b[%sm"' % i
+    # TODO(SuperPaintman):
+    #     try it with '"\\x1b[%03dm"'. It might simplify the attributeToString
+    #     function.
+    #
+    #     But maybe some terminals don't support it.
+    res += '"\\x1b[%dm"' % i
 
     if i != MAX_UINT8:
         res += " +"
