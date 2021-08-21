@@ -2,6 +2,18 @@
 
 ---
 
+## Tests
+
+```sh
+$ go test ./... -test.short
+```
+
+```sh
+$ go test ./... -bench=. -benchmem -run='^Benckmark'
+```
+
+---
+
 ## Simulator projects
 
 - https://github.com/spf13/cobra <sup>Go</sup>

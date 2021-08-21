@@ -223,26 +223,12 @@ const (
 // Unfortunately Go can't inline strconv.Itoa (at least Go 1.16) and we can't
 // write a regular function. So we need some evil slice hacks :(.
 //
+// If you look in the git log you will find a faster version of this function
+// but it has fewer ways to be inlined.
+//
 // NOTE(SuperPaintman): I would like to remove it in the future.
 func attributeToString(i uint8) string {
-	const (
-		size1d = 4 // '\x1b' '[' '0' 'm'
-		size2d = 5 // '\x1b' '[' '0' '0' 'm'
-		size3d = 6 // '\x1b' '[' '0' '0' '0' 'm'
-
-		offset2d = size1d * 10                // 0 ... 9
-		offset3d = offset2d + size2d*(100-10) // 0 ... 9 + 10 ... 99
-	)
-
-	if i < 10 {
-		return ansiAttributeString[int(i)*size1d : (int(i)+1)*size1d]
-	}
-
-	if i < 100 {
-		return ansiAttributeString[offset2d+(int(i)-10)*size2d : offset2d+(int(i)-10+1)*size2d]
-	}
-
-	return ansiAttributeString[offset3d+(int(i)-100)*size3d : offset3d+(int(i)-100+1)*size3d]
+	return ansiAttributeString[ansiAttributeIndex[uint16(i)]:ansiAttributeIndex[uint16(i)+1]]
 }
 
 // TODO(SuperPaintman): make it inlinable.

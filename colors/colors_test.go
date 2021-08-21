@@ -206,3 +206,13 @@ func TestBgTrueColorRGB(t *testing.T) {
 		}
 	}
 }
+
+var attributeStringRes string
+
+func BenchmarkAttribute_String(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		for c := 0; c <= 255; c++ {
+			attributeStringRes = Attribute(c).String()
+		}
+	}
+}
