@@ -5,9 +5,6 @@ import (
 	"testing"
 )
 
-// TODO(SuperPaintman): change it on the CI.
-const trueColorTestStep = 1<<8 - 1
-
 func init() {
 	// TODO(SuperPaintman): add tests for cases when terminal does not support colors.
 	supportsColor = true
@@ -93,8 +90,18 @@ func TestBgANSI256(t *testing.T) {
 
 const trueColorMax = 1<<24 - 1
 
+// TODO(SuperPaintman): change it on the CI.
+func trueColorTestStep() int {
+	if testing.Short() {
+		return 1<<8 - 1
+	}
+
+	return 1
+}
+
 func TestTrueColor(t *testing.T) {
-	for i := 0; i < trueColorMax+1; i += trueColorTestStep {
+	step := trueColorTestStep()
+	for i := 0; i < trueColorMax+1; i += step {
 		r := uint8((i >> 0) & 255)
 		g := uint8((i >> 8) & 255)
 		b := uint8((i >> 16) & 255)
@@ -108,13 +115,19 @@ func TestTrueColor(t *testing.T) {
 
 		if got != want {
 			// Fatal because we don't want to see ~16 million errors.
-			t.Fatalf("TrueColor(%d, %d, %d): got = %q, want = %q", r, g, b, got, want)
+			fn := t.Fatalf
+			if testing.Verbose() {
+				fn = t.Errorf
+			}
+
+			fn("TrueColor(%d, %d, %d): got = %q, want = %q", r, g, b, got, want)
 		}
 	}
 }
 
 func TestBgTrueColor(t *testing.T) {
-	for i := 0; i < trueColorMax+1; i += trueColorTestStep {
+	step := trueColorTestStep()
+	for i := 0; i < trueColorMax+1; i += step {
 		r := uint8((i >> 0) & 255)
 		g := uint8((i >> 8) & 255)
 		b := uint8((i >> 16) & 255)
@@ -128,13 +141,19 @@ func TestBgTrueColor(t *testing.T) {
 
 		if got != want {
 			// Fatal because we don't want to see ~16 million errors.
-			t.Fatalf("BgTrueColor(%d, %d, %d): got = %q, want = %q", r, g, b, got, want)
+			fn := t.Fatalf
+			if testing.Verbose() {
+				fn = t.Errorf
+			}
+
+			fn("BgTrueColor(%d, %d, %d): got = %q, want = %q", r, g, b, got, want)
 		}
 	}
 }
 
 func TestTrueColorRGB(t *testing.T) {
-	for i := 0; i < trueColorMax+1; i += trueColorTestStep {
+	step := trueColorTestStep()
+	for i := 0; i < trueColorMax+1; i += step {
 		rgb := RGB{
 			R: uint8((i >> 0) & 255),
 			G: uint8((i >> 8) & 255),
@@ -150,13 +169,19 @@ func TestTrueColorRGB(t *testing.T) {
 
 		if got != want {
 			// Fatal because we don't want to see ~16 million errors.
-			t.Fatalf("TrueColorRGB(%v): got = %q, want = %q", rgb, got, want)
+			fn := t.Fatalf
+			if testing.Verbose() {
+				fn = t.Errorf
+			}
+
+			fn("TrueColorRGB(%v): got = %q, want = %q", rgb, got, want)
 		}
 	}
 }
 
 func TestBgTrueColorRGB(t *testing.T) {
-	for i := 0; i < trueColorMax+1; i += trueColorTestStep {
+	step := trueColorTestStep()
+	for i := 0; i < trueColorMax+1; i += step {
 		rgb := RGB{
 			R: uint8((i >> 0) & 255),
 			G: uint8((i >> 8) & 255),
@@ -172,7 +197,12 @@ func TestBgTrueColorRGB(t *testing.T) {
 
 		if got != want {
 			// Fatal because we don't want to see ~16 million errors.
-			t.Fatalf("BgTrueColorRGB(%v): got = %q, want = %q", rgb, got, want)
+			fn := t.Fatalf
+			if testing.Verbose() {
+				fn = t.Errorf
+			}
+
+			fn("BgTrueColorRGB(%v): got = %q, want = %q", rgb, got, want)
 		}
 	}
 }
