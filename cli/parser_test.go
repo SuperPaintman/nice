@@ -10,7 +10,7 @@ func TestParser(t *testing.T) {
 
 	show := Bool(&parser, "show",
 		WithShort("s"),
-		WithUsage("Shows the resuld of the function"),
+		WithUsage("Show the resuld of the function"),
 	)
 
 	recreate := Bool(&parser, "recreate",

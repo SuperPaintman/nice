@@ -1,14 +1,20 @@
 package cli
 
-import "strings"
+import (
+	"strings"
+)
 
-type Parser interface {
+type Register interface {
 	RegisterFlag(flag Flag) error
 	RegisterArg(arg Arg) error
-	Parse(arguments []string) error
 }
 
-var _ Parser = (*DefaultParser)(nil)
+type Parser interface {
+	Register
+	Parse(arguments []string) error
+	Args() []Arg
+	Flags() []Flag
+}
 
 type flags struct {
 	data  []Flag
@@ -193,6 +199,8 @@ func (a *args) Add(arg Arg) {
 	a.index[arg.Name] = idx
 }
 
+var _ (Parser) = (*DefaultParser)(nil)
+
 type DefaultParser struct {
 	flags   flags
 	args    args
@@ -249,6 +257,11 @@ func (p *DefaultParser) Parse(arguments []string) error {
 
 			continue
 		}
+
+		// TODO(SuperPaintman): add POSIX-style short flag combining (-a -b -> -ab).
+		// TODO(SuperPaintman): add Short-flag+parameter combining (-a parm -> -aparm).
+		// TODO(SuperPaintman): add required flags.
+		// TODO(SuperPaintman): add optional args.
 
 		// Flags.
 		numMinuses := 1
@@ -312,18 +325,22 @@ func (p *DefaultParser) Parse(arguments []string) error {
 			if !hasValue {
 				value = "true"
 			}
+		}
 
-			if err := fv.Set(value); err != nil {
-				return err
-			}
-		} else {
-			if err := flag.Value.Set(value); err != nil {
-				return err
-			}
+		if err := flag.Value.Set(value); err != nil {
+			return err
 		}
 	}
 
 	return nil
+}
+
+func (p *DefaultParser) Args() []Arg {
+	return p.args.data
+}
+
+func (p *DefaultParser) Flags() []Flag {
+	return p.flags.data
 }
 
 func isBoolValue(str string) bool {

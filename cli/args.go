@@ -14,16 +14,16 @@ func newArg(value Value, opts ArgOptions) Arg {
 	}
 }
 
-func IntArgVar(parser Parser, p *int, name string, options ...ArgOptionApplyer) error {
+func IntArgVar(register Register, p *int, name string, options ...ArgOptionApplyer) error {
 	var opts ArgOptions
 	opts.applyName(name)
 	opts.applyArgOptions(options)
 
-	return parser.RegisterArg(newArg(newIntValue(p), opts))
+	return register.RegisterArg(newArg(newIntValue(p), opts))
 }
 
-func IntArg(parser Parser, name string, options ...ArgOptionApplyer) *int {
+func IntArg(register Register, name string, options ...ArgOptionApplyer) *int {
 	p := new(int)
-	_ = IntArgVar(parser, p, name, options...)
+	_ = IntArgVar(register, p, name, options...)
 	return p
 }

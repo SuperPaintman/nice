@@ -23,21 +23,21 @@ func newFlag(value Value, opts FlagOptions) Flag {
 	}
 }
 
-func BoolVar(parser Parser, p *bool, name string, options ...FlagOptionApplyer) error {
+func BoolVar(register Register, p *bool, name string, options ...FlagOptionApplyer) error {
 	var opts FlagOptions
 	opts.applyName(name)
 	opts.applyFlagOptions(options)
 
-	return parser.RegisterFlag(newFlag(newBoolValue(p), opts))
+	return register.RegisterFlag(newFlag(newBoolValue(p), opts))
 }
 
-func Bool(parser Parser, name string, options ...FlagOptionApplyer) *bool {
+func Bool(register Register, name string, options ...FlagOptionApplyer) *bool {
 	p := new(bool)
-	_ = BoolVar(parser, p, name, options...)
+	_ = BoolVar(register, p, name, options...)
 	return p
 }
 
-func IntVar(parser Parser, p *int, name string, options ...FlagOptionApplyer) error {
+func IntVar(parser Register, p *int, name string, options ...FlagOptionApplyer) error {
 	var opts FlagOptions
 	opts.applyName(name)
 	opts.applyFlagOptions(options)
@@ -45,8 +45,8 @@ func IntVar(parser Parser, p *int, name string, options ...FlagOptionApplyer) er
 	return parser.RegisterFlag(newFlag(newIntValue(p), opts))
 }
 
-func Int(parser Parser, name string, options ...FlagOptionApplyer) *int {
+func Int(register Register, name string, options ...FlagOptionApplyer) *int {
 	p := new(int)
-	_ = IntVar(parser, p, name, options...)
+	_ = IntVar(register, p, name, options...)
 	return p
 }
