@@ -1,36 +1,6 @@
 package cli
 
-type Flag struct {
-	Value   Value
-	Short   string
-	Long    string
-	Aliases []Alias
-	Usage   string
-}
-
-func newFlag(value Value, opts FlagOptions) Flag {
-	return Flag{
-		Value:   value,
-		Short:   opts.Short,
-		Long:    opts.Long,
-		Aliases: opts.Aliases,
-		Usage:   opts.Usage,
-	}
-}
-
-type Arg struct {
-	Value Value
-	Name  string
-	Usage string
-}
-
-func newArg(value Value, opts ArgOptions) Arg {
-	return Arg{
-		Value: value,
-		Name:  opts.Name,
-		Usage: opts.Usage,
-	}
-}
+import "strings"
 
 type Parser interface {
 	RegisterFlag(flag Flag) error
@@ -223,17 +193,11 @@ func (a *args) Add(arg Arg) {
 	a.index[arg.Name] = idx
 }
 
-type unknownFlag struct {
-	name     string
-	value    string
-	hasValue bool
-}
-
 type DefaultParser struct {
 	flags   flags
 	args    args
-	unknown []unknownFlag // Unknown flags (without named flags).
-	rest    []string      // Other arguments (without named args).
+	unknown []string // Unknown flags (without named flags).
+	rest    []string // Other arguments (without named args).
 }
 
 func (p *DefaultParser) RegisterFlag(flag Flag) error {
@@ -270,7 +234,8 @@ func (p *DefaultParser) Parse(arguments []string) error {
 			continue
 		}
 
-		if len(arg) < 2 && arg[0] != '-' {
+		// Args.
+		if arg[0] != '-' {
 			a, ok := p.args.Nth(argIdx)
 			if ok {
 				if err := a.Value.Set(arg); err != nil {
@@ -285,6 +250,7 @@ func (p *DefaultParser) Parse(arguments []string) error {
 			continue
 		}
 
+		// Flags.
 		numMinuses := 1
 		if arg[1] == '-' {
 			numMinuses++
@@ -297,6 +263,7 @@ func (p *DefaultParser) Parse(arguments []string) error {
 			// return false, f.failf("bad flag syntax: %s", s)
 		}
 
+		// Find a value.
 		var (
 			value    string
 			hasValue bool
@@ -311,30 +278,59 @@ func (p *DefaultParser) Parse(arguments []string) error {
 			}
 		}
 
+		// Find a known flag.
+		_, flag, knownflag := p.flags.Get(name)
+
 		if !hasValue && len(arguments) > 0 {
 			next := arguments[0]
 			if len(next) > 0 && next[0] != '-' {
-				value = next
-				hasValue = true
-				arguments = arguments[1:]
+				setValue := knownflag
+				if knownflag {
+					// Special case for bool flags. Allow only bool-like values.
+					if fv, ok := flag.Value.(boolFlag); ok && fv.IsBoolFlag() {
+						setValue = isBoolValue(next)
+					}
+				}
+
+				if setValue {
+					value = next
+					hasValue = true
+					arguments = arguments[1:]
+				}
 			}
 		}
 
-		_, flag, ok := p.flags.Get(name)
-		if !ok {
-			p.unknown = append(p.unknown, unknownFlag{
-				name:     name,
-				value:    value,
-				hasValue: hasValue,
-			})
-
+		if !knownflag {
+			prefix := strings.Repeat("-", numMinuses)
+			p.unknown = append(p.unknown, prefix+name)
 			continue
 		}
 
-		if err := flag.Value.Set(value); err != nil {
-			return err
+		// Set Value.
+		// Special case for bool flags which doesn't need a value.
+		if fv, ok := flag.Value.(boolFlag); ok && fv.IsBoolFlag() {
+			if !hasValue {
+				value = "true"
+			}
+
+			if err := fv.Set(value); err != nil {
+				return err
+			}
+		} else {
+			if err := flag.Value.Set(value); err != nil {
+				return err
+			}
 		}
 	}
 
 	return nil
+}
+
+func isBoolValue(str string) bool {
+	switch str {
+	case "1", "t", "T", "true", "TRUE", "True",
+		"0", "f", "F", "false", "FALSE", "False":
+		return true
+	}
+	return false
 }
