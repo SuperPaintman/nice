@@ -104,6 +104,7 @@ const (
 	Always
 )
 
+// TODO(SuperPaintman): replace it with setters to optimuze should* functions.
 var Colors Mode = Auto
 
 var (
