@@ -482,7 +482,7 @@ func (n defaultHelper) Help(ctx Context, w io.Writer, path []string) error {
 	// Commands.
 	if len(commands) > 0 {
 		ew.Writef("\n")
-		ew.Writef("Commangs:\n")
+		ew.Writef("Commands:\n")
 
 		for _, cmd := range commands {
 			// Name.
