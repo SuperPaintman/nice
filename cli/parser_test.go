@@ -10,15 +10,15 @@ func TestParser(t *testing.T) {
 
 	show := Bool(&parser, "show",
 		WithShort("s"),
-		WithUsage("Shows the resuld of the function."),
+		WithUsage("Shows the resuld of the function"),
 	)
 
 	recreate := Bool(&parser, "recreate",
-		WithUsage("Re-create the current user."),
+		WithUsage("Re-create the current user"),
 	)
 
 	update := Bool(&parser, "update",
-		WithUsage("Update the DB."),
+		WithUsage("Update the DB"),
 	)
 
 	unused := Bool(&parser, "unused")
@@ -28,7 +28,7 @@ func TestParser(t *testing.T) {
 	)
 
 	userID := IntArg(&parser, "user-id",
-		WithUsage("Current User ID."),
+		WithUsage("Current User ID"),
 	)
 
 	args := []string{
