@@ -18,6 +18,12 @@ type Context interface {
 	Command() *Command
 	Args() []Arg
 	Flags() []Flag
+	Printf(format string, a ...interface{}) (n int, err error)
+	Print(a ...interface{}) (n int, err error)
+	Println(a ...interface{}) (n int, err error)
+	Warnf(format string, a ...interface{}) (n int, err error)
+	Warn(a ...interface{}) (n int, err error)
+	Warnln(a ...interface{}) (n int, err error)
 }
 
 var _ (Context) = (*commandContext)(nil)
@@ -84,6 +90,30 @@ func (c *commandContext) Args() []Arg { return c.app.parser().Args() }
 
 func (c *commandContext) Flags() []Flag { return c.app.parser().Flags() }
 
+func (c *commandContext) Printf(format string, a ...interface{}) (n int, err error) {
+	return fmt.Fprintf(c.app.stdout(), format, a...)
+}
+
+func (c *commandContext) Print(a ...interface{}) (n int, err error) {
+	return fmt.Fprint(c.app.stdout(), a...)
+}
+
+func (c *commandContext) Println(a ...interface{}) (n int, err error) {
+	return fmt.Fprintln(c.app.stdout(), a...)
+}
+
+func (c *commandContext) Warnf(format string, a ...interface{}) (n int, err error) {
+	return fmt.Fprintf(c.app.stderr(), format, a...)
+}
+
+func (c *commandContext) Warn(a ...interface{}) (n int, err error) {
+	return fmt.Fprint(c.app.stderr(), a...)
+}
+
+func (c *commandContext) Warnln(a ...interface{}) (n int, err error) {
+	return fmt.Fprintln(c.app.stderr(), a...)
+}
+
 type App struct {
 	Name     string
 	Usage    string
@@ -139,10 +169,6 @@ func (app *App) RunContext(ctx context.Context) error {
 	}
 
 	// Run command.
-	if cmd.Action == nil {
-		// TODO
-	}
-
 	cmdCtx := &commandContext{
 		parent:  ctx,
 		app:     app,
@@ -158,8 +184,10 @@ func (app *App) RunContext(ctx context.Context) error {
 		)
 	}
 
-	if err := cmd.Action.Setup(cmdCtx); err != nil {
-		return err
+	if cmd.Action != nil {
+		if err := cmd.Action.Setup(cmdCtx); err != nil {
+			return err
+		}
 	}
 
 	if err := app.parser().Parse(app.args()); err != nil {
@@ -167,11 +195,13 @@ func (app *App) RunContext(ctx context.Context) error {
 	}
 
 	if *showHelp {
-		return app.help(cmdCtx, path, app.stdout())
+		return app.help(cmdCtx, app.stdout(), path)
 	}
 
-	if err := cmd.Action.Run(cmdCtx); err != nil {
-		return err
+	if cmd.Action != nil {
+		if err := cmd.Action.Run(cmdCtx); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -260,12 +290,12 @@ func (app *App) helpEnabled() bool {
 	return !disabled
 }
 
-func (app *App) help(ctx Context, path []string, w io.Writer) error {
+func (app *App) help(ctx Context, w io.Writer, path []string) error {
 	if app.Helper != nil {
-		return app.Helper.Help(ctx, path, w)
+		return app.Helper.Help(ctx, w, path)
 	}
 
-	return DefaultHelp().Help(ctx, path, w)
+	return DefaultHelp().Help(ctx, w, path)
 }
 
 type Command struct {
@@ -331,22 +361,22 @@ func (a *actionFunc) Run(ctx Context) error {
 }
 
 type Helper interface {
-	Help(ctx Context, path []string, w io.Writer) error
+	Help(ctx Context, w io.Writer, path []string) error
 }
 
 var _ Helper = (HelperFunc)(nil)
 
-type HelperFunc func(ctx Context, path []string, w io.Writer) error
+type HelperFunc func(ctx Context, w io.Writer, path []string) error
 
-func (fn HelperFunc) Help(ctx Context, path []string, w io.Writer) error {
-	return fn(ctx, path, w)
+func (fn HelperFunc) Help(ctx Context, w io.Writer, path []string) error {
+	return fn(ctx, w, path)
 }
 
 var _ Helper = noopHelper{}
 
 type noopHelper struct{}
 
-func (n noopHelper) Help(ctx Context, path []string, w io.Writer) error {
+func (n noopHelper) Help(ctx Context, w io.Writer, path []string) error {
 	return nil
 }
 
@@ -358,7 +388,7 @@ var _ Helper = defaultHelper{}
 
 type defaultHelper struct{}
 
-func (n defaultHelper) Help(ctx Context, path []string, w io.Writer) error {
+func (n defaultHelper) Help(ctx Context, w io.Writer, path []string) error {
 	const (
 		colorName     = colors.Blue
 		colorCommand  = colors.Magenta
@@ -371,60 +401,78 @@ func (n defaultHelper) Help(ctx Context, path []string, w io.Writer) error {
 	args := ctx.Args()
 	flags := ctx.Flags()
 	commands := ctx.App().Commands
+	for _, name := range path[1:] {
+		// Find a sub command.
+		var found bool
+		for i := range commands {
+			c := &commands[i]
 
-	// Usage.
-	ew.Writef("Usage:")
-	for _, name := range path {
-		ew.Writef(" %s%s%s", colorName, name, colorName.Reset())
-	}
-
-	if len(flags) > 0 {
-		ew.Writef(" %s[options]%s", colorOption, colorOption.Reset())
-	}
-
-	if len(args) > 0 {
-		for _, arg := range args {
-			ew.Writef(" %s<%s>%s", colorArgument, arg.Name, colorArgument.Reset())
+			if c.Name == name {
+				found = true
+				commands = c.Commands
+				break
+			}
 		}
-	} else if len(commands) > 0 {
-		ew.Writef(" %s[command]%s", colorCommand, colorCommand.Reset())
-	}
 
-	ew.Writef("\n")
+		if !found {
+			// return fmt.Errorf("cli: command not found: %s", name)
+			break
+		}
+	}
 
 	// Usage with a command.
-	if len(args) > 0 && len(commands) > 0 {
-		ew.Writef("      ")
+	if len(commands) > 0 {
+		ew.Writef("Usage:")
 
 		for _, name := range path {
 			ew.Writef(" %s%s%s", colorName, name, colorName.Reset())
 		}
 
+		if len(flags) > 0 {
+			ew.Writef(" %s[options]%s", colorOption, colorOption.Reset())
+		}
+
 		ew.Writef(" %s[command]%s", colorCommand, colorCommand.Reset())
 
 		ew.Writef("\n")
 	}
 
-	if err := ew.Err(); err != nil {
-		return err
-	}
-
-	// Arguments.
+	// Usage with argumens.
 	if len(args) > 0 {
-		ew.Writef("\n")
-		ew.Writef("Arguments:\n")
+		if len(commands) == 0 {
+			ew.Writef("Usage:")
+		} else {
+			ew.Writef("      ")
+		}
+		for _, name := range path {
+			ew.Writef(" %s%s%s", colorName, name, colorName.Reset())
+		}
+
+		if len(flags) > 0 {
+			ew.Writef(" %s[options]%s", colorOption, colorOption.Reset())
+		}
 
 		for _, arg := range args {
-			// Name.
-			ew.Writef("  %s%s%s", colorArgument, arg.Name, colorArgument.Reset())
-
-			// Usage.
-			if arg.Usage != "" {
-				ew.Writef("   %s", arg.Usage)
-			}
-
-			ew.Writef("\n")
+			ew.Writef(" %s<%s>%s", colorArgument, arg.Name, colorArgument.Reset())
 		}
+
+		ew.Writef("\n")
+
+		if err := ew.Err(); err != nil {
+			return err
+		}
+	} else if len(commands) == 0 {
+		ew.Writef("Usage:")
+
+		for _, name := range path {
+			ew.Writef(" %s%s%s", colorName, name, colorName.Reset())
+		}
+
+		if len(flags) > 0 {
+			ew.Writef(" %s[options]%s", colorOption, colorOption.Reset())
+		}
+
+		ew.Writef("\n")
 
 		if err := ew.Err(); err != nil {
 			return err
@@ -443,6 +491,28 @@ func (n defaultHelper) Help(ctx Context, path []string, w io.Writer) error {
 			// Usage.
 			if cmd.Usage != "" {
 				ew.Writef("   %s", cmd.Usage)
+			}
+
+			ew.Writef("\n")
+		}
+
+		if err := ew.Err(); err != nil {
+			return err
+		}
+	}
+
+	// Arguments.
+	if len(args) > 0 {
+		ew.Writef("\n")
+		ew.Writef("Arguments:\n")
+
+		for _, arg := range args {
+			// Name.
+			ew.Writef("  %s%s%s", colorArgument, arg.Name, colorArgument.Reset())
+
+			// Usage.
+			if arg.Usage != "" {
+				ew.Writef("   %s", arg.Usage)
 			}
 
 			ew.Writef("\n")
@@ -523,7 +593,7 @@ func (ew *easyWriter) Writef(format string, a ...interface{}) {
 
 	var err error
 	if len(a) == 0 {
-		_, err = fmt.Fprint(ew.w, format)
+		_, err = ew.w.Write([]byte(format))
 	} else {
 		_, err = fmt.Fprintf(ew.w, format, a...)
 	}
