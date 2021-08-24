@@ -16,6 +16,8 @@ type Getter interface {
 	Get() interface{}
 }
 
+var _ Getter = (*boolValue)(nil)
+
 type boolValue bool
 
 func newBoolValue(p *bool) *boolValue {
@@ -42,6 +44,8 @@ type boolFlag interface {
 	IsBoolFlag() bool
 }
 
+var _ Getter = (*intValue)(nil)
+
 type intValue int
 
 func newIntValue(p *int) *intValue {
@@ -60,3 +64,20 @@ func (i *intValue) Set(s string) error {
 func (i *intValue) Get() interface{} { return int(*i) }
 
 func (i *intValue) String() string { return strconv.Itoa(int(*i)) }
+
+type stringValue string
+
+var _ Getter = (*stringValue)(nil)
+
+func newStringValue(p *string) *stringValue {
+	return (*stringValue)(p)
+}
+
+func (s *stringValue) Set(val string) error {
+	*s = stringValue(val)
+	return nil
+}
+
+func (s *stringValue) Get() interface{} { return string(*s) }
+
+func (s *stringValue) String() string { return string(*s) }

@@ -56,3 +56,17 @@ func Int(register Register, name string, options ...FlagOptionApplyer) *int {
 	_ = IntVar(register, p, name, options...)
 	return p
 }
+
+func StringVar(parser Register, p *string, name string, options ...FlagOptionApplyer) error {
+	var opts FlagOptions
+	opts.applyName(name)
+	opts.applyFlagOptions(options)
+
+	return parser.RegisterFlag(newFlag(newStringValue(p), opts))
+}
+
+func String(register Register, name string, options ...FlagOptionApplyer) *string {
+	p := new(string)
+	_ = StringVar(register, p, name, options...)
+	return p
+}
