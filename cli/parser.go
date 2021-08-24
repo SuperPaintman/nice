@@ -14,6 +14,8 @@ type Parser interface {
 	Parse(arguments []string) error
 	Args() []Arg
 	Flags() []Flag
+	FormatLongFlag(name string) string
+	FormatShortFlag(name string) string
 }
 
 type flags struct {
@@ -202,6 +204,8 @@ func (a *args) Add(arg Arg) {
 var _ (Parser) = (*DefaultParser)(nil)
 
 type DefaultParser struct {
+	Universal bool
+
 	flags   flags
 	args    args
 	unknown []string // Unknown flags (without named flags).
@@ -341,6 +345,26 @@ func (p *DefaultParser) Args() []Arg {
 
 func (p *DefaultParser) Flags() []Flag {
 	return p.flags.data
+}
+
+func (p *DefaultParser) FormatLongFlag(name string) string {
+	if name == "" {
+		return ""
+	}
+
+	if p.Universal {
+		return "-" + name
+	}
+
+	return "--" + name
+}
+
+func (p *DefaultParser) FormatShortFlag(name string) string {
+	if name == "" {
+		return ""
+	}
+
+	return "-" + name
 }
 
 func isBoolValue(str string) bool {

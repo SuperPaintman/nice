@@ -67,16 +67,38 @@ func WithUsage(usage string) UsageOption {
 	return UsageOption(usage)
 }
 
+var (
+	_ FlagOptionApplyer = Necessary(Optional)
+	_ ArgOptionApplyer  = Necessary(Optional)
+)
+
+type Necessary uint8
+
+const (
+	necessaryUnset Necessary = iota
+	Optional
+	Required
+)
+
+func (opt Necessary) FlagOptionApply(o *FlagOptions) {
+	o.Necessary = opt
+}
+
+func (opt Necessary) ArgOptionApply(o *ArgOptions) {
+	o.Necessary = opt
+}
+
 // Flag options.
 
 var _ FlagOptionApplyer = FlagOptions{}
 
 type FlagOptions struct {
-	Value   Value
-	Short   string
-	Long    string
-	Aliases []Alias
-	Usage   string
+	Value     Value
+	Short     string
+	Long      string
+	Aliases   []Alias
+	Usage     string
+	Necessary Necessary // Optional if unset
 }
 
 func (o FlagOptions) FlagOptionApply(opts *FlagOptions) {
@@ -88,13 +110,15 @@ func (o FlagOptions) FlagOptionApply(opts *FlagOptions) {
 		opts.Long = o.Long
 	}
 
+	for _, alias := range o.Aliases {
+		opts.Aliases = append(opts.Aliases, alias)
+	}
+
 	if o.Usage != "" {
 		opts.Usage = o.Usage
 	}
 
-	for _, alias := range o.Aliases {
-		opts.Aliases = append(opts.Aliases, alias)
-	}
+	opts.Necessary = o.Necessary
 }
 
 func (o *FlagOptions) applyName(name string) {
@@ -119,9 +143,14 @@ func (o *FlagOptions) applyFlagOptions(options []FlagOptionApplyer) {
 var _ ArgOptionApplyer = ArgOptions{}
 
 type ArgOptions struct {
-	Value Value
-	Name  string
-	Usage string
+	Value     Value
+	Name      string
+	Usage     string
+	Necessary Necessary // Required if unset
+	// NOTE(SuperPaintman):
+	//     Usually when we use args in our CLIs they are required by default.
+	//     So yes, it's a little bit counfusing (why it isn't Optional?) but
+	//     it makes writing CLIs simpler with default options.
 }
 
 func (o ArgOptions) ArgOptionApply(opts *ArgOptions) {
@@ -132,6 +161,8 @@ func (o ArgOptions) ArgOptionApply(opts *ArgOptions) {
 	if o.Usage != "" {
 		opts.Usage = o.Usage
 	}
+
+	opts.Necessary = o.Necessary
 }
 
 func (o *ArgOptions) applyName(name string) {

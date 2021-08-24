@@ -6,21 +6,27 @@ type Alias struct {
 }
 
 type Flag struct {
-	Value   Value
-	Short   string
-	Long    string
-	Aliases []Alias
-	Usage   string
+	Value     Value
+	Short     string
+	Long      string
+	Aliases   []Alias
+	Usage     string
+	Necessary Necessary
 }
 
 func newFlag(value Value, opts FlagOptions) Flag {
 	return Flag{
-		Value:   value,
-		Short:   opts.Short,
-		Long:    opts.Long,
-		Aliases: opts.Aliases,
-		Usage:   opts.Usage,
+		Value:     value,
+		Short:     opts.Short,
+		Long:      opts.Long,
+		Aliases:   opts.Aliases,
+		Usage:     opts.Usage,
+		Necessary: opts.Necessary,
 	}
+}
+
+func (f *Flag) required() bool {
+	return f.Necessary == Required
 }
 
 func BoolVar(register Register, p *bool, name string, options ...FlagOptionApplyer) error {

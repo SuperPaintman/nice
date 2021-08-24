@@ -16,6 +16,7 @@ type Context interface {
 
 	App() *App
 	Command() *Command
+	Parser() Parser
 	Args() []Arg
 	Flags() []Flag
 	Printf(format string, a ...interface{}) (n int, err error)
@@ -76,13 +77,11 @@ func (c *commandContext) RegisterArg(arg Arg) error {
 	return c.app.parser().RegisterArg(arg)
 }
 
-func (c *commandContext) Parse(arguments []string) error {
-	return c.app.parser().Parse(arguments)
-}
-
 func (c *commandContext) App() *App { return c.app }
 
 func (c *commandContext) Command() *Command { return c.command }
+
+func (c *commandContext) Parser() Parser { return c.app.parser() }
 
 func (c *commandContext) Path() []string { return c.path }
 
@@ -295,7 +294,7 @@ func (app *App) help(ctx Context, w io.Writer, path []string) error {
 		return app.Helper.Help(ctx, w, path)
 	}
 
-	return DefaultHelp().Help(ctx, w, path)
+	return (DefaultHelper{}).Help(ctx, w, path)
 }
 
 type Command struct {
@@ -384,11 +383,11 @@ func DisableHelp() Helper {
 	return noopHelper{}
 }
 
-var _ Helper = defaultHelper{}
+var _ Helper = DefaultHelper{}
 
-type defaultHelper struct{}
+type DefaultHelper struct{}
 
-func (n defaultHelper) Help(ctx Context, w io.Writer, path []string) error {
+func (h DefaultHelper) Help(ctx Context, w io.Writer, path []string) error {
 	const (
 		colorName     = colors.Blue
 		colorCommand  = colors.Magenta
@@ -453,7 +452,11 @@ func (n defaultHelper) Help(ctx Context, w io.Writer, path []string) error {
 		}
 
 		for _, arg := range args {
-			ew.Writef(" %s<%s>%s", colorArgument, arg.Name, colorArgument.Reset())
+			if arg.required() {
+				ew.Writef(" %s<%s>%s", colorArgument, arg.Name, colorArgument.Reset())
+			} else {
+				ew.Writef(" %s[%s]%s", colorArgument, arg.Name, colorArgument.Reset())
+			}
 		}
 
 		ew.Writef("\n")
@@ -533,7 +536,11 @@ func (n defaultHelper) Help(ctx Context, w io.Writer, path []string) error {
 
 			// Short.
 			if flag.Short != "" {
-				ew.Writef("%s-%s%s", colorOption, flag.Short, colorOption.Reset())
+				ew.Writef("%s%s%s",
+					colorOption,
+					ctx.Parser().FormatShortFlag(flag.Short),
+					colorOption.Reset(),
+				)
 				ew.Writef(", ")
 			} else {
 				ew.Writef("    ")
@@ -541,7 +548,11 @@ func (n defaultHelper) Help(ctx Context, w io.Writer, path []string) error {
 
 			// Long.
 			if flag.Long != "" {
-				ew.Writef("%s--%s%s", colorOption, flag.Long, colorOption.Reset())
+				ew.Writef("%s%s%s",
+					colorOption,
+					ctx.Parser().FormatLongFlag(flag.Long),
+					colorOption.Reset(),
+				)
 			} else {
 				// TODO
 			}
@@ -560,10 +571,6 @@ func (n defaultHelper) Help(ctx Context, w io.Writer, path []string) error {
 	}
 
 	return nil
-}
-
-func DefaultHelp() Helper {
-	return defaultHelper{}
 }
 
 type easyWriter struct {
