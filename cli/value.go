@@ -16,7 +16,16 @@ type Getter interface {
 	Get() interface{}
 }
 
-var _ Getter = (*boolValue)(nil)
+type Typer interface {
+	Value
+	Type() string
+}
+
+var (
+	_ Value  = (*boolValue)(nil)
+	_ Getter = (*boolValue)(nil)
+	_ Typer  = (*boolValue)(nil)
+)
 
 type boolValue bool
 
@@ -37,6 +46,8 @@ func (b *boolValue) Get() interface{} { return bool(*b) }
 
 func (b *boolValue) String() string { return strconv.FormatBool(bool(*b)) }
 
+func (b *boolValue) Type() string { return "bool" }
+
 func (b *boolValue) IsBoolFlag() bool { return true }
 
 type boolFlag interface {
@@ -44,7 +55,11 @@ type boolFlag interface {
 	IsBoolFlag() bool
 }
 
-var _ Getter = (*intValue)(nil)
+var (
+	_ Value  = (*intValue)(nil)
+	_ Getter = (*intValue)(nil)
+	_ Typer  = (*intValue)(nil)
+)
 
 type intValue int
 
@@ -65,9 +80,15 @@ func (i *intValue) Get() interface{} { return int(*i) }
 
 func (i *intValue) String() string { return strconv.Itoa(int(*i)) }
 
+func (i *intValue) Type() string { return "int" }
+
 type stringValue string
 
-var _ Getter = (*stringValue)(nil)
+var (
+	_ Value  = (*stringValue)(nil)
+	_ Getter = (*stringValue)(nil)
+	_ Typer  = (*stringValue)(nil)
+)
 
 func newStringValue(p *string) *stringValue {
 	return (*stringValue)(p)
@@ -81,3 +102,5 @@ func (s *stringValue) Set(val string) error {
 func (s *stringValue) Get() interface{} { return string(*s) }
 
 func (s *stringValue) String() string { return string(*s) }
+
+func (s *stringValue) Type() string { return "string" }

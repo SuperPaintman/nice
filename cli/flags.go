@@ -25,6 +25,14 @@ func newFlag(value Value, opts FlagOptions) Flag {
 	}
 }
 
+func (f *Flag) Type() string {
+	if t, ok := f.Value.(Typer); ok {
+		return t.Type()
+	}
+
+	return ""
+}
+
 func (f *Flag) required() bool {
 	return f.Necessary == Required
 }

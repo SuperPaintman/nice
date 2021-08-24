@@ -41,22 +41,23 @@ func (h DefaultHelper) Help(ctx Context, w io.Writer, path []string) error {
 		colorCommand  = colors.Magenta
 		colorArgument = colors.Magenta
 		colorOption   = colors.Yellow
+		colorType     = colors.Green
 	)
 
 	ew := easyWriter{w: w}
 
 	args := ctx.Args()
 	flags := ctx.Flags()
-	commands := ctx.App().Commands
+	cmd := ctx.App().root()
 	for _, name := range path[1:] {
 		// Find a sub command.
 		var found bool
-		for i := range commands {
-			c := &commands[i]
+		for i := range cmd.Commands {
+			c := &cmd.Commands[i]
 
 			if c.Name == name {
 				found = true
-				commands = c.Commands
+				cmd = c
 				break
 			}
 		}
@@ -68,7 +69,7 @@ func (h DefaultHelper) Help(ctx Context, w io.Writer, path []string) error {
 	}
 
 	// Usage with a command.
-	if len(commands) > 0 {
+	if len(cmd.Commands) > 0 {
 		ew.Writef("Usage:")
 
 		for _, name := range path {
@@ -86,7 +87,7 @@ func (h DefaultHelper) Help(ctx Context, w io.Writer, path []string) error {
 
 	// Usage with argumens.
 	if len(args) > 0 {
-		if len(commands) == 0 {
+		if len(cmd.Commands) == 0 {
 			ew.Writef("Usage:")
 		} else {
 			ew.Writef("      ")
@@ -112,7 +113,7 @@ func (h DefaultHelper) Help(ctx Context, w io.Writer, path []string) error {
 		if err := ew.Err(); err != nil {
 			return err
 		}
-	} else if len(commands) == 0 {
+	} else if len(cmd.Commands) == 0 {
 		ew.Writef("Usage:")
 
 		for _, name := range path {
@@ -130,18 +131,28 @@ func (h DefaultHelper) Help(ctx Context, w io.Writer, path []string) error {
 		}
 	}
 
+	// Description from Usage field.
+	if cmd.Usage != "" {
+		ew.Writef("\n")
+		ew.Writef(cmd.Usage)
+
+		if len(cmd.Usage) > 0 && cmd.Usage[len(cmd.Usage)-1] != '\n' {
+			ew.Writef("\n")
+		}
+	}
+
 	// Commands.
-	if len(commands) > 0 {
+	if len(cmd.Commands) > 0 {
 		ew.Writef("\n")
 		ew.Writef("Commands:\n")
 
-		for _, cmd := range commands {
+		for _, cmd := range cmd.Commands {
 			// Name.
 			ew.Writef("  %s%s%s", colorCommand, cmd.Name, colorCommand.Reset())
 
 			// Usage.
 			if cmd.Usage != "" {
-				ew.Writef("   %s", cmd.Usage)
+				ew.Writef("\t\t%s", cmd.Usage)
 			}
 
 			ew.Writef("\n")
@@ -159,11 +170,24 @@ func (h DefaultHelper) Help(ctx Context, w io.Writer, path []string) error {
 
 		for _, arg := range args {
 			// Name.
-			ew.Writef("  %s%s%s", colorArgument, arg.Name, colorArgument.Reset())
+			if arg.required() {
+				ew.Writef("  %s<%s>%s", colorArgument, arg.Name, colorArgument.Reset())
+			} else {
+				ew.Writef("  %s[%s]%s", colorArgument, arg.Name, colorArgument.Reset())
+			}
+
+			// Type.
+			if t := arg.Type(); t != "bool" {
+				if t == "" {
+					t = "(unknown)"
+				}
+
+				ew.Writef(" %s%s%s", colorType, t, colorType.Reset())
+			}
 
 			// Usage.
 			if arg.Usage != "" {
-				ew.Writef("   %s", arg.Usage)
+				ew.Writef("\t\t%s", arg.Usage)
 			}
 
 			ew.Writef("\n")
@@ -205,9 +229,18 @@ func (h DefaultHelper) Help(ctx Context, w io.Writer, path []string) error {
 				// TODO
 			}
 
+			// Type.
+			if t := flag.Type(); t != "bool" {
+				if t == "" {
+					t = "(unknown)"
+				}
+
+				ew.Writef(" %s%s%s", colorType, t, colorType.Reset())
+			}
+
 			// Usage.
 			if flag.Usage != "" {
-				ew.Writef("   %s", flag.Usage)
+				ew.Writef("\t\t%s", flag.Usage)
 			}
 
 			ew.Writef("\n")

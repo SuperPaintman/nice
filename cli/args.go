@@ -16,6 +16,14 @@ func newArg(value Value, opts ArgOptions) Arg {
 	}
 }
 
+func (a *Arg) Type() string {
+	if t, ok := a.Value.(Typer); ok {
+		return t.Type()
+	}
+
+	return ""
+}
+
 func (a *Arg) required() bool {
 	// By default args are required.
 	return a.Necessary != Optional
