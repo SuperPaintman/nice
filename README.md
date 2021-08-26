@@ -1,5 +1,16 @@
 # Nice 👌
 
+**Nice** is a highly customizable and lightweight framework for crafting CLI
+apps.
+
+Nice respects idiomatic [Go](https://golang.org/) code and focuses to be clear,
+efficient and easy to write and maintain.
+
+You can use it as a full-featured non-opinionated framework or use any nice
+packages as stand-alone libraries.
+
+I hope you'll enjoy your nice CLI app!
+
 ---
 
 ## Tests
