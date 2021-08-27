@@ -33,7 +33,7 @@ func (f *Flag) Type() string {
 	return ""
 }
 
-func (f *Flag) required() bool {
+func (f *Flag) Required() bool {
 	return f.Necessary == Required
 }
 

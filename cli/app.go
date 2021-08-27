@@ -17,6 +17,9 @@ type Context interface {
 	Parser() Parser
 	Args() []Arg
 	Flags() []Flag
+	Stdout() io.Writer
+	Stderr() io.Writer
+	Stdin() io.Reader
 	Printf(format string, a ...interface{}) (n int, err error)
 	Print(a ...interface{}) (n int, err error)
 	Println(a ...interface{}) (n int, err error)
@@ -86,6 +89,12 @@ func (c *commandContext) Path() []string { return c.path }
 func (c *commandContext) Args() []Arg { return c.app.parser().Args() }
 
 func (c *commandContext) Flags() []Flag { return c.app.parser().Flags() }
+
+func (c *commandContext) Stdout() io.Writer { return c.app.stdout() }
+
+func (c *commandContext) Stderr() io.Writer { return c.app.stderr() }
+
+func (c *commandContext) Stdin() io.Reader { return c.app.stdin() }
 
 func (c *commandContext) Printf(format string, a ...interface{}) (n int, err error) {
 	return fmt.Fprintf(c.app.stdout(), format, a...)

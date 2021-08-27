@@ -24,7 +24,7 @@ func (a *Arg) Type() string {
 	return ""
 }
 
-func (a *Arg) required() bool {
+func (a *Arg) Required() bool {
 	// By default args are required.
 	return a.Necessary != Optional
 }

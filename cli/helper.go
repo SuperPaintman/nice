@@ -1,7 +1,6 @@
 package cli
 
 import (
-	"fmt"
 	"io"
 
 	"github.com/SuperPaintman/nice/colors"
@@ -101,7 +100,7 @@ func (h DefaultHelper) Help(ctx Context, w io.Writer, path []string) error {
 		}
 
 		for _, arg := range args {
-			if arg.required() {
+			if arg.Required() {
 				ew.Writef(" %s<%s>%s", colorArgument, arg.Name, colorArgument.Reset())
 			} else {
 				ew.Writef(" %s[%s]%s", colorArgument, arg.Name, colorArgument.Reset())
@@ -170,7 +169,7 @@ func (h DefaultHelper) Help(ctx Context, w io.Writer, path []string) error {
 
 		for _, arg := range args {
 			// Name.
-			if arg.required() {
+			if arg.Required() {
 				ew.Writef("  %s<%s>%s", colorArgument, arg.Name, colorArgument.Reset())
 			} else {
 				ew.Writef("  %s[%s]%s", colorArgument, arg.Name, colorArgument.Reset())
@@ -252,45 +251,4 @@ func (h DefaultHelper) Help(ctx Context, w io.Writer, path []string) error {
 	}
 
 	return nil
-}
-
-type easyWriter struct {
-	w   io.Writer
-	err error
-}
-
-func (ew *easyWriter) Write(data []byte) {
-	if ew.err != nil {
-		return
-	}
-
-	_, err := ew.w.Write(data)
-	if err != nil {
-		ew.err = err
-	}
-}
-
-func (ew *easyWriter) WriteString(s string) {
-	ew.Write([]byte(s))
-}
-
-func (ew *easyWriter) Writef(format string, a ...interface{}) {
-	if ew.err != nil {
-		return
-	}
-
-	var err error
-	if len(a) == 0 {
-		_, err = ew.w.Write([]byte(format))
-	} else {
-		_, err = fmt.Fprintf(ew.w, format, a...)
-	}
-
-	if err != nil {
-		ew.err = err
-	}
-}
-
-func (ew *easyWriter) Err() error {
-	return ew.err
 }
