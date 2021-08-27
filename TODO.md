@@ -8,6 +8,7 @@
 
   - [ ] Before action
   - [ ] After action
+  - [ ] Human friendly errors
 
 - [ ] Help generator
 
@@ -16,12 +17,14 @@
 - [ ] Parser
 
   - [ ] Errors if flags and args registred twice
+    - [ ] Show line and file where it was registred
   - [ ] Global flags
   - [ ] Required flags
   - [ ] Optional args
   - [ ] `"--"` bypass
   - [ ] POSIX-style short flag combining (`-a -b -> -ab`)
   - [ ] Short-flag+parameter combining (`-a parm -> -aparm`)
+  - [ ] "Did you mean?" for unknown flags and commands
 
 - [ ] Documentation generator
 
@@ -78,8 +81,60 @@
 
 ---
 
+## CI
+
+### MVP
+
+- [ ] Github CI
+
+  - [ ] Check generated files (regenerate them)
+  - [ ] Test runner
+  - [ ] Linter runner
+  - [ ] Build packages
+  - [ ] Commit messages
+
+- [ ] Coveralls
+
+---
+
+## Documentation
+
+### MVP
+
+- [ ] Update `README.md`
+- [ ] Examples
+- [ ] Tutorial
+
+---
+
+## Community
+
+### MVP
+
+- [ ] Logo
+- [ ] Article on dev.to
+- [ ] Article on habr.com
+- [ ] Quick introduction on YouTube
+- [ ] Subreddit
+- [ ] Twitter posts
+
+### Dream release
+
+- [ ] Article on medium
+
+---
+
 ## Misc
 
 ### MVP
 
 - [ ] Remove and move `escape` package into other branch
+
+- [ ] Packages for OSes
+
+  - [ ] NixOS
+  - [ ] Arch
+  - [ ] Ubunta / Debian
+  - [ ] Brew
+  - [ ] Mac Ports
+  - [ ] Windows
