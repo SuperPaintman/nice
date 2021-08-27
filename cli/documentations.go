@@ -1,6 +1,9 @@
 package cli
 
-import "io"
+import (
+	"bytes"
+	"io"
+)
 
 type DocumantationGenerator interface {
 	DocumantationGenerate(ctx Context, w io.Writer) error
@@ -46,8 +49,15 @@ func MarkdownDocumantation() DocumantationGenerator {
 		}
 
 		// Description.
-		if app.Usage != "" {
-			usage := normalizeUsage(app.Usage)
+		if app.Usage != nil {
+			// TODO(SuperPaintman): optimize it.
+			var buf bytes.Buffer
+			if err := app.Usage.Usage(ctx, &buf); err != nil {
+				return err
+			}
+			usage := string(buf.Bytes())
+
+			usage = normalizeUsage(usage)
 
 			if len(usage) > 0 {
 				ew.Writef("\n")
@@ -107,7 +117,14 @@ func MarkdownDocumantation() DocumantationGenerator {
 				}
 
 				// Description.
-				if usage := normalizeUsage(arg.Usage); usage != "" {
+				// TODO(SuperPaintman): optimize it.
+				var buf bytes.Buffer
+				if err := arg.Usage.Usage(ctx, &buf); err != nil {
+					return err
+				}
+				usage := string(buf.Bytes())
+
+				if usage := normalizeUsage(usage); usage != "" {
 					ew.Writef(" %s |", usage)
 				} else {
 					ew.Writef(" |")
@@ -164,7 +181,14 @@ func MarkdownDocumantation() DocumantationGenerator {
 				}
 
 				// Description.
-				if usage := normalizeUsage(flag.Usage); usage != "" {
+				// TODO(SuperPaintman): optimize it.
+				var buf bytes.Buffer
+				if err := flag.Usage.Usage(ctx, &buf); err != nil {
+					return err
+				}
+				usage := string(buf.Bytes())
+
+				if usage := normalizeUsage(usage); usage != "" {
 					ew.Writef(" %s |", usage)
 				} else {
 					ew.Writef(" |")

@@ -10,7 +10,7 @@ type Flag struct {
 	Short     string
 	Long      string
 	Aliases   []Alias
-	Usage     string
+	Usage     Usager
 	Necessary Necessary
 }
 

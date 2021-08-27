@@ -3,7 +3,7 @@ package cli
 type Arg struct {
 	Value     Value
 	Name      string
-	Usage     string
+	Usage     Usager
 	Necessary Necessary
 }
 

@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"bytes"
 	"io"
 
 	"github.com/SuperPaintman/nice/colors"
@@ -132,11 +133,18 @@ func (h DefaultHelper) Help(ctx Context, w io.Writer) error {
 	}
 
 	// Description from Usage field.
-	if cmd.Usage != "" {
-		ew.Writef("\n")
-		ew.Writef(cmd.Usage)
+	if cmd.Usage != nil {
+		// TODO(SuperPaintman): optimize it.
+		var buf bytes.Buffer
+		if err := cmd.Usage.Usage(ctx, &buf); err != nil {
+			return err
+		}
+		usage := string(buf.Bytes())
 
-		if len(cmd.Usage) > 0 && cmd.Usage[len(cmd.Usage)-1] != '\n' {
+		ew.Writef("\n")
+		ew.Writef(usage)
+
+		if len(usage) > 0 && usage[len(usage)-1] != '\n' {
 			ew.Writef("\n")
 		}
 	}
@@ -151,8 +159,17 @@ func (h DefaultHelper) Help(ctx Context, w io.Writer) error {
 			ew.Writef("  %s%s%s", colorCommand, cmd.Name, colorCommand.Reset())
 
 			// Usage.
-			if cmd.Usage != "" {
-				ew.Writef("\t\t%s", cmd.Usage)
+			if cmd.Usage != nil {
+				// TODO(SuperPaintman): optimize it.
+				var buf bytes.Buffer
+				if err := cmd.Usage.Usage(ctx, &buf); err != nil {
+					return err
+				}
+				usage := string(buf.Bytes())
+
+				if usage != "" {
+					ew.Writef("\t\t%s", usage)
+				}
 			}
 
 			ew.Writef("\n")
@@ -186,8 +203,17 @@ func (h DefaultHelper) Help(ctx Context, w io.Writer) error {
 			}
 
 			// Usage.
-			if arg.Usage != "" {
-				ew.Writef("\t\t%s", arg.Usage)
+			if arg.Usage != nil {
+				// TODO(SuperPaintman): optimize it.
+				var buf bytes.Buffer
+				if err := arg.Usage.Usage(ctx, &buf); err != nil {
+					return err
+				}
+				usage := string(buf.Bytes())
+
+				if usage != "" {
+					ew.Writef("\t\t%s", usage)
+				}
 			}
 
 			ew.Writef("\n")
@@ -239,8 +265,17 @@ func (h DefaultHelper) Help(ctx Context, w io.Writer) error {
 			}
 
 			// Usage.
-			if flag.Usage != "" {
-				ew.Writef("\t\t%s", flag.Usage)
+			if flag.Usage != nil {
+				// TODO(SuperPaintman): optimize it.
+				var buf bytes.Buffer
+				if err := flag.Usage.Usage(ctx, &buf); err != nil {
+					return err
+				}
+				usage := string(buf.Bytes())
+
+				if usage != "" {
+					ew.Writef("\t\t%s", usage)
+				}
 			}
 
 			ew.Writef("\n")

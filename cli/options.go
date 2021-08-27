@@ -45,29 +45,6 @@ func WithNoop() NoopOption {
 }
 
 var (
-	_ FlagOptionApplyer = UsageOption("")
-	_ ArgOptionApplyer  = UsageOption("")
-)
-
-type UsageOption string
-
-func (opt UsageOption) FlagOptionApply(o *FlagOptions) {
-	if opt != "" {
-		o.Usage = string(opt)
-	}
-}
-
-func (opt UsageOption) ArgOptionApply(o *ArgOptions) {
-	if opt != "" {
-		o.Usage = string(opt)
-	}
-}
-
-func WithUsage(usage string) UsageOption {
-	return UsageOption(usage)
-}
-
-var (
 	_ FlagOptionApplyer = Necessary(Optional)
 	_ ArgOptionApplyer  = Necessary(Optional)
 )
@@ -88,6 +65,70 @@ func (opt Necessary) ArgOptionApply(o *ArgOptions) {
 	o.Necessary = opt
 }
 
+// Usage option.
+
+var (
+	_ FlagOptionApplyer = (UsagerFunc)(nil)
+	_ ArgOptionApplyer  = (UsagerFunc)(nil)
+)
+
+func (fn UsagerFunc) FlagOptionApply(o *FlagOptions) {
+	if fn != nil {
+		o.Usage = fn
+	}
+}
+
+func (fn UsagerFunc) ArgOptionApply(o *ArgOptions) {
+	if fn != nil {
+		o.Usage = fn
+	}
+}
+
+var (
+	_ FlagOptionApplyer = Usage("")
+	_ ArgOptionApplyer  = Usage("")
+)
+
+func (s Usage) FlagOptionApply(o *FlagOptions) {
+	if s != "" {
+		o.Usage = s
+	}
+}
+
+func (s Usage) ArgOptionApply(o *ArgOptions) {
+	if s != "" {
+		o.Usage = s
+	}
+}
+
+var (
+	_ FlagOptionApplyer = usager{}
+	_ ArgOptionApplyer  = usager{}
+)
+
+type usager struct{ usager Usager }
+
+func (u usager) FlagOptionApply(o *FlagOptions) {
+	if u.usager != nil {
+		o.Usage = u.usager
+	}
+}
+
+func (u usager) ArgOptionApply(o *ArgOptions) {
+	if u.usager != nil {
+		o.Usage = u.usager
+	}
+}
+
+type UsageOption interface {
+	FlagOptionApplyer
+	ArgOptionApplyer
+}
+
+func WithUsage(u Usager) UsageOption {
+	return usager{u}
+}
+
 // Flag options.
 
 var _ FlagOptionApplyer = FlagOptions{}
@@ -97,8 +138,9 @@ type FlagOptions struct {
 	Short     string
 	Long      string
 	Aliases   []Alias
-	Usage     string
+	Usage     Usager
 	Necessary Necessary // Optional if unset
+	Global    bool      // TODO
 }
 
 func (o FlagOptions) FlagOptionApply(opts *FlagOptions) {
@@ -114,7 +156,7 @@ func (o FlagOptions) FlagOptionApply(opts *FlagOptions) {
 		opts.Aliases = append(opts.Aliases, alias)
 	}
 
-	if o.Usage != "" {
+	if o.Usage != nil {
 		opts.Usage = o.Usage
 	}
 
@@ -138,45 +180,6 @@ func (o *FlagOptions) applyFlagOptions(options []FlagOptionApplyer) {
 	}
 }
 
-// Arg options.
-
-var _ ArgOptionApplyer = ArgOptions{}
-
-type ArgOptions struct {
-	Value     Value
-	Name      string
-	Usage     string
-	Necessary Necessary // Required if unset
-	// NOTE(SuperPaintman):
-	//     Usually when we use args in our CLIs they are required by default.
-	//     So yes, it's a little bit counfusing (why it isn't Optional?) but
-	//     it makes writing CLIs simpler with default options.
-}
-
-func (o ArgOptions) ArgOptionApply(opts *ArgOptions) {
-	if o.Name != "" {
-		opts.Name = o.Name
-	}
-
-	if o.Usage != "" {
-		opts.Usage = o.Usage
-	}
-
-	opts.Necessary = o.Necessary
-}
-
-func (o *ArgOptions) applyName(name string) {
-	o.Name = name
-}
-
-func (o *ArgOptions) applyArgOptions(options []ArgOptionApplyer) {
-	for _, opt := range options {
-		if opt != nil {
-			opt.ArgOptionApply(o)
-		}
-	}
-}
-
 func WithShort(name string) FlagOptionFunc {
 	return func(o *FlagOptions) {
 		o.Short = name
@@ -192,5 +195,52 @@ func WithLong(name string) FlagOptionFunc {
 func WithAliases(aliases ...Alias) FlagOptionFunc {
 	return func(o *FlagOptions) {
 		o.Aliases = aliases
+	}
+}
+
+var _ FlagOptionApplyer = Global(false)
+
+type Global bool
+
+func (g Global) FlagOptionApply(o *FlagOptions) {
+	o.Global = bool(g)
+}
+
+// Arg options.
+
+var _ ArgOptionApplyer = ArgOptions{}
+
+type ArgOptions struct {
+	Value     Value
+	Name      string
+	Usage     Usager
+	Necessary Necessary // Required if unset
+	// NOTE(SuperPaintman):
+	//     Usually when we use args in our CLIs they are required by default.
+	//     So yes, it's a little bit counfusing (why it isn't Optional?) but
+	//     it makes writing CLIs simpler with default options.
+}
+
+func (o ArgOptions) ArgOptionApply(opts *ArgOptions) {
+	if o.Name != "" {
+		opts.Name = o.Name
+	}
+
+	if o.Usage != nil {
+		opts.Usage = o.Usage
+	}
+
+	opts.Necessary = o.Necessary
+}
+
+func (o *ArgOptions) applyName(name string) {
+	o.Name = name
+}
+
+func (o *ArgOptions) applyArgOptions(options []ArgOptionApplyer) {
+	for _, opt := range options {
+		if opt != nil {
+			opt.ArgOptionApply(o)
+		}
 	}
 }

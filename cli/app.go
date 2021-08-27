@@ -8,16 +8,17 @@ import (
 )
 
 type App struct {
-	Name     string
-	Usage    string
-	Action   Action
-	Commands []Command
-	Args     []string
-	Stdout   io.Writer
-	Stderr   io.Writer
-	Stdin    io.Reader
-	Parser   Parser
-	Helper   Helper
+	Name         string
+	Usage        Usager
+	Action       Action
+	CommandFlags []CommandFlag
+	Commands     []Command
+	Args         []string
+	Stdout       io.Writer
+	Stderr       io.Writer
+	Stdin        io.Reader
+	Parser       Parser
+	Helper       Helper
 
 	defaultParser *DefaultParser
 }
@@ -72,18 +73,44 @@ func (app *App) RunContext(ctx context.Context) error {
 
 	// Help flag.
 	// TODO(SuperPaintman): move into global flags.
-	showHelp := new(bool)
-	if app.helpEnabled() {
-		showHelp = Bool(cmdCtx, "help",
-			WithShort("h"),
-			WithUsage("Show information about a command"),
-		)
-	}
+	// showHelp := new(bool)
+	// if app.helpEnabled() {
+	// 	showHelp = Bool(cmdCtx, "help",
+	// 		WithShort("h"),
+	// 		WithUsage("Show information about a command"),
+	// 	)
+	// }
 
+	// Setup root command.
 	if cmd.Action != nil {
 		if err := cmd.Action.Setup(cmdCtx); err != nil {
 			return err
 		}
+	}
+
+	// Add command flags.
+	allCommandFlags := make([]*CommandFlag, 0, len(cmd.CommandFlags))
+	addCommandFlags := func(cmdCtx Context, af []CommandFlag) error {
+		for i := range af {
+			allCommandFlags = append(allCommandFlags, &af[i])
+		}
+
+		for _, f := range allCommandFlags {
+			err := BoolVar(cmdCtx, &f.value, f.Long,
+				WithShort(f.Short),
+				WithAliases(f.Aliases...),
+				WithUsage(f.Usage),
+			)
+			if err != nil {
+				return err
+			}
+		}
+
+		return nil
+	}
+
+	if err := addCommandFlags(cmdCtx, cmd.CommandFlags); err != nil {
+		return err
 	}
 
 	cmder := commander{
@@ -100,20 +127,16 @@ func (app *App) RunContext(ctx context.Context) error {
 
 			cmdCtx = newCommandContext(cmdCtx, app, cmd, path)
 
-			// Help flag.
-			// TODO(SuperPaintman): move into global flags.
-			if app.helpEnabled() {
-				showHelp = Bool(cmdCtx, "help",
-					WithShort("h"),
-					WithUsage("Show information about a command"),
-				)
-			}
-
 			// Setup a child command.
 			if cmd.Action != nil {
 				if err := cmd.Action.Setup(cmdCtx); err != nil {
 					return err
 				}
+			}
+
+			// Add child command flags.
+			if err := addCommandFlags(cmdCtx, cmd.CommandFlags); err != nil {
+				return err
 			}
 
 			return nil
@@ -124,10 +147,24 @@ func (app *App) RunContext(ctx context.Context) error {
 		return err
 	}
 
-	if *showHelp {
-		return app.help(cmdCtx, app.stdout())
+	// Run command flag.
+	for _, f := range allCommandFlags {
+		if f == nil {
+			continue
+		}
+
+		if !f.value {
+			continue
+		}
+
+		if err := f.Action(cmdCtx); err != nil {
+			return err
+		}
+
+		return nil
 	}
 
+	// Run action.
 	if cmd.Action != nil {
 		if err := cmd.Action.Run(cmdCtx); err != nil {
 			return err
@@ -160,10 +197,11 @@ func (app *App) Run() error {
 
 func (app *App) Command() *Command {
 	return &Command{
-		Name:     app.Name,
-		Usage:    app.Usage,
-		Action:   app.Action,
-		Commands: app.Commands,
+		Name:         app.Name,
+		Usage:        app.Usage,
+		Action:       app.Action,
+		CommandFlags: app.CommandFlags,
+		Commands:     app.Commands,
 	}
 }
 
@@ -211,14 +249,14 @@ func (app *App) parser() Parser {
 	return app.defaultParser
 }
 
-func (app *App) helpEnabled() bool {
-	var disabled bool
-	if app.Helper != nil {
-		_, disabled = app.Helper.(noopHelper)
-	}
+// func (app *App) helpEnabled() bool {
+// 	var disabled bool
+// 	if app.Helper != nil {
+// 		_, disabled = app.Helper.(noopHelper)
+// 	}
 
-	return !disabled
-}
+// 	return !disabled
+// }
 
 func (app *App) help(ctx Context, w io.Writer) error {
 	if app.Helper != nil {
@@ -229,10 +267,11 @@ func (app *App) help(ctx Context, w io.Writer) error {
 }
 
 type Command struct {
-	Name     string
-	Usage    string
-	Action   Action
-	Commands []Command
+	Name         string
+	Usage        Usager
+	Action       Action
+	CommandFlags []CommandFlag
+	Commands     []Command
 }
 
 // TODO(SuperPaintman): fix this command.
@@ -250,6 +289,9 @@ type Action interface {
 	Setup(ctx Context) error
 	Run(ctx Context) error
 }
+
+// TODO(SuperPaintman): add Before.
+// TODO(SuperPaintman): add After.
 
 type ActionRunner func(ctx Context) error
 
@@ -288,4 +330,14 @@ func (a *actionFunc) Run(ctx Context) error {
 	}
 
 	return a.runner(ctx)
+}
+
+type CommandFlag struct {
+	Short   string
+	Long    string
+	Aliases []Alias
+	Usage   Usager
+	Action  ActionRunner
+
+	value bool
 }
