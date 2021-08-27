@@ -9,9 +9,14 @@ type Register interface {
 	RegisterArg(arg Arg) error
 }
 
+type Commander interface {
+	IsCommand(name string) bool
+	SetCommand(name string) error
+}
+
 type Parser interface {
 	Register
-	Parse(arguments []string) error
+	Parse(commander Commander, arguments []string) error
 	Args() []Arg
 	Flags() []Flag
 	FormatLongFlag(name string) string
@@ -157,6 +162,12 @@ func (f *flags) Add(flag Flag) {
 	}
 }
 
+func (f *flags) Reset() {
+	f.data = f.data[:0]
+	f.long = nil
+	f.short = nil
+}
+
 type args struct {
 	data  []Arg
 	index map[string]int // Indexes of named arg in the data.
@@ -201,6 +212,11 @@ func (a *args) Add(arg Arg) {
 	a.index[arg.Name] = idx
 }
 
+func (a *args) Reset() {
+	a.data = a.data[:0]
+	a.index = nil
+}
+
 var _ (Parser) = (*DefaultParser)(nil)
 
 type DefaultParser struct {
@@ -232,8 +248,11 @@ func (p *DefaultParser) RegisterArg(arg Arg) error {
 	return nil
 }
 
-func (p *DefaultParser) Parse(arguments []string) error {
-	var argIdx int
+func (p *DefaultParser) Parse(commander Commander, arguments []string) error {
+	var (
+		argMode bool
+		argIdx  int
+	)
 	for {
 		if len(arguments) == 0 {
 			break
@@ -246,8 +265,24 @@ func (p *DefaultParser) Parse(arguments []string) error {
 			continue
 		}
 
-		// Args.
+		// Commands or Args.
 		if arg[0] != '-' {
+			// Check if the arg is a command.
+			if !argMode && commander != nil && commander.IsCommand(arg) {
+				// Reset previous flags and args.
+				p.flags.Reset()
+				p.args.Reset()
+
+				if err := commander.SetCommand(arg); err != nil {
+					return err
+				}
+
+				continue
+			}
+
+			// Parse rest as args.
+			argMode = true
+
 			a, ok := p.args.Nth(argIdx)
 			if ok {
 				if err := a.Value.Set(arg); err != nil {

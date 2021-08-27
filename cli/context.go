@@ -13,6 +13,7 @@ type Context interface {
 
 	App() *App
 	Command() *Command
+	Path() []string
 	Parser() Parser
 	Args() []Arg
 	Flags() []Flag
@@ -35,6 +36,15 @@ type commandContext struct {
 	app     *App
 	command *Command
 	path    []string
+}
+
+func newCommandContext(ctx context.Context, app *App, command *Command, path []string) *commandContext {
+	return &commandContext{
+		parent:  ctx,
+		app:     app,
+		command: command,
+		path:    path,
+	}
 }
 
 func (c *commandContext) Deadline() (deadline time.Time, ok bool) {
@@ -81,9 +91,9 @@ func (c *commandContext) App() *App { return c.app }
 
 func (c *commandContext) Command() *Command { return c.command }
 
-func (c *commandContext) Parser() Parser { return c.app.parser() }
-
 func (c *commandContext) Path() []string { return c.path }
+
+func (c *commandContext) Parser() Parser { return c.app.parser() }
 
 func (c *commandContext) Args() []Arg { return c.app.parser().Args() }
 

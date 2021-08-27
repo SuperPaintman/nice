@@ -2,6 +2,7 @@ package cli
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"os"
 )
@@ -21,53 +22,56 @@ type App struct {
 	defaultParser *DefaultParser
 }
 
+type commander struct {
+	app  *App
+	next func(*Command) error
+
+	command *Command
+	found   *Command
+}
+
+func (c *commander) IsCommand(name string) bool {
+	commands := c.app.Commands
+	if c.command != nil {
+		commands = c.command.Commands
+	}
+
+	for i := range commands {
+		cmd := &commands[i]
+
+		if cmd.Name == name {
+			c.found = cmd
+			return true
+		}
+	}
+
+	return false
+}
+
+func (c *commander) SetCommand(name string) error {
+	if c.found.Name != name {
+		return fmt.Errorf("cli: command not found: %s", name)
+	}
+
+	c.command = c.found
+	c.found = nil
+
+	if err := c.next(c.command); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (app *App) RunContext(ctx context.Context) error {
-	// TODO(SuperPaintman): add fast parser.
-	var cmdParser DefaultParser
-
-	if err := cmdParser.Parse(app.args()); err != nil {
-		return nil
-	}
-
-	// lastName := app.Name
-	path := []string{app.Name}
-
-	// rootCmd := true
-	cmd := app.root()
-	for _, name := range cmdParser.rest {
-		// lastName = name
-
-		// Find a sub command.
-		var found bool
-		for i := range cmd.Commands {
-			// NOTE(SuperPaintman): inherit parent's flags?
-
-			c := &cmd.Commands[i]
-
-			if c.Name == name {
-				found = true
-
-				path = append(path, c.Name)
-				// rootCmd = false
-				cmd = c
-				break
-			}
-		}
-
-		if !found {
-			// return fmt.Errorf("cli: command not found: %s", name)
-			break
-		}
-	}
+	cmd := app.Command()
+	path := []string{cmd.Name}
 
 	// Run command.
-	cmdCtx := &commandContext{
-		parent:  ctx,
-		app:     app,
-		command: cmd,
-	}
+	cmdCtx := newCommandContext(ctx, app, cmd, path)
 
 	// Help flag.
+	// TODO(SuperPaintman): move into global flags.
 	showHelp := new(bool)
 	if app.helpEnabled() {
 		showHelp = Bool(cmdCtx, "help",
@@ -82,12 +86,46 @@ func (app *App) RunContext(ctx context.Context) error {
 		}
 	}
 
-	if err := app.parser().Parse(app.args()); err != nil {
+	cmder := commander{
+		app: app,
+		next: func(c *Command) error {
+			cmd = c
+
+			// Update path and context.
+			// Do not mutate previous contextes.
+			newPath := make([]string, len(path)+1)
+			copy(newPath, path)
+			newPath[len(newPath)-1] = cmd.Name
+			path = newPath
+
+			cmdCtx = newCommandContext(cmdCtx, app, cmd, path)
+
+			// Help flag.
+			// TODO(SuperPaintman): move into global flags.
+			if app.helpEnabled() {
+				showHelp = Bool(cmdCtx, "help",
+					WithShort("h"),
+					WithUsage("Show information about a command"),
+				)
+			}
+
+			// Setup a child command.
+			if cmd.Action != nil {
+				if err := cmd.Action.Setup(cmdCtx); err != nil {
+					return err
+				}
+			}
+
+			return nil
+		},
+	}
+
+	if err := app.parser().Parse(&cmder, app.args()); err != nil {
 		return err
 	}
 
 	if *showHelp {
-		return app.help(cmdCtx, app.stdout(), path)
+		return app.help(cmdCtx, app.stdout())
 	}
 
 	if cmd.Action != nil {
@@ -120,7 +158,7 @@ func (app *App) Run() error {
 // 	return app.ShowHelpContext(context.Background())
 // }
 
-func (app *App) root() *Command {
+func (app *App) Command() *Command {
 	return &Command{
 		Name:     app.Name,
 		Usage:    app.Usage,
@@ -182,12 +220,12 @@ func (app *App) helpEnabled() bool {
 	return !disabled
 }
 
-func (app *App) help(ctx Context, w io.Writer, path []string) error {
+func (app *App) help(ctx Context, w io.Writer) error {
 	if app.Helper != nil {
-		return app.Helper.Help(ctx, w, path)
+		return app.Helper.Help(ctx, w)
 	}
 
-	return (DefaultHelper{}).Help(ctx, w, path)
+	return (DefaultHelper{}).Help(ctx, w)
 }
 
 type Command struct {

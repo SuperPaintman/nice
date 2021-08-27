@@ -7,22 +7,22 @@ import (
 )
 
 type Helper interface {
-	Help(ctx Context, w io.Writer, path []string) error
+	Help(ctx Context, w io.Writer) error
 }
 
 var _ Helper = (HelperFunc)(nil)
 
-type HelperFunc func(ctx Context, w io.Writer, path []string) error
+type HelperFunc func(ctx Context, w io.Writer) error
 
-func (fn HelperFunc) Help(ctx Context, w io.Writer, path []string) error {
-	return fn(ctx, w, path)
+func (fn HelperFunc) Help(ctx Context, w io.Writer) error {
+	return fn(ctx, w)
 }
 
 var _ Helper = noopHelper{}
 
 type noopHelper struct{}
 
-func (n noopHelper) Help(ctx Context, w io.Writer, path []string) error {
+func (n noopHelper) Help(ctx Context, w io.Writer) error {
 	return nil
 }
 
@@ -34,7 +34,7 @@ var _ Helper = DefaultHelper{}
 
 type DefaultHelper struct{}
 
-func (h DefaultHelper) Help(ctx Context, w io.Writer, path []string) error {
+func (h DefaultHelper) Help(ctx Context, w io.Writer) error {
 	const (
 		colorName     = colors.Blue
 		colorCommand  = colors.Magenta
@@ -47,7 +47,8 @@ func (h DefaultHelper) Help(ctx Context, w io.Writer, path []string) error {
 
 	args := ctx.Args()
 	flags := ctx.Flags()
-	cmd := ctx.App().root()
+	cmd := ctx.App().Command()
+	path := ctx.Path()
 	for _, name := range path[1:] {
 		// Find a sub command.
 		var found bool
