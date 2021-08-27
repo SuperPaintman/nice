@@ -9,6 +9,8 @@
   - [ ] Before action
   - [ ] After action
   - [ ] Human friendly errors
+  - [ ] Long description for commands, flags and args
+  - [ ] Rest args
 
 - [ ] Help generator
 
@@ -24,7 +26,7 @@
   - [ ] `"--"` bypass
   - [ ] POSIX-style short flag combining (`-a -b -> -ab`)
   - [ ] Short-flag+parameter combining (`-a parm -> -aparm`)
-  - [ ] "Did you mean?" for unknown flags and commands
+  - [ ] Default value
 
 - [ ] Documentation generator
 
@@ -52,10 +54,17 @@
 
     - [ ] Template
 
+- [ ] Parser
+
+  - [ ] "Did you mean?" for unknown flags and commands
+  - [ ] Value from ENV
+  - [ ] Hidden commands and flags
+
 - [ ] Documentation generator
 
   - [ ] Man
   - [ ] Org Mode
+  - [ ] reStructuredText
 
 - [ ] Completion generator
 
@@ -95,6 +104,18 @@
 
 - [ ] Coveralls
 
+### Dream release
+
+- [ ] Github CI
+
+  - [ ] License updater
+  - [ ] Python linter
+  - [ ] Markdown linter
+  - [ ] Test Go in Markdown comments
+  - [ ] Lint Go in Markdown comments
+
+- [ ] Code Climate
+
 ---
 
 ## Documentation
@@ -103,6 +124,11 @@
 
 - [ ] Update `README.md`
 - [ ] Examples
+- [ ] Go comments
+
+### Dream release
+
+- [ ] Table with simulator projects
 - [ ] Tutorial
 
 ---
@@ -112,6 +138,8 @@
 ### MVP
 
 - [ ] Logo
+- [ ] Github tags
+- [ ] Github thumbnail
 - [ ] Article on dev.to
 - [ ] Article on habr.com
 - [ ] Quick introduction on YouTube
@@ -121,6 +149,7 @@
 ### Dream release
 
 - [ ] Article on medium
+- [ ] Who use Nice
 
 ---
 
