@@ -90,7 +90,6 @@ func TestBgANSI256(t *testing.T) {
 
 const trueColorMax = 1<<24 - 1
 
-// TODO(SuperPaintman): change it on the CI.
 func trueColorTestStep() int {
 	if testing.Short() {
 		return 1<<8 - 1

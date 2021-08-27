@@ -71,16 +71,6 @@ func (app *App) RunContext(ctx context.Context) error {
 	// Run command.
 	cmdCtx := newCommandContext(ctx, app, cmd, path)
 
-	// Help flag.
-	// TODO(SuperPaintman): move into global flags.
-	// showHelp := new(bool)
-	// if app.helpEnabled() {
-	// 	showHelp = Bool(cmdCtx, "help",
-	// 		WithShort("h"),
-	// 		WithUsage("Show information about a command"),
-	// 	)
-	// }
-
 	// Setup root command.
 	if cmd.Action != nil {
 		if err := cmd.Action.Setup(cmdCtx); err != nil {
@@ -178,23 +168,6 @@ func (app *App) Run() error {
 	return app.RunContext(context.Background())
 }
 
-// TODO(SuperPaintman):
-// func (app *App) ShowHelpContext(ctx context.Context) error {
-// 	cmdCtx := &commandContext{
-// 		parent:  ctx,
-// 		app:     app,
-// 		command: app.root(),
-// 	}
-//
-// 	path := []string{app.Name}
-//
-// 	return app.help(cmdCtx, path, app.stdout())
-// }
-
-// func (app *App) ShowHelp() error {
-// 	return app.ShowHelpContext(context.Background())
-// }
-
 func (app *App) Command() *Command {
 	return &Command{
 		Name:         app.Name,
@@ -273,17 +246,6 @@ type Command struct {
 	CommandFlags []CommandFlag
 	Commands     []Command
 }
-
-// TODO(SuperPaintman): fix this command.
-// func HelpCommand() Command {
-// 	return Command{
-// 		Name:  "help",
-// 		Usage: "Show information about a command",
-// 		Action: SimpleActionFunc(func(ctx Context) error {
-// 			return ctx.App().ShowHelpContext(ctx)
-// 		}),
-// 	}
-// }
 
 type Action interface {
 	Setup(ctx Context) error
