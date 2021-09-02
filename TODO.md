@@ -59,6 +59,10 @@
   - [ ] "Did you mean?" for unknown flags and commands
   - [ ] Value from ENV
   - [ ] Hidden commands and flags
+  - [ ] Negative bool flags (`--no-*`)
+  - [ ] Array types (`-i 1 -i 2 -i 3`)
+  - [ ] Object types (`--a.b.c 2`)
+  - [ ] "deprecated" option
 
 - [ ] Documentation generator
 
