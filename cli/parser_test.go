@@ -6,7 +6,229 @@ import (
 	"testing"
 )
 
-func TestParser(t *testing.T) {
+func deref(t *testing.T, ptr interface{}) interface{} {
+	t.Helper()
+
+	v := reflect.ValueOf(ptr)
+	if v.Kind() != reflect.Ptr {
+		t.Fatalf("flag is not a pointer: %T", v.String())
+	}
+
+	return v.Elem().Interface()
+}
+
+func TestParseFlags(t *testing.T) {
+	type testValue struct {
+		name string
+		args []string
+		want interface{}
+	}
+
+	tt := []struct {
+		name  string
+		setup func(Register) interface{}
+		tests []testValue
+	}{
+		{
+			name:  "Bool",
+			setup: func(r Register) interface{} { return Bool(r, "t") },
+			tests: []testValue{
+				{
+					name: "without value",
+					args: []string{"-t"},
+					want: true,
+				},
+				{
+					name: "false",
+					args: []string{"-t", "false"},
+					want: false,
+				},
+				{
+					name: "true",
+					args: []string{"-t", "true"},
+					want: true,
+				},
+				{
+					name: "skip unknown value",
+					args: []string{"-t", "abcd"},
+					want: true,
+				},
+			},
+		},
+		{
+			name:  "Int",
+			setup: func(r Register) interface{} { return Int(r, "t") },
+			tests: []testValue{
+				{
+					name: "0",
+					args: []string{"-t", "0"},
+					want: 0,
+				},
+				{
+					name: "1337",
+					args: []string{"-t", "1337"},
+					want: 1337,
+				},
+				// TODO(SuperPaintman): add negative numbers.
+				// {
+				// 	name: "-7331",
+				// 	args: []string{"-t", "-7331"},
+				// 	want: -7331,
+				// },
+			},
+		},
+		{
+			name:  "String",
+			setup: func(r Register) interface{} { return String(r, "t") },
+			tests: []testValue{
+				{
+					name: "test",
+					args: []string{"-t", "test"},
+					want: "test",
+				},
+				{
+					name: "empty",
+					args: []string{"-t", ""},
+					want: "",
+				},
+			},
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			for _, tvc := range tc.tests {
+				t.Run(tvc.name, func(t *testing.T) {
+					var parser DefaultParser
+
+					f := tc.setup(&parser)
+
+					if err := parser.Parse(nil, tvc.args); err != nil {
+						t.Fatalf("Parse(): failed to parse flags: %s", err)
+					}
+
+					got := deref(t, f)
+					if !reflect.DeepEqual(got, tvc.want) {
+						t.Errorf("Parse(): got = %#v, want = %#v", got, tvc.want)
+					}
+				})
+			}
+		})
+	}
+}
+
+func TestParseArgs(t *testing.T) {
+	type testValue struct {
+		name string
+		args []string
+		want interface{}
+	}
+
+	tt := []struct {
+		name  string
+		setup func(Register) interface{}
+		tests []testValue
+	}{
+		{
+			name:  "Int",
+			setup: func(r Register) interface{} { return IntArg(r, "t") },
+			tests: []testValue{
+				{
+					name: "0",
+					args: []string{"0"},
+					want: 0,
+				},
+				{
+					name: "1337",
+					args: []string{"1337"},
+					want: 1337,
+				},
+				// TODO(SuperPaintman): add negative numbers.
+				// {
+				// 	name: "-7331",
+				// 	args: []string{"-t", "-7331"},
+				// 	want: -7331,
+				// },
+			},
+		},
+		{
+			name:  "String",
+			setup: func(r Register) interface{} { return StringArg(r, "t") },
+			tests: []testValue{
+				{
+					name: "test",
+					args: []string{"test"},
+					want: "test",
+				},
+				{
+					name: "empty",
+					args: []string{""},
+					want: "",
+				},
+			},
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			for _, tvc := range tc.tests {
+				t.Run(tvc.name, func(t *testing.T) {
+					var parser DefaultParser
+
+					f := tc.setup(&parser)
+
+					if err := parser.Parse(nil, tvc.args); err != nil {
+						t.Fatalf("Parse(): failed to parse args: %s", err)
+					}
+
+					got := deref(t, f)
+					if !reflect.DeepEqual(got, tvc.want) {
+						t.Errorf("Parse(): got = %#v, want = %#v", got, tvc.want)
+					}
+				})
+			}
+		})
+	}
+}
+
+func TestParse_Parse_posix_style_short_flags(t *testing.T) {
+	var parser DefaultParser
+
+	a := Bool(&parser, "a")
+	b := Bool(&parser, "b")
+	c := Bool(&parser, "c")
+	d := Bool(&parser, "d")
+	e := Bool(&parser, "e")
+	f := Bool(&parser, "f")
+	g := Bool(&parser, "g")
+
+	args := []string{"-ab", "-def", "-g"}
+
+	if err := parser.Parse(nil, args); err != nil {
+		t.Fatalf("Parse(): failed to parse args: %s", err)
+	}
+
+	// Check flags.
+	const (
+		wantA = true
+		wantB = true
+		wantC = false
+		wantD = true
+		wantE = true
+		wantF = true
+		wantG = true
+	)
+
+	assertParseBoolFlags(t, "a", *a, wantA)
+	assertParseBoolFlags(t, "b", *b, wantB)
+	assertParseBoolFlags(t, "c", *c, wantC)
+	assertParseBoolFlags(t, "d", *d, wantD)
+	assertParseBoolFlags(t, "e", *e, wantE)
+	assertParseBoolFlags(t, "f", *f, wantF)
+	assertParseBoolFlags(t, "g", *g, wantG)
+}
+
+func TestParser_Parse(t *testing.T) {
 	var parser DefaultParser
 
 	show := Bool(&parser, "show",
@@ -132,7 +354,7 @@ func (c *testCommander) SetCommand(name string) error {
 
 func (c *testCommander) Path() []string { return c.path }
 
-func TestParser_with_commands(t *testing.T) {
+func TestParser_Parse_with_commands(t *testing.T) {
 	var parser DefaultParser
 
 	show := new(bool)
@@ -236,5 +458,13 @@ func TestParser_with_commands(t *testing.T) {
 	wantRest := []string{"other", "vals", "in", "args"}
 	if !reflect.DeepEqual(parser.rest, wantRest) {
 		t.Errorf("Parse(): rest: got = %#v, want = %#v", parser.rest, wantRest)
+	}
+}
+
+func assertParseBoolFlags(t *testing.T, name string, got, want bool) {
+	t.Helper()
+
+	if got != want {
+		t.Errorf("Parse(): %s: got = %v, want = %v", name, got, want)
 	}
 }
