@@ -121,7 +121,13 @@ func TestIsBoolValue(t *testing.T) {
 			value: "nO",
 			want:  true,
 		},
-		// Broken.
+		// Wrong.
+		{
+			value: "",
+		},
+		{
+			value: "000",
+		},
 		{
 			value: "100",
 		},
@@ -286,6 +292,40 @@ func TestParseBool(t *testing.T) {
 
 			if got != tc.want {
 				t.Errorf("parseBool(): got = %v, want = %v", got, tc.want)
+			}
+		})
+	}
+}
+
+func TestParseBool_wrong_value(t *testing.T) {
+	tt := []struct {
+		value string
+	}{
+		{
+			value: "",
+		},
+		{
+			value: "000",
+		},
+		{
+			value: "100",
+		},
+		{
+			value: "da",
+		},
+		{
+			value: "-1",
+		},
+		{
+			value: "falseValue",
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.value, func(t *testing.T) {
+			_, err := parseBool(tc.value)
+			if err == nil {
+				t.Fatalf("parseBool(): got nil, want err")
 			}
 		})
 	}
