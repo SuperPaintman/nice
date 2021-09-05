@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 	"testing"
@@ -39,17 +40,32 @@ func TestParseFlags(t *testing.T) {
 					want: true,
 				},
 				{
-					name: "false",
+					name: "empty value",
+					args: []string{"-t="},
+					want: true,
+				},
+				{
+					name: "true value",
+					args: []string{"-t=true"},
+					want: true,
+				},
+				{
+					name: "false value",
+					args: []string{"-t=false"},
+					want: false,
+				},
+				{
+					name: "false next arg",
 					args: []string{"-t", "false"},
 					want: false,
 				},
 				{
-					name: "true",
+					name: "true next arg",
 					args: []string{"-t", "true"},
 					want: true,
 				},
 				{
-					name: "skip unknown value",
+					name: "skip not bool-like next arg",
 					args: []string{"-t", "abcd"},
 					want: true,
 				},
@@ -60,21 +76,45 @@ func TestParseFlags(t *testing.T) {
 			setup: func(r Register) interface{} { return Int(r, "t") },
 			tests: []testValue{
 				{
-					name: "0",
+					name: "0 value",
+					args: []string{"-t=0"},
+					want: 0,
+				},
+				{
+					name: "-0 value",
+					args: []string{"-t=-0"},
+					want: 0,
+				},
+				{
+					name: "1337 value",
+					args: []string{"-t=1337"},
+					want: 1337,
+				},
+				{
+					name: "-7331 value",
+					args: []string{"-t=-7331"},
+					want: -7331,
+				},
+				{
+					name: "0 next arg",
 					args: []string{"-t", "0"},
 					want: 0,
 				},
 				{
-					name: "1337",
+					name: "-0 next arg",
+					args: []string{"-t", "-0"},
+					want: 0,
+				},
+				{
+					name: "1337 next arg",
 					args: []string{"-t", "1337"},
 					want: 1337,
 				},
-				// TODO(SuperPaintman): add negative numbers.
-				// {
-				// 	name: "-7331",
-				// 	args: []string{"-t", "-7331"},
-				// 	want: -7331,
-				// },
+				{
+					name: "-7331 next arg",
+					args: []string{"-t", "-7331"},
+					want: -7331,
+				},
 			},
 		},
 		{
@@ -82,14 +122,54 @@ func TestParseFlags(t *testing.T) {
 			setup: func(r Register) interface{} { return String(r, "t") },
 			tests: []testValue{
 				{
-					name: "test",
+					name: "test value",
+					args: []string{"-t=test"},
+					want: "test",
+				},
+				{
+					name: "empty value",
+					args: []string{"-t="},
+					want: "",
+				},
+				{
+					name: "with dash value",
+					args: []string{"-t=go-test"},
+					want: "go-test",
+				},
+				{
+					name: "with start dash value",
+					args: []string{"-t=-go-test"},
+					want: "-go-test",
+				},
+				{
+					name: "with equals value",
+					args: []string{"-t=go=test"},
+					want: "go=test",
+				},
+				{
+					name: "with start equals value",
+					args: []string{"-t==go=test"},
+					want: "=go=test",
+				},
+				{
+					name: "test next arg",
 					args: []string{"-t", "test"},
 					want: "test",
 				},
 				{
-					name: "empty",
+					name: "empty next arg",
 					args: []string{"-t", ""},
 					want: "",
+				},
+				{
+					name: "with dash next arg",
+					args: []string{"-t", "go-test"},
+					want: "go-test",
+				},
+				{
+					name: "with equals next arg",
+					args: []string{"-t", "go=test"},
+					want: "go=test",
 				},
 			},
 		},
@@ -110,6 +190,93 @@ func TestParseFlags(t *testing.T) {
 					got := deref(t, f)
 					if !reflect.DeepEqual(got, tvc.want) {
 						t.Errorf("Parse(): got = %#v, want = %#v", got, tvc.want)
+					}
+				})
+			}
+		})
+	}
+}
+
+func TestParseFlags_broken_value(t *testing.T) {
+	type testValue struct {
+		name string
+		args []string
+		want error
+	}
+
+	tt := []struct {
+		name  string
+		setup func(Register) interface{}
+		tests []testValue
+	}{
+		{
+			name:  "Bool",
+			setup: func(r Register) interface{} { return Bool(r, "t") },
+			tests: []testValue{
+				{
+					name: "not bool-like value",
+					args: []string{"-t=abcd"},
+					want: &ParseError{
+						Type: "bool",
+						Err:  ErrSyntax,
+					},
+				},
+			},
+		},
+		{
+			name:  "Int",
+			setup: func(r Register) interface{} { return Int(r, "t") },
+			tests: []testValue{
+				{
+					name: "not int-like next arg",
+					args: []string{"-t", "abcd"},
+					want: &ParseError{
+						Type: "int",
+						Err:  ErrSyntax,
+					},
+				},
+				// TODO(SuperPaintman): int overflow
+				{
+					name: "bool next arg",
+					args: []string{"-t", "true"},
+					want: &ParseError{
+						Type: "int",
+						Err:  ErrSyntax,
+					},
+				},
+				{
+					name: "float next arg",
+					args: []string{"-t", "12.34"},
+					want: &ParseError{
+						Type: "int",
+						Err:  ErrSyntax,
+					},
+				},
+				// TODO(SuperPaintman): empty value
+				// TODO(SuperPaintman): next flag
+			},
+		},
+		{
+			name:  "String",
+			setup: func(r Register) interface{} { return String(r, "t") },
+			tests: []testValue{
+				// TODO(SuperPaintman): empty value
+				// TODO(SuperPaintman): next flag
+			},
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			for _, tvc := range tc.tests {
+				t.Run(tvc.name, func(t *testing.T) {
+					var parser DefaultParser
+
+					_ = tc.setup(&parser)
+
+					err := parser.Parse(nil, tvc.args)
+					if !errors.Is(err, tvc.want) {
+						t.Fatalf("Parse(): got error = %q, want error = %q", err, tvc.want)
 					}
 				})
 			}
@@ -139,16 +306,20 @@ func TestParseArgs(t *testing.T) {
 					want: 0,
 				},
 				{
+					name: "-0",
+					args: []string{"-0"},
+					want: 0,
+				},
+				{
 					name: "1337",
 					args: []string{"1337"},
 					want: 1337,
 				},
-				// TODO(SuperPaintman): add negative numbers.
-				// {
-				// 	name: "-7331",
-				// 	args: []string{"-t", "-7331"},
-				// 	want: -7331,
-				// },
+				{
+					name: "-7331",
+					args: []string{"-7331"},
+					want: -7331,
+				},
 			},
 		},
 		{

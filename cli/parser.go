@@ -217,7 +217,7 @@ func (a *args) Reset() {
 	a.index = nil
 }
 
-var _ (Parser) = (*DefaultParser)(nil)
+var _ Parser = (*DefaultParser)(nil)
 
 type DefaultParser struct {
 	Universal bool

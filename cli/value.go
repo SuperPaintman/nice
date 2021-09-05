@@ -1,8 +1,61 @@
 package cli
 
 import (
+	"errors"
+	"fmt"
 	"strconv"
 )
+
+var ErrSyntax = errors.New("invalid syntax")
+
+var ErrRange = errors.New("value out of range")
+
+type ParseError struct {
+	Type string
+	Err  error
+}
+
+func (e *ParseError) Error() string {
+	msg := "unknown error"
+	if e.Err != nil {
+		msg = e.Err.Error()
+	}
+
+	return fmt.Sprintf("parse %s error: %s", e.Type, msg)
+}
+
+func (e *ParseError) Unwrap() error { return e.Err }
+
+func (e *ParseError) Is(err error) bool {
+	pe, ok := err.(*ParseError)
+	return ok && pe.Type == e.Type && errors.Is(pe.Err, e.Err)
+}
+
+// func (e *ParseError) As(err interface{}) bool {
+// 	pe, ok := err.(**ParseError)
+// 	if !ok {
+// 		return false
+// 	}
+
+// 	*pe = e
+// 	return true
+// }
+
+func numError(typ string, err error) error {
+	ne, ok := err.(*strconv.NumError)
+	if ok {
+		if ne.Err == strconv.ErrSyntax {
+			err = ErrSyntax
+		} else if ne.Err == strconv.ErrRange {
+			err = ErrRange
+		}
+	}
+
+	return &ParseError{
+		Type: typ,
+		Err:  err,
+	}
+}
 
 // var _ flag.Value = (Value)(nil)
 
@@ -38,7 +91,10 @@ func newBoolValue(p *bool) *boolValue {
 func (b *boolValue) Set(s string) error {
 	v, err := parseBool(s)
 	if err != nil {
-		// err = errParse
+		err = &ParseError{
+			Type: "bool",
+			Err:  err,
+		}
 	}
 	*b = boolValue(v)
 	return err
@@ -72,7 +128,7 @@ func newIntValue(p *int) *intValue {
 func (i *intValue) Set(s string) error {
 	v, err := strconv.ParseInt(s, 0, strconv.IntSize)
 	if err != nil {
-		// err = numError(err)
+		err = numError("int", err)
 	}
 	*i = intValue(v)
 	return err
@@ -179,10 +235,5 @@ func parseBool(str string) (bool, error) {
 		}
 	}
 
-	// TODO(SuperPaintman): replace with custom error.
-	return false, &strconv.NumError{
-		Func: "ParseBool",
-		Num:  str,
-		Err:  strconv.ErrSyntax,
-	}
+	return false, ErrSyntax
 }

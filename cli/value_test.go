@@ -1,6 +1,10 @@
 package cli
 
-import "testing"
+import (
+	"errors"
+	"fmt"
+	"testing"
+)
 
 func TestIsBoolValue(t *testing.T) {
 	tt := []struct {
@@ -121,7 +125,7 @@ func TestIsBoolValue(t *testing.T) {
 			value: "nO",
 			want:  true,
 		},
-		// Wrong.
+		// Broken.
 		{
 			value: "",
 		},
@@ -297,7 +301,7 @@ func TestParseBool(t *testing.T) {
 	}
 }
 
-func TestParseBool_wrong_value(t *testing.T) {
+func TestParseBool_broken_value(t *testing.T) {
 	tt := []struct {
 		value string
 	}{
@@ -324,8 +328,8 @@ func TestParseBool_wrong_value(t *testing.T) {
 	for _, tc := range tt {
 		t.Run(tc.value, func(t *testing.T) {
 			_, err := parseBool(tc.value)
-			if err == nil {
-				t.Fatalf("parseBool(): got nil, want err")
+			if err != ErrSyntax {
+				t.Fatalf("parseBool(): got error = %q, want error = %q", err, ErrSyntax)
 			}
 		})
 	}
@@ -338,5 +342,56 @@ func BenchmarkParseBool(b *testing.B) {
 		for _, v := range [...]string{"t", "true", "TRUE", "Y", "Yes", "f", "false", "FALSE", "N", "No"} {
 			parseBoolRes, _ = parseBool(v)
 		}
+	}
+}
+
+func TestParseError_Unwrap(t *testing.T) {
+	underlying := errors.New("test underlying")
+	err := &ParseError{Type: "test", Err: underlying}
+
+	got := errors.Unwrap(err)
+	if got != underlying {
+		t.Errorf("Unwrap(): got = %v, want = %v", got, underlying)
+	}
+}
+
+func TestParseError_Is(t *testing.T) {
+	underlying := errors.New("test underlying")
+	a := &ParseError{Type: "test", Err: underlying}
+	b := &ParseError{Type: "test", Err: underlying}
+	c := &ParseError{Type: "test", Err: errors.New("test another")}
+	d := &ParseError{Type: "test2", Err: underlying}
+
+	if !errors.Is(a, a) {
+		t.Errorf("Is(a, a): expected two pointers to the same error will be matched")
+	}
+
+	if !errors.Is(a, b) {
+		t.Errorf("Is(a, b): expected two identical errors will be matched")
+	}
+
+	if errors.Is(a, c) {
+		t.Errorf("Is(a, c): expected two errors with different Err will not be matched")
+	}
+
+	if errors.Is(a, d) {
+		t.Errorf("Is(a, d): expected two errors with different Type will not be matched")
+	}
+}
+
+func TestParseError_As(t *testing.T) {
+	underlying := errors.New("test underlying")
+
+	err := fmt.Errorf("wrap error: %w", &ParseError{Type: "test", Err: underlying})
+
+	want := &ParseError{Type: "test", Err: underlying}
+	got := &ParseError{}
+
+	if !errors.As(err, &got) {
+		t.Errorf("As(): expected errors will be matched")
+	}
+
+	if !errors.Is(got, want) {
+		t.Errorf("got = %#v, want = %#v", got, want)
 	}
 }
