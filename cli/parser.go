@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"strconv"
 	"strings"
 )
 
@@ -29,12 +30,17 @@ type flags struct {
 	short map[string]int // Indexes of flags in the data. It contains all short names.
 }
 
-func (f *flags) Get(name string) (idx int, flag *Flag, ok bool) {
+func (f *flags) GetLong(name string) (idx int, flag *Flag, ok bool) {
 	idx, ok = f.long[name]
-	if !ok {
-		idx, ok = f.short[name]
+	if ok {
+		flag = &f.data[idx]
 	}
 
+	return
+}
+
+func (f *flags) GetShort(name string) (idx int, flag *Flag, ok bool) {
+	idx, ok = f.short[name]
 	if ok {
 		flag = &f.data[idx]
 	}
@@ -221,6 +227,8 @@ var _ Parser = (*DefaultParser)(nil)
 
 type DefaultParser struct {
 	Universal bool
+	// TODO(SuperPaintman): disable POSIX-style short flag combining (-a -b -> -ab).
+	// TODO(SuperPaintman): disable Short-flag+parameter combining (-a parm -> -aparm).
 
 	flags   flags
 	args    args
@@ -261,12 +269,8 @@ func (p *DefaultParser) Parse(commander Commander, arguments []string) error {
 		arg := arguments[0]
 		arguments = arguments[1:]
 
-		if len(arg) == 0 {
-			continue
-		}
-
 		// Commands or Args.
-		if arg[0] != '-' {
+		if len(arg) == 0 || arg[0] != '-' || isNumber(arg) {
 			// Check if the arg is a command.
 			if !argMode && commander != nil && commander.IsCommand(arg) {
 				// Reset previous flags and args.
@@ -297,8 +301,6 @@ func (p *DefaultParser) Parse(commander Commander, arguments []string) error {
 			continue
 		}
 
-		// TODO(SuperPaintman): add POSIX-style short flag combining (-a -b -> -ab).
-		// TODO(SuperPaintman): add Short-flag+parameter combining (-a parm -> -aparm).
 		// TODO(SuperPaintman): add required flags.
 		// TODO(SuperPaintman): add optional args.
 
@@ -309,6 +311,8 @@ func (p *DefaultParser) Parse(commander Commander, arguments []string) error {
 
 			// TODO(SuperPaintman): add the "--" bypass.
 		}
+
+		shortFlag := numMinuses == 1 && !p.Universal
 
 		name := arg[numMinuses:]
 		if len(name) == 0 || name[0] == '-' || name[0] == '=' {
@@ -331,43 +335,80 @@ func (p *DefaultParser) Parse(commander Commander, arguments []string) error {
 		}
 
 		// Find a known flag.
-		_, flag, knownflag := p.flags.Get(name)
+		restName := name
+		lastHasValue := hasValue
+		lastValue := value
+		for len(restName) > 0 {
+			// Parse POSIX-style short flag combining (-a -b -> -ab).
+			var (
+				flag          *Flag
+				knownflag     bool
+				lastShortFlag bool
+			)
+			if shortFlag {
+				name = restName[:1]
+				restName = restName[1:]
 
-		if !hasValue && len(arguments) > 0 {
-			next := arguments[0]
-			if len(next) > 0 && next[0] != '-' {
-				setValue := knownflag
+				if len(restName) == 0 {
+					hasValue = lastHasValue
+					value = lastValue
+					lastShortFlag = true
+				} else {
+					hasValue = false
+					value = ""
+				}
+
+				_, flag, knownflag = p.flags.GetShort(name)
 				if knownflag {
-					// Special case for bool flags. Allow only bool-like values.
 					if fv, ok := flag.Value.(boolFlag); ok && fv.IsBoolFlag() {
-						setValue = isBoolValue(next)
 					}
 				}
 
-				if setValue {
-					value = next
-					hasValue = true
-					arguments = arguments[1:]
+				// TODO(SuperPaintman): add Short-flag+parameter combining (-a parm -> -aparm).
+			} else {
+				restName = ""
+
+				_, flag, knownflag = p.flags.GetLong(name)
+			}
+
+			if (!shortFlag || lastShortFlag) && !hasValue && len(arguments) > 0 {
+				next := arguments[0]
+				if len(next) > 0 && (next[0] != '-' || isNumber(next)) {
+					setValue := knownflag
+					if knownflag {
+						// Special case for bool flags. Allow only bool-like values.
+						if fv, ok := flag.Value.(boolFlag); ok && fv.IsBoolFlag() {
+							setValue = isBoolValue(next)
+						}
+					}
+
+					if setValue {
+						value = next
+						hasValue = true
+						arguments = arguments[1:]
+					}
 				}
 			}
-		}
 
-		if !knownflag {
-			prefix := strings.Repeat("-", numMinuses)
-			p.unknown = append(p.unknown, prefix+name)
-			continue
-		}
-
-		// Set Value.
-		// Special case for bool flags which doesn't need a value.
-		if fv, ok := flag.Value.(boolFlag); ok && fv.IsBoolFlag() {
-			if !hasValue {
-				value = "true"
+			if !knownflag {
+				prefix := strings.Repeat("-", numMinuses)
+				p.unknown = append(p.unknown, prefix+name)
+				continue
 			}
-		}
 
-		if err := flag.Value.Set(value); err != nil {
-			return err
+			// Set Value.
+			// Special case for bool flags which doesn't need a value.
+			if fv, ok := flag.Value.(boolFlag); ok && fv.IsBoolFlag() {
+				if !hasValue {
+					value = "true"
+				} else if value == "" {
+					value = "false"
+				}
+			}
+
+			if err := flag.Value.Set(value); err != nil {
+				return err
+			}
 		}
 	}
 
@@ -400,4 +441,18 @@ func (p *DefaultParser) FormatShortFlag(name string) string {
 	}
 
 	return "-" + name
+}
+
+func isNumber(s string) bool {
+	// TODO(SuperPaintman): optimize it.
+
+	if _, err := strconv.ParseInt(s, 0, 0); err == nil {
+		return true
+	}
+
+	if _, err := strconv.ParseFloat(s, 64); err == nil {
+		return true
+	}
+
+	return false
 }

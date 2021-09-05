@@ -42,7 +42,7 @@ func TestParseFlags(t *testing.T) {
 				{
 					name: "empty value",
 					args: []string{"-t="},
-					want: true,
+					want: false,
 				},
 				{
 					name: "true value",
@@ -132,6 +132,26 @@ func TestParseFlags(t *testing.T) {
 					want: "",
 				},
 				{
+					name: "test next arg",
+					args: []string{"-t", "test"},
+					want: "test",
+				},
+				{
+					name: "without value",
+					args: []string{"-t"},
+					want: "",
+				},
+				{
+					name: "empty next arg",
+					args: []string{"-t", ""},
+					want: "",
+				},
+				{
+					name: "next flag",
+					args: []string{"-t", "-b"},
+					want: "",
+				},
+				{
 					name: "with dash value",
 					args: []string{"-t=go-test"},
 					want: "go-test",
@@ -152,16 +172,6 @@ func TestParseFlags(t *testing.T) {
 					want: "=go=test",
 				},
 				{
-					name: "test next arg",
-					args: []string{"-t", "test"},
-					want: "test",
-				},
-				{
-					name: "empty next arg",
-					args: []string{"-t", ""},
-					want: "",
-				},
-				{
 					name: "with dash next arg",
 					args: []string{"-t", "go-test"},
 					want: "go-test",
@@ -170,6 +180,11 @@ func TestParseFlags(t *testing.T) {
 					name: "with equals next arg",
 					args: []string{"-t", "go=test"},
 					want: "go=test",
+				},
+				{
+					name: "with equals start next arg",
+					args: []string{"-t", "=go=test"},
+					want: "=go=test",
 				},
 			},
 		},
@@ -184,12 +199,12 @@ func TestParseFlags(t *testing.T) {
 					f := tc.setup(&parser)
 
 					if err := parser.Parse(nil, tvc.args); err != nil {
-						t.Fatalf("Parse(): failed to parse flags: %s", err)
+						t.Fatalf("Parse(%v): failed to parse flags: %s", tvc.args, err)
 					}
 
 					got := deref(t, f)
 					if !reflect.DeepEqual(got, tvc.want) {
-						t.Errorf("Parse(): got = %#v, want = %#v", got, tvc.want)
+						t.Errorf("Parse(%v): got = %#v, want = %#v", tvc.args, got, tvc.want)
 					}
 				})
 			}
@@ -235,7 +250,22 @@ func TestParseFlags_broken_value(t *testing.T) {
 						Err:  ErrSyntax,
 					},
 				},
-				// TODO(SuperPaintman): int overflow
+				{
+					name: "int overflow",
+					args: []string{"-t", "99999999999999999999999999"},
+					want: &ParseError{
+						Type: "int",
+						Err:  ErrRange,
+					},
+				},
+				{
+					name: "int negative overflow",
+					args: []string{"-t", "-99999999999999999999999999"},
+					want: &ParseError{
+						Type: "int",
+						Err:  ErrRange,
+					},
+				},
 				{
 					name: "bool next arg",
 					args: []string{"-t", "true"},
@@ -252,17 +282,35 @@ func TestParseFlags_broken_value(t *testing.T) {
 						Err:  ErrSyntax,
 					},
 				},
-				// TODO(SuperPaintman): empty value
-				// TODO(SuperPaintman): next flag
+				{
+					name: "without value",
+					args: []string{"-t"},
+					want: &ParseError{
+						Type: "int",
+						Err:  ErrSyntax,
+					},
+				},
+				{
+					name: "empty value",
+					args: []string{"-t", ""},
+					want: &ParseError{
+						Type: "int",
+						Err:  ErrSyntax,
+					},
+				},
+				{
+					name: "next flag",
+					args: []string{"-t", "-b"},
+					want: &ParseError{
+						Type: "int",
+						Err:  ErrSyntax,
+					},
+				},
 			},
 		},
 		{
 			name:  "String",
 			setup: func(r Register) interface{} { return String(r, "t") },
-			tests: []testValue{
-				// TODO(SuperPaintman): empty value
-				// TODO(SuperPaintman): next flag
-			},
 		},
 	}
 
@@ -276,7 +324,7 @@ func TestParseFlags_broken_value(t *testing.T) {
 
 					err := parser.Parse(nil, tvc.args)
 					if !errors.Is(err, tvc.want) {
-						t.Fatalf("Parse(): got error = %q, want error = %q", err, tvc.want)
+						t.Fatalf("Parse(%v): got error = %q, want error = %q", tvc.args, err, tvc.want)
 					}
 				})
 			}
@@ -297,7 +345,7 @@ func TestParseArgs(t *testing.T) {
 		tests []testValue
 	}{
 		{
-			name:  "Int",
+			name:  "IntArg",
 			setup: func(r Register) interface{} { return IntArg(r, "t") },
 			tests: []testValue{
 				{
@@ -323,7 +371,7 @@ func TestParseArgs(t *testing.T) {
 			},
 		},
 		{
-			name:  "String",
+			name:  "StringArg",
 			setup: func(r Register) interface{} { return StringArg(r, "t") },
 			tests: []testValue{
 				{
@@ -349,12 +397,102 @@ func TestParseArgs(t *testing.T) {
 					f := tc.setup(&parser)
 
 					if err := parser.Parse(nil, tvc.args); err != nil {
-						t.Fatalf("Parse(): failed to parse args: %s", err)
+						t.Fatalf("Parse(%v): failed to parse args: %s", tvc.args, err)
 					}
 
 					got := deref(t, f)
 					if !reflect.DeepEqual(got, tvc.want) {
-						t.Errorf("Parse(): got = %#v, want = %#v", got, tvc.want)
+						t.Errorf("Parse(%v): got = %#v, want = %#v", tvc.args, got, tvc.want)
+					}
+				})
+			}
+		})
+	}
+}
+
+func TestParseArgs_broken_value(t *testing.T) {
+	type testValue struct {
+		name string
+		args []string
+		want error
+	}
+
+	tt := []struct {
+		name  string
+		setup func(Register) interface{}
+		tests []testValue
+	}{
+		{
+			name:  "IntArg",
+			setup: func(r Register) interface{} { return IntArg(r, "t") },
+			tests: []testValue{
+				{
+					name: "not int-like",
+					args: []string{"abcd"},
+					want: &ParseError{
+						Type: "int",
+						Err:  ErrSyntax,
+					},
+				},
+				{
+					name: "int overflow",
+					args: []string{"99999999999999999999999999"},
+					want: &ParseError{
+						Type: "int",
+						Err:  ErrRange,
+					},
+				},
+				{
+					name: "int negative overflow",
+					args: []string{"-99999999999999999999999999"},
+					want: &ParseError{
+						Type: "int",
+						Err:  ErrRange,
+					},
+				},
+				{
+					name: "bool",
+					args: []string{"true"},
+					want: &ParseError{
+						Type: "int",
+						Err:  ErrSyntax,
+					},
+				},
+				{
+					name: "float",
+					args: []string{"12.34"},
+					want: &ParseError{
+						Type: "int",
+						Err:  ErrSyntax,
+					},
+				},
+				{
+					name: "empty",
+					args: []string{""},
+					want: &ParseError{
+						Type: "int",
+						Err:  ErrSyntax,
+					},
+				},
+			},
+		},
+		{
+			name:  "StringArg",
+			setup: func(r Register) interface{} { return StringArg(r, "t") },
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			for _, tvc := range tc.tests {
+				t.Run(tvc.name, func(t *testing.T) {
+					var parser DefaultParser
+
+					_ = tc.setup(&parser)
+
+					err := parser.Parse(nil, tvc.args)
+					if !errors.Is(err, tvc.want) {
+						t.Fatalf("Parse(%v): got error = %q, want error = %q", tvc.args, err, tvc.want)
 					}
 				})
 			}
