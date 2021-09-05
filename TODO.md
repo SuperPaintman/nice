@@ -27,6 +27,7 @@
   - [ ] POSIX-style short flag combining (`-a -b -> -ab`)
   - [ ] Short-flag+parameter combining (`-a parm -> -aparm`)
   - [ ] Default value
+  - [x] Better `isBoolValue`
 
 - [ ] Documentation generator
 

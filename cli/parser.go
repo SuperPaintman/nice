@@ -401,12 +401,3 @@ func (p *DefaultParser) FormatShortFlag(name string) string {
 
 	return "-" + name
 }
-
-func isBoolValue(str string) bool {
-	switch str {
-	case "1", "t", "T", "true", "TRUE", "True",
-		"0", "f", "F", "false", "FALSE", "False":
-		return true
-	}
-	return false
-}

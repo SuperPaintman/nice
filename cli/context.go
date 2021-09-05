@@ -29,7 +29,7 @@ type Context interface {
 	Warnln(a ...interface{}) (n int, err error)
 }
 
-var _ (Context) = (*commandContext)(nil)
+var _ Context = (*commandContext)(nil)
 
 type commandContext struct {
 	parent context.Context
