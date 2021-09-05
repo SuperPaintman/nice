@@ -500,6 +500,88 @@ func TestParseArgs_broken_value(t *testing.T) {
 	}
 }
 
+func TestRegisterDuplicatedFlag(t *testing.T) {
+	var parser DefaultParser
+
+	_ = Bool(&parser, "a")
+	flag := &parser.Flags()[0]
+
+	_ = Int(&parser, "a")
+
+	args := []string{"-a", "100"}
+
+	got := parser.Parse(nil, args)
+	want := &DuplicatedFlagError{
+		Flag: flag,
+	}
+	if !errors.Is(got, want) {
+		t.Fatalf("Parse(): got error = %q, want error = %q", got, want)
+	}
+}
+
+func TestRegisterOverrideFlag(t *testing.T) {
+	parser := DefaultParser{OverrideFlags: true}
+
+	oldA := Bool(&parser, "a")
+	a := Int(&parser, "a")
+
+	args := []string{"-a", "100"}
+	if err := parser.Parse(nil, args); err != nil {
+		t.Fatalf("Parse(): failed to parse args: %s", err)
+	}
+
+	const wantOldA = false
+	if *oldA != wantOldA {
+		t.Errorf("Parse(): oldA: got = %v, want = %v", *oldA, wantOldA)
+	}
+
+	const wantA = 100
+	if *a != wantA {
+		t.Errorf("Parse(): a: got = %v, want = %v", *a, wantA)
+	}
+}
+
+func TestRegisterDuplicatedArg(t *testing.T) {
+	var parser DefaultParser
+
+	_ = StringArg(&parser, "a")
+	arg := &parser.Args()[0]
+
+	_ = IntArg(&parser, "a")
+
+	args := []string{"100"}
+
+	got := parser.Parse(nil, args)
+	want := &DuplicatedArgError{
+		Arg: arg,
+	}
+	if !errors.Is(got, want) {
+		t.Fatalf("Parse(): got error = %q, want error = %q", got, want)
+	}
+}
+
+func TestRegisterOverrideArg(t *testing.T) {
+	parser := DefaultParser{OverrideArgs: true}
+
+	oldA := StringArg(&parser, "a")
+	a := IntArg(&parser, "a")
+
+	args := []string{"100"}
+	if err := parser.Parse(nil, args); err != nil {
+		t.Fatalf("Parse(): failed to parse args: %s", err)
+	}
+
+	const wantOldA = ""
+	if *oldA != wantOldA {
+		t.Errorf("Parse(): oldA: got = %v, want = %v", *oldA, wantOldA)
+	}
+
+	const wantA = 100
+	if *a != wantA {
+		t.Errorf("Parse(): a: got = %v, want = %v", *a, wantA)
+	}
+}
+
 func TestParse_Parse_posix_style_short_flags(t *testing.T) {
 	var parser DefaultParser
 

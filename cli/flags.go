@@ -37,6 +37,29 @@ func (f *Flag) Required() bool {
 	return f.Necessary == Required
 }
 
+func (f *Flag) String() string {
+	v := "Flag("
+	v += f.Type()
+
+	if f.Short != "" {
+		v += ","
+		v += "-" + f.Short
+	}
+
+	if f.Long != "" {
+		if v == "" {
+			v += ","
+		} else {
+			v += "/"
+		}
+
+		v += "--" + f.Long
+	}
+	v += ")"
+
+	return v
+}
+
 func BoolVar(register Register, p *bool, name string, options ...FlagOptionApplyer) error {
 	var opts FlagOptions
 	opts.applyName(name)

@@ -29,6 +29,10 @@ func (a *Arg) Required() bool {
 	return a.Necessary != Optional
 }
 
+func (a *Arg) String() string {
+	return "Arg(" + a.Type() + "," + a.Name + ")"
+}
+
 func IntArgVar(register Register, p *int, name string, options ...ArgOptionApplyer) error {
 	var opts ArgOptions
 	opts.applyName(name)

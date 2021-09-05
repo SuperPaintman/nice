@@ -1,9 +1,36 @@
 package cli
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 )
+
+type DuplicatedFlagError struct {
+	Flag *Flag
+}
+
+func (e *DuplicatedFlagError) Is(err error) bool {
+	pe, ok := err.(*DuplicatedFlagError)
+	return ok && pe.Flag == e.Flag
+}
+
+func (e *DuplicatedFlagError) Error() string {
+	return fmt.Sprintf("duplicated flag: %s", e.Flag.String())
+}
+
+type DuplicatedArgError struct {
+	Arg *Arg
+}
+
+func (e *DuplicatedArgError) Is(err error) bool {
+	pe, ok := err.(*DuplicatedArgError)
+	return ok && pe.Arg == e.Arg
+}
+
+func (e *DuplicatedArgError) Error() string {
+	return fmt.Sprintf("duplicated arg: %s", e.Arg.String())
+}
 
 type Register interface {
 	RegisterFlag(flag Flag) error
@@ -226,19 +253,33 @@ func (a *args) Reset() {
 var _ Parser = (*DefaultParser)(nil)
 
 type DefaultParser struct {
-	Universal bool
+	Universal     bool
+	OverrideFlags bool
+	OverrideArgs  bool
 	// TODO(SuperPaintman): disable POSIX-style short flag combining (-a -b -> -ab).
 	// TODO(SuperPaintman): disable Short-flag+parameter combining (-a parm -> -aparm).
 
-	flags   flags
-	args    args
-	unknown []string // Unknown flags (without named flags).
-	rest    []string // Other arguments (without named args).
+	flags           flags
+	args            args
+	unknown         []string             // Unknown flags (without named flags).
+	rest            []string             // Other arguments (without named args).
+	registerFlagErr *DuplicatedFlagError // RegisterFlag first error.
+	registerArgErr  *DuplicatedArgError  // RegisterArg first error.
 }
 
 func (p *DefaultParser) RegisterFlag(flag Flag) error {
-	if _, _, ok := p.flags.Find(flag.Long, flag.Short, flag.Aliases); ok {
-		// TODO(SuperPaintman): check if the flag already in flags.
+	if !p.OverrideFlags {
+		if _, f, ok := p.flags.Find(flag.Long, flag.Short, flag.Aliases); ok {
+			err := &DuplicatedFlagError{
+				Flag: f,
+			}
+
+			if p.registerFlagErr == nil {
+				p.registerFlagErr = err
+			}
+
+			return err
+		}
 	}
 
 	p.flags.Add(flag)
@@ -247,8 +288,18 @@ func (p *DefaultParser) RegisterFlag(flag Flag) error {
 }
 
 func (p *DefaultParser) RegisterArg(arg Arg) error {
-	if _, _, ok := p.args.Get(arg.Name); ok {
-		// TODO(SuperPaintman): check if the arg already in args.
+	if !p.OverrideArgs {
+		if _, a, ok := p.args.Get(arg.Name); ok {
+			err := &DuplicatedArgError{
+				Arg: a,
+			}
+
+			if p.registerFlagErr == nil {
+				p.registerArgErr = err
+			}
+
+			return err
+		}
 	}
 
 	p.args.Add(arg)
@@ -257,6 +308,13 @@ func (p *DefaultParser) RegisterArg(arg Arg) error {
 }
 
 func (p *DefaultParser) Parse(commander Commander, arguments []string) error {
+	if p.registerFlagErr != nil {
+		return p.registerFlagErr
+	}
+	if p.registerArgErr != nil {
+		return p.registerArgErr
+	}
+
 	var (
 		argMode bool
 		argIdx  int
