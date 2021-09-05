@@ -31,16 +31,6 @@ func (e *ParseError) Is(err error) bool {
 	return ok && pe.Type == e.Type && errors.Is(pe.Err, e.Err)
 }
 
-// func (e *ParseError) As(err interface{}) bool {
-// 	pe, ok := err.(**ParseError)
-// 	if !ok {
-// 		return false
-// 	}
-
-// 	*pe = e
-// 	return true
-// }
-
 func numError(typ string, err error) error {
 	ne, ok := err.(*strconv.NumError)
 	if ok {
