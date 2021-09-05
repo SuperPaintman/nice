@@ -1,6 +1,8 @@
 package cli
 
-import "strconv"
+import (
+	"strconv"
+)
 
 // var _ flag.Value = (Value)(nil)
 
@@ -34,7 +36,7 @@ func newBoolValue(p *bool) *boolValue {
 }
 
 func (b *boolValue) Set(s string) error {
-	v, err := strconv.ParseBool(s)
+	v, err := parseBool(s)
 	if err != nil {
 		// err = errParse
 	}
@@ -104,3 +106,83 @@ func (s *stringValue) Get() interface{} { return string(*s) }
 func (s *stringValue) String() string { return string(*s) }
 
 func (s *stringValue) Type() string { return "string" }
+
+const maxBoolStringLen = len("false") // "1 byte", no, yes, true, false
+
+func boolToLower(src []byte) {
+	for i, b := range src {
+		if b >= 'A' && b <= 'Z' {
+			src[i] = b - 'A' + 'a'
+		}
+	}
+}
+
+func isBoolValue(str string) bool {
+	if len(str) <= maxBoolStringLen {
+		// Inline optimized and alloc-free "to lower" converter.
+		var buf [maxBoolStringLen]byte
+		s := buf[:len(str)]
+		copy(s, str)
+		boolToLower(s)
+
+		// A little bit optimized value checking switch.
+		switch len(s) {
+		case 1: // 1, t, y, 0, f, n
+			return s[0] == '1' || s[0] == 't' || s[0] == 'y' ||
+				s[0] == '0' || s[0] == 'f' || s[0] == 'n'
+		case 2: // no
+			return string(s) == "no"
+		case 3: // yes
+			return string(s) == "yes"
+		case 4: // true
+			return string(s) == "true"
+		case 5: // false
+			return string(s) == "false"
+		}
+	}
+
+	return false
+}
+
+func parseBool(str string) (bool, error) {
+	if len(str) <= maxBoolStringLen {
+		// Inline optimized and alloc-free "to lower" converter.
+		var buf [maxBoolStringLen]byte
+		s := buf[:len(str)]
+		copy(s, str)
+		boolToLower(s)
+
+		// A little bit optimized value checking switch.
+		switch len(s) {
+		case 1: // 1, t, y, 0, f, n
+			if s[0] == '1' || s[0] == 't' || s[0] == 'y' {
+				return true, nil
+			} else if s[0] == '0' || s[0] == 'f' || s[0] == 'n' {
+				return false, nil
+			}
+		case 2: // no
+			if string(s) == "no" {
+				return false, nil
+			}
+		case 3: // yes
+			if string(s) == "yes" {
+				return true, nil
+			}
+		case 4: // true
+			if string(s) == "true" {
+				return true, nil
+			}
+		case 5: // false
+			if string(s) == "false" {
+				return false, nil
+			}
+		}
+	}
+
+	// TODO(SuperPaintman): replace with custom error.
+	return false, &strconv.NumError{
+		Func: "ParseBool",
+		Num:  str,
+		Err:  strconv.ErrSyntax,
+	}
+}
