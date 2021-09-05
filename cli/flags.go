@@ -1,17 +1,22 @@
 package cli
 
-type Alias struct {
-	Short string
-	Long  string
-}
-
 type Flag struct {
 	Value     Value
 	Short     string
 	Long      string
-	Aliases   []Alias
 	Usage     Usager
 	Necessary Necessary
+
+	// NOTE(SuperPaintman):
+	//     The first version had "Aliases" for flags. It's quite handy to have
+	//     (e.g. --dry and --dry-run) but at the same time makes API a bit
+	//     confusing because of duplication logic.
+	//
+	//     We can override flags on aliases collision or remove the alias from the
+	//     original list but it makes API quite unpredictable for developers.
+	//
+	//     I decided to remove aliases. It's not so commonly used feature and
+	//     developers can easely make a workaround if they need it.
 }
 
 func newFlag(value Value, opts FlagOptions) Flag {
@@ -19,7 +24,6 @@ func newFlag(value Value, opts FlagOptions) Flag {
 		Value:     value,
 		Short:     opts.Short,
 		Long:      opts.Long,
-		Aliases:   opts.Aliases,
 		Usage:     opts.Usage,
 		Necessary: opts.Necessary,
 	}

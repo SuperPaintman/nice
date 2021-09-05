@@ -137,7 +137,6 @@ type FlagOptions struct {
 	Value     Value
 	Short     string
 	Long      string
-	Aliases   []Alias
 	Usage     Usager
 	Necessary Necessary // Optional if unset
 	Global    bool      // TODO
@@ -150,10 +149,6 @@ func (o FlagOptions) FlagOptionApply(opts *FlagOptions) {
 
 	if o.Long != "" {
 		opts.Long = o.Long
-	}
-
-	for _, alias := range o.Aliases {
-		opts.Aliases = append(opts.Aliases, alias)
 	}
 
 	if o.Usage != nil {
@@ -189,12 +184,6 @@ func WithShort(name string) FlagOptionFunc {
 func WithLong(name string) FlagOptionFunc {
 	return func(o *FlagOptions) {
 		o.Long = name
-	}
-}
-
-func WithAliases(aliases ...Alias) FlagOptionFunc {
-	return func(o *FlagOptions) {
-		o.Aliases = aliases
 	}
 }
 

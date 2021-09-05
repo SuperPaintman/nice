@@ -75,7 +75,7 @@ func (f *flags) GetShort(name string) (idx int, flag *Flag, ok bool) {
 	return
 }
 
-func (f *flags) Find(long, short string, aliases []Alias) (idx int, flag *Flag, ok bool) {
+func (f *flags) Find(long, short string) (idx int, flag *Flag, ok bool) {
 	if long != "" {
 		if idx, ok = f.long[long]; ok {
 			flag = &f.data[idx]
@@ -87,22 +87,6 @@ func (f *flags) Find(long, short string, aliases []Alias) (idx int, flag *Flag, 
 		if idx, ok = f.short[short]; ok {
 			flag = &f.data[idx]
 			return
-		}
-	}
-
-	for _, alias := range aliases {
-		if alias.Long != "" {
-			if idx, ok = f.long[alias.Long]; ok {
-				flag = &f.data[idx]
-				return
-			}
-		}
-
-		if alias.Short != "" {
-			if idx, ok = f.short[alias.Short]; ok {
-				flag = &f.data[idx]
-				return
-			}
 		}
 	}
 
@@ -131,27 +115,6 @@ func (f *flags) Add(flag Flag) {
 		}
 	}
 
-	// Find in aliases.
-	if !found {
-		for _, alias := range flag.Aliases {
-			if alias.Long != "" {
-				idx, found = f.long[alias.Long]
-				if found {
-					f.data[idx] = flag
-					break
-				}
-			}
-
-			if alias.Short != "" {
-				idx, found = f.short[alias.Short]
-				if found {
-					f.data[idx] = flag
-					break
-				}
-			}
-		}
-	}
-
 	if found {
 		return
 	}
@@ -174,24 +137,6 @@ func (f *flags) Add(flag Flag) {
 		}
 
 		f.short[flag.Short] = idx
-	}
-
-	for _, alias := range flag.Aliases {
-		if alias.Long != "" {
-			if f.long == nil {
-				f.long = make(map[string]int)
-			}
-
-			f.long[alias.Long] = idx
-		}
-
-		if alias.Short != "" {
-			if f.short == nil {
-				f.short = make(map[string]int)
-			}
-
-			f.short[alias.Short] = idx
-		}
 	}
 }
 
@@ -269,7 +214,7 @@ type DefaultParser struct {
 
 func (p *DefaultParser) RegisterFlag(flag Flag) error {
 	if !p.OverrideFlags {
-		if _, f, ok := p.flags.Find(flag.Long, flag.Short, flag.Aliases); ok {
+		if _, f, ok := p.flags.Find(flag.Long, flag.Short); ok {
 			err := &DuplicatedFlagError{
 				Flag: f,
 			}

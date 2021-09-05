@@ -88,7 +88,6 @@ func (app *App) RunContext(ctx context.Context) error {
 		for _, f := range allCommandFlags {
 			err := BoolVar(cmdCtx, &f.value, f.Long,
 				WithShort(f.Short),
-				WithAliases(f.Aliases...),
 				WithUsage(f.Usage),
 			)
 			if err != nil {
@@ -295,11 +294,10 @@ func (a *actionFunc) Run(ctx Context) error {
 }
 
 type CommandFlag struct {
-	Short   string
-	Long    string
-	Aliases []Alias
-	Usage   Usager
-	Action  ActionRunner
+	Short  string
+	Long   string
+	Usage  Usager
+	Action ActionRunner
 
 	value bool
 }
