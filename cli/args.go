@@ -33,30 +33,4 @@ func (a *Arg) String() string {
 	return "Arg(" + a.Type() + "," + a.Name + ")"
 }
 
-func IntArgVar(register Register, p *int, name string, options ...ArgOptionApplyer) error {
-	var opts ArgOptions
-	opts.applyName(name)
-	opts.applyArgOptions(options)
-
-	return register.RegisterArg(newArg(newIntValue(p), opts))
-}
-
-func IntArg(register Register, name string, options ...ArgOptionApplyer) *int {
-	p := new(int)
-	_ = IntArgVar(register, p, name, options...)
-	return p
-}
-
-func StringArgVar(parser Register, p *string, name string, options ...ArgOptionApplyer) error {
-	var opts ArgOptions
-	opts.applyName(name)
-	opts.applyArgOptions(options)
-
-	return parser.RegisterArg(newArg(newStringValue(p), opts))
-}
-
-func StringArg(register Register, name string, options ...ArgOptionApplyer) *string {
-	p := new(string)
-	_ = StringArgVar(register, p, name, options...)
-	return p
-}
+//go:generate python ./generate_args.py
