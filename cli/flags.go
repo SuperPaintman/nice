@@ -64,44 +64,4 @@ func (f *Flag) String() string {
 	return v
 }
 
-func BoolVar(register Register, p *bool, name string, options ...FlagOptionApplyer) error {
-	var opts FlagOptions
-	opts.applyName(name)
-	opts.applyFlagOptions(options)
-
-	return register.RegisterFlag(newFlag(newBoolValue(p), opts))
-}
-
-func Bool(register Register, name string, options ...FlagOptionApplyer) *bool {
-	p := new(bool)
-	_ = BoolVar(register, p, name, options...)
-	return p
-}
-
-func IntVar(parser Register, p *int, name string, options ...FlagOptionApplyer) error {
-	var opts FlagOptions
-	opts.applyName(name)
-	opts.applyFlagOptions(options)
-
-	return parser.RegisterFlag(newFlag(newIntValue(p), opts))
-}
-
-func Int(register Register, name string, options ...FlagOptionApplyer) *int {
-	p := new(int)
-	_ = IntVar(register, p, name, options...)
-	return p
-}
-
-func StringVar(parser Register, p *string, name string, options ...FlagOptionApplyer) error {
-	var opts FlagOptions
-	opts.applyName(name)
-	opts.applyFlagOptions(options)
-
-	return parser.RegisterFlag(newFlag(newStringValue(p), opts))
-}
-
-func String(register Register, name string, options ...FlagOptionApplyer) *string {
-	p := new(string)
-	_ = StringVar(register, p, name, options...)
-	return p
-}
+//go:generate python ./generate_flags.py
