@@ -68,18 +68,6 @@ type Typer interface {
 
 // bool
 
-var (
-	_ Value  = (*boolValue)(nil)
-	_ Getter = (*boolValue)(nil)
-	_ Typer  = (*boolValue)(nil)
-)
-
-type boolValue bool
-
-func newBoolValue(p *bool) *boolValue {
-	return (*boolValue)(p)
-}
-
 func (b *boolValue) Set(s string) error {
 	v, err := parseBool(s)
 	if err != nil {
@@ -91,12 +79,6 @@ func (b *boolValue) Set(s string) error {
 	*b = boolValue(v)
 	return err
 }
-
-func (b *boolValue) Get() interface{} { return bool(*b) }
-
-func (b *boolValue) String() string { return strconv.FormatBool(bool(*b)) }
-
-func (b *boolValue) Type() string { return "bool" }
 
 func (b *boolValue) IsBoolFlag() bool { return true }
 
@@ -212,42 +194,12 @@ func parseBool(str string) (bool, error) {
 
 // string
 
-var (
-	_ Value  = (*stringValue)(nil)
-	_ Getter = (*stringValue)(nil)
-	_ Typer  = (*stringValue)(nil)
-)
-
-type stringValue string
-
-func newStringValue(p *string) *stringValue {
-	return (*stringValue)(p)
-}
-
 func (s *stringValue) Set(val string) error {
 	*s = stringValue(val)
 	return nil
 }
 
-func (s *stringValue) Get() interface{} { return string(*s) }
-
-func (s *stringValue) String() string { return string(*s) }
-
-func (s *stringValue) Type() string { return "string" }
-
 // int
-
-var (
-	_ Value  = (*intValue)(nil)
-	_ Getter = (*intValue)(nil)
-	_ Typer  = (*intValue)(nil)
-)
-
-type intValue int
-
-func newIntValue(p *int) *intValue {
-	return (*intValue)(p)
-}
 
 func (i *intValue) Set(s string) error {
 	v, err := strconv.ParseInt(s, 0, strconv.IntSize)
@@ -258,11 +210,15 @@ func (i *intValue) Set(s string) error {
 	return err
 }
 
-func (i *intValue) Get() interface{} { return int(*i) }
-
-func (i *intValue) String() string { return strconv.Itoa(int(*i)) }
-
-func (i *intValue) Type() string { return "int" }
-
 // uint
-// TODO
+
+func (u *uintValue) Set(s string) error {
+	v, err := strconv.ParseUint(s, 0, strconv.IntSize)
+	if err != nil {
+		err = numError("uint", err)
+	}
+	*u = uintValue(v)
+	return err
+}
+
+//go:generate python ./generate_value.py
