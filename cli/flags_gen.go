@@ -18,6 +18,166 @@ func Bool(register Register, name string, options ...FlagOptionApplyer) *bool {
 	return p
 }
 
+// uint8
+
+func Uint8Var(register Register, p *uint8, name string, options ...FlagOptionApplyer) error {
+	var opts FlagOptions
+	opts.applyName(name)
+	opts.applyFlagOptions(options)
+
+	return register.RegisterFlag(newFlag(newUint8Value(p), opts))
+}
+
+func Uint8(register Register, name string, options ...FlagOptionApplyer) *uint8 {
+	p := new(uint8)
+	_ = Uint8Var(register, p, name, options...)
+	return p
+}
+
+// uint16
+
+func Uint16Var(register Register, p *uint16, name string, options ...FlagOptionApplyer) error {
+	var opts FlagOptions
+	opts.applyName(name)
+	opts.applyFlagOptions(options)
+
+	return register.RegisterFlag(newFlag(newUint16Value(p), opts))
+}
+
+func Uint16(register Register, name string, options ...FlagOptionApplyer) *uint16 {
+	p := new(uint16)
+	_ = Uint16Var(register, p, name, options...)
+	return p
+}
+
+// uint32
+
+func Uint32Var(register Register, p *uint32, name string, options ...FlagOptionApplyer) error {
+	var opts FlagOptions
+	opts.applyName(name)
+	opts.applyFlagOptions(options)
+
+	return register.RegisterFlag(newFlag(newUint32Value(p), opts))
+}
+
+func Uint32(register Register, name string, options ...FlagOptionApplyer) *uint32 {
+	p := new(uint32)
+	_ = Uint32Var(register, p, name, options...)
+	return p
+}
+
+// uint64
+
+func Uint64Var(register Register, p *uint64, name string, options ...FlagOptionApplyer) error {
+	var opts FlagOptions
+	opts.applyName(name)
+	opts.applyFlagOptions(options)
+
+	return register.RegisterFlag(newFlag(newUint64Value(p), opts))
+}
+
+func Uint64(register Register, name string, options ...FlagOptionApplyer) *uint64 {
+	p := new(uint64)
+	_ = Uint64Var(register, p, name, options...)
+	return p
+}
+
+// int8
+
+func Int8Var(register Register, p *int8, name string, options ...FlagOptionApplyer) error {
+	var opts FlagOptions
+	opts.applyName(name)
+	opts.applyFlagOptions(options)
+
+	return register.RegisterFlag(newFlag(newInt8Value(p), opts))
+}
+
+func Int8(register Register, name string, options ...FlagOptionApplyer) *int8 {
+	p := new(int8)
+	_ = Int8Var(register, p, name, options...)
+	return p
+}
+
+// int16
+
+func Int16Var(register Register, p *int16, name string, options ...FlagOptionApplyer) error {
+	var opts FlagOptions
+	opts.applyName(name)
+	opts.applyFlagOptions(options)
+
+	return register.RegisterFlag(newFlag(newInt16Value(p), opts))
+}
+
+func Int16(register Register, name string, options ...FlagOptionApplyer) *int16 {
+	p := new(int16)
+	_ = Int16Var(register, p, name, options...)
+	return p
+}
+
+// int32
+
+func Int32Var(register Register, p *int32, name string, options ...FlagOptionApplyer) error {
+	var opts FlagOptions
+	opts.applyName(name)
+	opts.applyFlagOptions(options)
+
+	return register.RegisterFlag(newFlag(newInt32Value(p), opts))
+}
+
+func Int32(register Register, name string, options ...FlagOptionApplyer) *int32 {
+	p := new(int32)
+	_ = Int32Var(register, p, name, options...)
+	return p
+}
+
+// int64
+
+func Int64Var(register Register, p *int64, name string, options ...FlagOptionApplyer) error {
+	var opts FlagOptions
+	opts.applyName(name)
+	opts.applyFlagOptions(options)
+
+	return register.RegisterFlag(newFlag(newInt64Value(p), opts))
+}
+
+func Int64(register Register, name string, options ...FlagOptionApplyer) *int64 {
+	p := new(int64)
+	_ = Int64Var(register, p, name, options...)
+	return p
+}
+
+// float32
+
+func Float32Var(register Register, p *float32, name string, options ...FlagOptionApplyer) error {
+	var opts FlagOptions
+	opts.applyName(name)
+	opts.applyFlagOptions(options)
+
+	return register.RegisterFlag(newFlag(newFloat32Value(p), opts))
+}
+
+func Float32(register Register, name string, options ...FlagOptionApplyer) *float32 {
+	p := new(float32)
+	_ = Float32Var(register, p, name, options...)
+	return p
+}
+
+// float64
+
+func Float64Var(register Register, p *float64, name string, options ...FlagOptionApplyer) error {
+	var opts FlagOptions
+	opts.applyName(name)
+	opts.applyFlagOptions(options)
+
+	return register.RegisterFlag(newFlag(newFloat64Value(p), opts))
+}
+
+func Float64(register Register, name string, options ...FlagOptionApplyer) *float64 {
+	p := new(float64)
+	_ = Float64Var(register, p, name, options...)
+	return p
+}
+
 // string
 
 func StringVar(register Register, p *string, name string, options ...FlagOptionApplyer) error {
@@ -47,5 +207,21 @@ func IntVar(register Register, p *int, name string, options ...FlagOptionApplyer
 func Int(register Register, name string, options ...FlagOptionApplyer) *int {
 	p := new(int)
 	_ = IntVar(register, p, name, options...)
+	return p
+}
+
+// uint
+
+func UintVar(register Register, p *uint, name string, options ...FlagOptionApplyer) error {
+	var opts FlagOptions
+	opts.applyName(name)
+	opts.applyFlagOptions(options)
+
+	return register.RegisterFlag(newFlag(newUintValue(p), opts))
+}
+
+func Uint(register Register, name string, options ...FlagOptionApplyer) *uint {
+	p := new(uint)
+	_ = UintVar(register, p, name, options...)
 	return p
 }

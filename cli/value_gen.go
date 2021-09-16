@@ -26,6 +26,206 @@ func (v *boolValue) String() string { return strconv.FormatBool(bool(*v)) }
 
 func (*boolValue) Type() string { return "bool" }
 
+// uint8
+
+var (
+	_ Value  = (*uint8Value)(nil)
+	_ Getter = (*uint8Value)(nil)
+	_ Typer  = (*uint8Value)(nil)
+)
+
+type uint8Value uint8
+
+func newUint8Value(p *uint8) *uint8Value {
+	return (*uint8Value)(p)
+}
+
+func (v *uint8Value) Get() interface{} { return uint8(*v) }
+
+func (v *uint8Value) String() string { return strconv.FormatUint(uint64(*v), 10) }
+
+func (*uint8Value) Type() string { return "uint8" }
+
+// uint16
+
+var (
+	_ Value  = (*uint16Value)(nil)
+	_ Getter = (*uint16Value)(nil)
+	_ Typer  = (*uint16Value)(nil)
+)
+
+type uint16Value uint16
+
+func newUint16Value(p *uint16) *uint16Value {
+	return (*uint16Value)(p)
+}
+
+func (v *uint16Value) Get() interface{} { return uint16(*v) }
+
+func (v *uint16Value) String() string { return strconv.FormatUint(uint64(*v), 10) }
+
+func (*uint16Value) Type() string { return "uint16" }
+
+// uint32
+
+var (
+	_ Value  = (*uint32Value)(nil)
+	_ Getter = (*uint32Value)(nil)
+	_ Typer  = (*uint32Value)(nil)
+)
+
+type uint32Value uint32
+
+func newUint32Value(p *uint32) *uint32Value {
+	return (*uint32Value)(p)
+}
+
+func (v *uint32Value) Get() interface{} { return uint32(*v) }
+
+func (v *uint32Value) String() string { return strconv.FormatUint(uint64(*v), 10) }
+
+func (*uint32Value) Type() string { return "uint32" }
+
+// uint64
+
+var (
+	_ Value  = (*uint64Value)(nil)
+	_ Getter = (*uint64Value)(nil)
+	_ Typer  = (*uint64Value)(nil)
+)
+
+type uint64Value uint64
+
+func newUint64Value(p *uint64) *uint64Value {
+	return (*uint64Value)(p)
+}
+
+func (v *uint64Value) Get() interface{} { return uint64(*v) }
+
+func (v *uint64Value) String() string { return strconv.FormatUint(uint64(*v), 10) }
+
+func (*uint64Value) Type() string { return "uint64" }
+
+// int8
+
+var (
+	_ Value  = (*int8Value)(nil)
+	_ Getter = (*int8Value)(nil)
+	_ Typer  = (*int8Value)(nil)
+)
+
+type int8Value int8
+
+func newInt8Value(p *int8) *int8Value {
+	return (*int8Value)(p)
+}
+
+func (v *int8Value) Get() interface{} { return int8(*v) }
+
+func (v *int8Value) String() string { return strconv.FormatInt(int64(*v), 10) }
+
+func (*int8Value) Type() string { return "int8" }
+
+// int16
+
+var (
+	_ Value  = (*int16Value)(nil)
+	_ Getter = (*int16Value)(nil)
+	_ Typer  = (*int16Value)(nil)
+)
+
+type int16Value int16
+
+func newInt16Value(p *int16) *int16Value {
+	return (*int16Value)(p)
+}
+
+func (v *int16Value) Get() interface{} { return int16(*v) }
+
+func (v *int16Value) String() string { return strconv.FormatInt(int64(*v), 10) }
+
+func (*int16Value) Type() string { return "int16" }
+
+// int32
+
+var (
+	_ Value  = (*int32Value)(nil)
+	_ Getter = (*int32Value)(nil)
+	_ Typer  = (*int32Value)(nil)
+)
+
+type int32Value int32
+
+func newInt32Value(p *int32) *int32Value {
+	return (*int32Value)(p)
+}
+
+func (v *int32Value) Get() interface{} { return int32(*v) }
+
+func (v *int32Value) String() string { return strconv.FormatInt(int64(*v), 10) }
+
+func (*int32Value) Type() string { return "int32" }
+
+// int64
+
+var (
+	_ Value  = (*int64Value)(nil)
+	_ Getter = (*int64Value)(nil)
+	_ Typer  = (*int64Value)(nil)
+)
+
+type int64Value int64
+
+func newInt64Value(p *int64) *int64Value {
+	return (*int64Value)(p)
+}
+
+func (v *int64Value) Get() interface{} { return int64(*v) }
+
+func (v *int64Value) String() string { return strconv.FormatInt(int64(*v), 10) }
+
+func (*int64Value) Type() string { return "int64" }
+
+// float32
+
+var (
+	_ Value  = (*float32Value)(nil)
+	_ Getter = (*float32Value)(nil)
+	_ Typer  = (*float32Value)(nil)
+)
+
+type float32Value float32
+
+func newFloat32Value(p *float32) *float32Value {
+	return (*float32Value)(p)
+}
+
+func (v *float32Value) Get() interface{} { return float32(*v) }
+
+func (v *float32Value) String() string { return strconv.FormatFloat(float64(*v), 'g', -1, 32) }
+
+func (*float32Value) Type() string { return "float32" }
+
+// float64
+
+var (
+	_ Value  = (*float64Value)(nil)
+	_ Getter = (*float64Value)(nil)
+	_ Typer  = (*float64Value)(nil)
+)
+
+type float64Value float64
+
+func newFloat64Value(p *float64) *float64Value {
+	return (*float64Value)(p)
+}
+
+func (v *float64Value) Get() interface{} { return float64(*v) }
+
+func (v *float64Value) String() string { return strconv.FormatFloat(float64(*v), 'g', -1, 64) }
+
+func (*float64Value) Type() string { return "float64" }
+
 // string
 
 var (

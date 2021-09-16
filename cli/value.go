@@ -163,34 +163,114 @@ func parseBool(str string) (bool, error) {
 }
 
 // uint8
-// TODO
+
+func (u *uint8Value) Set(s string) error {
+	v, err := strconv.ParseUint(s, 0, 8)
+	if err != nil {
+		err = numError("uint8", err)
+	}
+	*u = uint8Value(v)
+	return err
+}
 
 // uint16
-// TODO
+
+func (u *uint16Value) Set(s string) error {
+	v, err := strconv.ParseUint(s, 0, 16)
+	if err != nil {
+		err = numError("uint16", err)
+	}
+	*u = uint16Value(v)
+	return err
+}
 
 // uint32
-// TODO
+
+func (u *uint32Value) Set(s string) error {
+	v, err := strconv.ParseUint(s, 0, 32)
+	if err != nil {
+		err = numError("uint32", err)
+	}
+	*u = uint32Value(v)
+	return err
+}
 
 // uint64
-// TODO
+
+func (u *uint64Value) Set(s string) error {
+	v, err := strconv.ParseUint(s, 0, 64)
+	if err != nil {
+		err = numError("uint64", err)
+	}
+	*u = uint64Value(v)
+	return err
+}
 
 // int8
-// TODO
+
+func (i *int8Value) Set(s string) error {
+	v, err := strconv.ParseInt(s, 0, 8)
+	if err != nil {
+		err = numError("int8", err)
+	}
+	*i = int8Value(v)
+	return err
+}
 
 // int16
-// TODO
+
+func (i *int16Value) Set(s string) error {
+	v, err := strconv.ParseInt(s, 0, 16)
+	if err != nil {
+		err = numError("int16", err)
+	}
+	*i = int16Value(v)
+	return err
+}
 
 // int32
-// TODO
+
+func (i *int32Value) Set(s string) error {
+	v, err := strconv.ParseInt(s, 0, 32)
+	if err != nil {
+		err = numError("int32", err)
+	}
+	*i = int32Value(v)
+	return err
+}
 
 // int64
-// TODO
+
+func (i *int64Value) Set(s string) error {
+	v, err := strconv.ParseInt(s, 0, 64)
+	if err != nil {
+		err = numError("int64", err)
+	}
+	*i = int64Value(v)
+	return err
+}
 
 // float32
-// TODO
+
+func (i *float32Value) Set(s string) error {
+	v, err := strconv.ParseFloat(s, 32)
+	if err != nil {
+		err = numError("float32", err)
+	}
+	*i = float32Value(v)
+	return err
+}
 
 // float64
-// TODO
+
+func (i *float64Value) Set(s string) error {
+	v, err := strconv.ParseFloat(s, 64)
+	if err != nil {
+		err = numError("float64", err)
+	}
+	*i = float64Value(v)
+	return err
+}
 
 // string
 

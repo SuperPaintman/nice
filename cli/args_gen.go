@@ -18,6 +18,166 @@ func BoolArg(register Register, name string, options ...ArgOptionApplyer) *bool 
 	return p
 }
 
+// uint8
+
+func Uint8ArgVar(register Register, p *uint8, name string, options ...ArgOptionApplyer) error {
+	var opts ArgOptions
+	opts.applyName(name)
+	opts.applyArgOptions(options)
+
+	return register.RegisterArg(newArg(newUint8Value(p), opts))
+}
+
+func Uint8Arg(register Register, name string, options ...ArgOptionApplyer) *uint8 {
+	p := new(uint8)
+	_ = Uint8ArgVar(register, p, name, options...)
+	return p
+}
+
+// uint16
+
+func Uint16ArgVar(register Register, p *uint16, name string, options ...ArgOptionApplyer) error {
+	var opts ArgOptions
+	opts.applyName(name)
+	opts.applyArgOptions(options)
+
+	return register.RegisterArg(newArg(newUint16Value(p), opts))
+}
+
+func Uint16Arg(register Register, name string, options ...ArgOptionApplyer) *uint16 {
+	p := new(uint16)
+	_ = Uint16ArgVar(register, p, name, options...)
+	return p
+}
+
+// uint32
+
+func Uint32ArgVar(register Register, p *uint32, name string, options ...ArgOptionApplyer) error {
+	var opts ArgOptions
+	opts.applyName(name)
+	opts.applyArgOptions(options)
+
+	return register.RegisterArg(newArg(newUint32Value(p), opts))
+}
+
+func Uint32Arg(register Register, name string, options ...ArgOptionApplyer) *uint32 {
+	p := new(uint32)
+	_ = Uint32ArgVar(register, p, name, options...)
+	return p
+}
+
+// uint64
+
+func Uint64ArgVar(register Register, p *uint64, name string, options ...ArgOptionApplyer) error {
+	var opts ArgOptions
+	opts.applyName(name)
+	opts.applyArgOptions(options)
+
+	return register.RegisterArg(newArg(newUint64Value(p), opts))
+}
+
+func Uint64Arg(register Register, name string, options ...ArgOptionApplyer) *uint64 {
+	p := new(uint64)
+	_ = Uint64ArgVar(register, p, name, options...)
+	return p
+}
+
+// int8
+
+func Int8ArgVar(register Register, p *int8, name string, options ...ArgOptionApplyer) error {
+	var opts ArgOptions
+	opts.applyName(name)
+	opts.applyArgOptions(options)
+
+	return register.RegisterArg(newArg(newInt8Value(p), opts))
+}
+
+func Int8Arg(register Register, name string, options ...ArgOptionApplyer) *int8 {
+	p := new(int8)
+	_ = Int8ArgVar(register, p, name, options...)
+	return p
+}
+
+// int16
+
+func Int16ArgVar(register Register, p *int16, name string, options ...ArgOptionApplyer) error {
+	var opts ArgOptions
+	opts.applyName(name)
+	opts.applyArgOptions(options)
+
+	return register.RegisterArg(newArg(newInt16Value(p), opts))
+}
+
+func Int16Arg(register Register, name string, options ...ArgOptionApplyer) *int16 {
+	p := new(int16)
+	_ = Int16ArgVar(register, p, name, options...)
+	return p
+}
+
+// int32
+
+func Int32ArgVar(register Register, p *int32, name string, options ...ArgOptionApplyer) error {
+	var opts ArgOptions
+	opts.applyName(name)
+	opts.applyArgOptions(options)
+
+	return register.RegisterArg(newArg(newInt32Value(p), opts))
+}
+
+func Int32Arg(register Register, name string, options ...ArgOptionApplyer) *int32 {
+	p := new(int32)
+	_ = Int32ArgVar(register, p, name, options...)
+	return p
+}
+
+// int64
+
+func Int64ArgVar(register Register, p *int64, name string, options ...ArgOptionApplyer) error {
+	var opts ArgOptions
+	opts.applyName(name)
+	opts.applyArgOptions(options)
+
+	return register.RegisterArg(newArg(newInt64Value(p), opts))
+}
+
+func Int64Arg(register Register, name string, options ...ArgOptionApplyer) *int64 {
+	p := new(int64)
+	_ = Int64ArgVar(register, p, name, options...)
+	return p
+}
+
+// float32
+
+func Float32ArgVar(register Register, p *float32, name string, options ...ArgOptionApplyer) error {
+	var opts ArgOptions
+	opts.applyName(name)
+	opts.applyArgOptions(options)
+
+	return register.RegisterArg(newArg(newFloat32Value(p), opts))
+}
+
+func Float32Arg(register Register, name string, options ...ArgOptionApplyer) *float32 {
+	p := new(float32)
+	_ = Float32ArgVar(register, p, name, options...)
+	return p
+}
+
+// float64
+
+func Float64ArgVar(register Register, p *float64, name string, options ...ArgOptionApplyer) error {
+	var opts ArgOptions
+	opts.applyName(name)
+	opts.applyArgOptions(options)
+
+	return register.RegisterArg(newArg(newFloat64Value(p), opts))
+}
+
+func Float64Arg(register Register, name string, options ...ArgOptionApplyer) *float64 {
+	p := new(float64)
+	_ = Float64ArgVar(register, p, name, options...)
+	return p
+}
+
 // string
 
 func StringArgVar(register Register, p *string, name string, options ...ArgOptionApplyer) error {
@@ -47,5 +207,21 @@ func IntArgVar(register Register, p *int, name string, options ...ArgOptionApply
 func IntArg(register Register, name string, options ...ArgOptionApplyer) *int {
 	p := new(int)
 	_ = IntArgVar(register, p, name, options...)
+	return p
+}
+
+// uint
+
+func UintArgVar(register Register, p *uint, name string, options ...ArgOptionApplyer) error {
+	var opts ArgOptions
+	opts.applyName(name)
+	opts.applyArgOptions(options)
+
+	return register.RegisterArg(newArg(newUintValue(p), opts))
+}
+
+func UintArg(register Register, name string, options ...ArgOptionApplyer) *uint {
+	p := new(uint)
+	_ = UintArgVar(register, p, name, options...)
 	return p
 }

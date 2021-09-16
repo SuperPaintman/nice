@@ -2,19 +2,19 @@
 
 flags = [
     ("bool", "Bool"),
-    # ("uint8", "Uint8"),
-    # ("uint16", "Uint16"),
-    # ("uint32", "Uint32"),
-    # ("uint64", "Uint64"),
-    # ("int8", "Int8"),
-    # ("int16", "Int16"),
-    # ("int32", "Int32"),
-    # ("int64", "Int64"),
-    # ("float32", "Float32"),
-    # ("float64", "Float64"),
+    ("uint8", "Uint8"),
+    ("uint16", "Uint16"),
+    ("uint32", "Uint32"),
+    ("uint64", "Uint64"),
+    ("int8", "Int8"),
+    ("int16", "Int16"),
+    ("int32", "Int32"),
+    ("int64", "Int64"),
+    ("float32", "Float32"),
+    ("float64", "Float64"),
     ("string", "String"),
     ("int", "Int"),
-    # ("uint", "Uint"),
+    ("uint", "Uint"),
     # TODO: Duration
     # TODO: Func
 ]
