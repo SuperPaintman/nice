@@ -66,13 +66,13 @@ type Typer interface {
 	Type() string
 }
 
+// bool
+
 var (
 	_ Value  = (*boolValue)(nil)
 	_ Getter = (*boolValue)(nil)
 	_ Typer  = (*boolValue)(nil)
 )
-
-// bool
 
 type boolValue bool
 
@@ -104,12 +104,6 @@ type boolFlag interface {
 	Value
 	IsBoolFlag() bool
 }
-
-var (
-	_ Value  = (*intValue)(nil)
-	_ Getter = (*intValue)(nil)
-	_ Typer  = (*intValue)(nil)
-)
 
 const maxBoolStringLen = len("false") // "1 byte", no, yes, true, false
 
@@ -218,13 +212,13 @@ func parseBool(str string) (bool, error) {
 
 // string
 
-type stringValue string
-
 var (
 	_ Value  = (*stringValue)(nil)
 	_ Getter = (*stringValue)(nil)
 	_ Typer  = (*stringValue)(nil)
 )
+
+type stringValue string
 
 func newStringValue(p *string) *stringValue {
 	return (*stringValue)(p)
@@ -242,6 +236,12 @@ func (s *stringValue) String() string { return string(*s) }
 func (s *stringValue) Type() string { return "string" }
 
 // int
+
+var (
+	_ Value  = (*intValue)(nil)
+	_ Getter = (*intValue)(nil)
+	_ Typer  = (*intValue)(nil)
+)
 
 type intValue int
 
