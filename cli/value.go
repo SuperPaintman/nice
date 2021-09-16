@@ -72,6 +72,8 @@ var (
 	_ Typer  = (*boolValue)(nil)
 )
 
+// bool
+
 type boolValue bool
 
 func newBoolValue(p *bool) *boolValue {
@@ -108,50 +110,6 @@ var (
 	_ Getter = (*intValue)(nil)
 	_ Typer  = (*intValue)(nil)
 )
-
-type intValue int
-
-func newIntValue(p *int) *intValue {
-	return (*intValue)(p)
-}
-
-func (i *intValue) Set(s string) error {
-	v, err := strconv.ParseInt(s, 0, strconv.IntSize)
-	if err != nil {
-		err = numError("int", err)
-	}
-	*i = intValue(v)
-	return err
-}
-
-func (i *intValue) Get() interface{} { return int(*i) }
-
-func (i *intValue) String() string { return strconv.Itoa(int(*i)) }
-
-func (i *intValue) Type() string { return "int" }
-
-type stringValue string
-
-var (
-	_ Value  = (*stringValue)(nil)
-	_ Getter = (*stringValue)(nil)
-	_ Typer  = (*stringValue)(nil)
-)
-
-func newStringValue(p *string) *stringValue {
-	return (*stringValue)(p)
-}
-
-func (s *stringValue) Set(val string) error {
-	*s = stringValue(val)
-	return nil
-}
-
-func (s *stringValue) Get() interface{} { return string(*s) }
-
-func (s *stringValue) String() string { return string(*s) }
-
-func (s *stringValue) Type() string { return "string" }
 
 const maxBoolStringLen = len("false") // "1 byte", no, yes, true, false
 
@@ -227,3 +185,84 @@ func parseBool(str string) (bool, error) {
 
 	return false, ErrSyntax
 }
+
+// uint8
+// TODO
+
+// uint16
+// TODO
+
+// uint32
+// TODO
+
+// uint64
+// TODO
+
+// int8
+// TODO
+
+// int16
+// TODO
+
+// int32
+// TODO
+
+// int64
+// TODO
+
+// float32
+// TODO
+
+// float64
+// TODO
+
+// string
+
+type stringValue string
+
+var (
+	_ Value  = (*stringValue)(nil)
+	_ Getter = (*stringValue)(nil)
+	_ Typer  = (*stringValue)(nil)
+)
+
+func newStringValue(p *string) *stringValue {
+	return (*stringValue)(p)
+}
+
+func (s *stringValue) Set(val string) error {
+	*s = stringValue(val)
+	return nil
+}
+
+func (s *stringValue) Get() interface{} { return string(*s) }
+
+func (s *stringValue) String() string { return string(*s) }
+
+func (s *stringValue) Type() string { return "string" }
+
+// int
+
+type intValue int
+
+func newIntValue(p *int) *intValue {
+	return (*intValue)(p)
+}
+
+func (i *intValue) Set(s string) error {
+	v, err := strconv.ParseInt(s, 0, strconv.IntSize)
+	if err != nil {
+		err = numError("int", err)
+	}
+	*i = intValue(v)
+	return err
+}
+
+func (i *intValue) Get() interface{} { return int(*i) }
+
+func (i *intValue) String() string { return strconv.Itoa(int(*i)) }
+
+func (i *intValue) Type() string { return "int" }
+
+// uint
+// TODO
