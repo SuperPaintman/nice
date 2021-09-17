@@ -457,5 +457,9 @@ func isNumber(s string) bool {
 		return true
 	}
 
+	if _, err := strconv.ParseUint(s, 0, 0); err == nil {
+		return true
+	}
+
 	return false
 }

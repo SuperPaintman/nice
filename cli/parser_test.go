@@ -7,6 +7,7 @@ import (
 	"reflect"
 	"strconv"
 	"testing"
+	"unsafe"
 )
 
 const (
@@ -71,6 +72,83 @@ var (
 		{"0b10111011", uint(0b10111011)},
 		{strconv.FormatUint(uint64(maxUint), 10), uint(maxUint)},
 		{strconv.FormatUint(uint64(minUint), 10), uint(minUint)},
+	}
+)
+
+type commonBroken struct {
+	name  string
+	value string
+	want  error
+}
+
+const (
+	float32MaxOverflowValue = "3.40282e+39"          // 3.40282e+38
+	float64MaxOverflowValue = "1.79769e+309"         // 1.79769e+308
+	int32MaxOverflowValue   = "2147483648"           // 2147483647
+	int64MaxOverflowValue   = "9223372036854775808"  // 9223372036854775807
+	int32MinOverflowValue   = "-2147483649"          // -2147483648
+	int64MinOverflowValue   = "9223372036854775809"  // -9223372036854775808
+	uint32MaxOverflowValue  = "4294967296"           // 4294967295
+	uint64MaxOverflowValue  = "18446744073709551616" // 18446744073709551615
+)
+
+func intMaxOverflowValue() string {
+	if unsafe.Sizeof(int(0)) == unsafe.Sizeof(int32(0)) {
+		return int32MaxOverflowValue
+	} else {
+		return int64MaxOverflowValue
+	}
+}
+
+func intMinOverflowValue() string {
+	if unsafe.Sizeof(int(0)) == unsafe.Sizeof(int32(0)) {
+		return int32MinOverflowValue
+	} else {
+		return int64MinOverflowValue
+	}
+}
+
+func uintMaxOverflowValue() string {
+	if unsafe.Sizeof(uint(0)) == unsafe.Sizeof(uint32(0)) {
+		return uint32MaxOverflowValue
+	} else {
+		return uint64MaxOverflowValue
+	}
+}
+
+var (
+	commonFloat64Brokens = []commonBroken{
+		{"empty", "", &ParseError{Type: "float64", Err: ErrSyntax}},
+		{"not float64-like", "abcd", &ParseError{Type: "float64", Err: ErrSyntax}},
+		{"broken float64", "12.43a", &ParseError{Type: "float64", Err: ErrSyntax}},
+		{"true", "true", &ParseError{Type: "float64", Err: ErrSyntax}},
+		{"false", "false", &ParseError{Type: "float64", Err: ErrSyntax}},
+		{"float64 max overflow", float64MaxOverflowValue, &ParseError{Type: "float64", Err: ErrRange}},
+	}
+
+	commonIntBrokens = []commonBroken{
+		{"empty", "", &ParseError{Type: "int", Err: ErrSyntax}},
+		{"not int-like", "abcd", &ParseError{Type: "int", Err: ErrSyntax}},
+		{"broken int", "1337a", &ParseError{Type: "int", Err: ErrSyntax}},
+		{"true", "true", &ParseError{Type: "int", Err: ErrSyntax}},
+		{"false", "false", &ParseError{Type: "int", Err: ErrSyntax}},
+		{"float", "12.34", &ParseError{Type: "int", Err: ErrSyntax}},
+		{"negative float", "-43.21", &ParseError{Type: "int", Err: ErrSyntax}},
+		{"int max overflow", intMaxOverflowValue(), &ParseError{Type: "int", Err: ErrRange}},
+		{"int min overflow", intMinOverflowValue(), &ParseError{Type: "int", Err: ErrRange}},
+	}
+
+	commonUintBrokens = []commonBroken{
+		{"empty", "", &ParseError{Type: "uint", Err: ErrSyntax}},
+		{"not uint-like", "abcd", &ParseError{Type: "uint", Err: ErrSyntax}},
+		{"broken uint", "1337a", &ParseError{Type: "uint", Err: ErrSyntax}},
+		{"true", "true", &ParseError{Type: "uint", Err: ErrSyntax}},
+		{"false", "false", &ParseError{Type: "uint", Err: ErrSyntax}},
+		{"negative int", "-7331", &ParseError{Type: "uint", Err: ErrSyntax}},
+		{"float", "12.34", &ParseError{Type: "uint", Err: ErrSyntax}},
+		{"negative float", "-43.21", &ParseError{Type: "uint", Err: ErrSyntax}},
+		{"uint max overflow", uintMaxOverflowValue(), &ParseError{Type: "uint", Err: ErrRange}},
+		{"uint min overflow", "-0", &ParseError{Type: "uint", Err: ErrSyntax}},
 	}
 )
 
@@ -271,6 +349,44 @@ func TestParseFlags_broken_value(t *testing.T) {
 		want error
 	}
 
+	mergeTestValues := func(tvss ...[]testValue) []testValue {
+		t.Helper()
+
+		var all []testValue
+
+		for _, tvs := range tvss {
+			all = append(all, tvs...)
+		}
+
+		return all
+	}
+
+	commonBrokensToTestValues := func(vals []commonBroken) []testValue {
+		t.Helper()
+
+		tvs := make([]testValue, 0, len(vals)*2)
+
+		// value.
+		for _, v := range vals {
+			tvs = append(tvs, testValue{
+				name: v.name + " value",
+				args: []string{"-t=" + v.value},
+				want: v.want,
+			})
+		}
+
+		// next arg
+		for _, v := range vals {
+			tvs = append(tvs, testValue{
+				name: v.name + " next arg",
+				args: []string{"-t", v.value},
+				want: v.want,
+			})
+		}
+
+		return tvs
+	}
+
 	tt := []struct {
 		name  string
 		setup func(Register) interface{}
@@ -288,77 +404,66 @@ func TestParseFlags_broken_value(t *testing.T) {
 						Err:  ErrSyntax,
 					},
 				},
+				{
+					name: "not bool-like value 2",
+					args: []string{"-t=2"},
+					want: &ParseError{
+						Type: "bool",
+						Err:  ErrSyntax,
+					},
+				},
 			},
+		},
+		{
+			name:  "Float64",
+			setup: func(r Register) interface{} { return Float64(r, "t") },
+			tests: mergeTestValues(
+				[]testValue{
+					{
+						name: "without value",
+						args: []string{"-t"},
+						want: &ParseError{
+							Type: "float64",
+							Err:  ErrSyntax,
+						},
+					},
+				},
+				commonBrokensToTestValues(commonFloat64Brokens),
+			),
 		},
 		{
 			name:  "Int",
 			setup: func(r Register) interface{} { return Int(r, "t") },
-			tests: []testValue{
-				{
-					name: "not int-like next arg",
-					args: []string{"-t", "abcd"},
-					want: &ParseError{
-						Type: "int",
-						Err:  ErrSyntax,
+			tests: mergeTestValues(
+				[]testValue{
+					{
+						name: "without value",
+						args: []string{"-t"},
+						want: &ParseError{
+							Type: "int",
+							Err:  ErrSyntax,
+						},
 					},
 				},
-				{
-					name: "int overflow",
-					args: []string{"-t", "99999999999999999999999999"},
-					want: &ParseError{
-						Type: "int",
-						Err:  ErrRange,
+				commonBrokensToTestValues(commonIntBrokens),
+			),
+		},
+		{
+			name:  "Uint",
+			setup: func(r Register) interface{} { return Uint(r, "t") },
+			tests: mergeTestValues(
+				[]testValue{
+					{
+						name: "without value",
+						args: []string{"-t"},
+						want: &ParseError{
+							Type: "uint",
+							Err:  ErrSyntax,
+						},
 					},
 				},
-				{
-					name: "int negative overflow",
-					args: []string{"-t", "-99999999999999999999999999"},
-					want: &ParseError{
-						Type: "int",
-						Err:  ErrRange,
-					},
-				},
-				{
-					name: "bool next arg",
-					args: []string{"-t", "true"},
-					want: &ParseError{
-						Type: "int",
-						Err:  ErrSyntax,
-					},
-				},
-				{
-					name: "float next arg",
-					args: []string{"-t", "12.34"},
-					want: &ParseError{
-						Type: "int",
-						Err:  ErrSyntax,
-					},
-				},
-				{
-					name: "without value",
-					args: []string{"-t"},
-					want: &ParseError{
-						Type: "int",
-						Err:  ErrSyntax,
-					},
-				},
-				{
-					name: "empty value",
-					args: []string{"-t", ""},
-					want: &ParseError{
-						Type: "int",
-						Err:  ErrSyntax,
-					},
-				},
-				{
-					name: "next flag",
-					args: []string{"-t", "-b"},
-					want: &ParseError{
-						Type: "int",
-						Err:  ErrSyntax,
-					},
-				},
-			},
+				commonBrokensToTestValues(commonUintBrokens),
+			),
 		},
 		{
 			name:  "String",
@@ -499,64 +604,89 @@ func TestParseArgs_broken_value(t *testing.T) {
 		want error
 	}
 
+	mergeTestValues := func(tvss ...[]testValue) []testValue {
+		t.Helper()
+
+		var all []testValue
+
+		for _, tvs := range tvss {
+			all = append(all, tvs...)
+		}
+
+		return all
+	}
+
+	commonBrokensToTestValues := func(vals []commonBroken) []testValue {
+		t.Helper()
+
+		tvs := make([]testValue, 0, len(vals))
+
+		for _, v := range vals {
+			tvs = append(tvs, testValue{
+				name: v.name,
+				args: []string{v.value},
+				want: v.want,
+			})
+		}
+
+		return tvs
+	}
+
 	tt := []struct {
 		name  string
 		setup func(Register) interface{}
 		tests []testValue
 	}{
 		{
-			name:  "IntArg",
-			setup: func(r Register) interface{} { return IntArg(r, "t") },
+			name:  "BoolArg",
+			setup: func(r Register) interface{} { return BoolArg(r, "t") },
 			tests: []testValue{
-				{
-					name: "not int-like",
-					args: []string{"abcd"},
-					want: &ParseError{
-						Type: "int",
-						Err:  ErrSyntax,
-					},
-				},
-				{
-					name: "int overflow",
-					args: []string{"99999999999999999999999999"},
-					want: &ParseError{
-						Type: "int",
-						Err:  ErrRange,
-					},
-				},
-				{
-					name: "int negative overflow",
-					args: []string{"-99999999999999999999999999"},
-					want: &ParseError{
-						Type: "int",
-						Err:  ErrRange,
-					},
-				},
-				{
-					name: "bool",
-					args: []string{"true"},
-					want: &ParseError{
-						Type: "int",
-						Err:  ErrSyntax,
-					},
-				},
-				{
-					name: "float",
-					args: []string{"12.34"},
-					want: &ParseError{
-						Type: "int",
-						Err:  ErrSyntax,
-					},
-				},
 				{
 					name: "empty",
 					args: []string{""},
 					want: &ParseError{
-						Type: "int",
+						Type: "bool",
+						Err:  ErrSyntax,
+					},
+				},
+				{
+					name: "not bool-like",
+					args: []string{"abcd"},
+					want: &ParseError{
+						Type: "bool",
+						Err:  ErrSyntax,
+					},
+				},
+				{
+					name: "not bool-like 2",
+					args: []string{"2"},
+					want: &ParseError{
+						Type: "bool",
 						Err:  ErrSyntax,
 					},
 				},
 			},
+		},
+		{
+			name:  "Float64Arg",
+			setup: func(r Register) interface{} { return Float64Arg(r, "t") },
+			tests: mergeTestValues(
+				commonBrokensToTestValues(commonFloat64Brokens),
+			),
+		},
+		{
+			name:  "IntArg",
+			setup: func(r Register) interface{} { return IntArg(r, "t") },
+			tests: mergeTestValues(
+				commonBrokensToTestValues(commonIntBrokens),
+			),
+		},
+		{
+			name:  "UintArg",
+			setup: func(r Register) interface{} { return UintArg(r, "t") },
+			tests: mergeTestValues(
+				commonBrokensToTestValues(commonUintBrokens),
+			),
 		},
 		{
 			name:  "StringArg",
