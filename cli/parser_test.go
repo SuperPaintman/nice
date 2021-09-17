@@ -3,8 +3,17 @@ package cli
 import (
 	"errors"
 	"fmt"
+	"math"
 	"reflect"
+	"strconv"
 	"testing"
+)
+
+const (
+	maxUint = ^uint(0)
+	minUint = 0
+	maxInt  = int(maxUint >> 1)
+	minInt  = -maxInt - 1
 )
 
 func deref(t *testing.T, ptr interface{}) interface{} {
@@ -18,11 +27,96 @@ func deref(t *testing.T, ptr interface{}) interface{} {
 	return v.Elem().Interface()
 }
 
+type commonValue struct {
+	value string
+	want  interface{}
+}
+
+var (
+	commonBoolValues = []commonValue{
+		{"true", true},
+		{"Y", true},
+		{"1", true},
+		{"false", false},
+		{"F", false},
+		{"0", false},
+	}
+
+	commonFloat64Values = []commonValue{
+		{"0", 0.0},
+		{"-0", 0.0},
+		{"1337", 1337.0},
+		{"-7331", -7331.0},
+		{strconv.FormatFloat(math.MaxFloat64, 'g', -1, 64), math.MaxFloat64},
+		{strconv.FormatFloat(math.SmallestNonzeroFloat64, 'g', -1, 64), math.SmallestNonzeroFloat64},
+	}
+
+	commonIntValues = []commonValue{
+		{"0", 0},
+		{"-0", 0},
+		{"1337", 1337},
+		{"-7331", -7331},
+		{"0xABC", 0xABC},
+		{"-0xCBA", -0xCBA},
+		{"0b10111011", 0b10111011},
+		{"-0b11011101", -0b11011101},
+		{strconv.FormatInt(int64(maxInt), 10), maxInt},
+		{strconv.FormatInt(int64(minInt), 10), minInt},
+	}
+
+	commonUintValues = []commonValue{
+		{"0", uint(0)},
+		{"1337", uint(1337)},
+		{"0xABC", uint(0xABC)},
+		{"0b10111011", uint(0b10111011)},
+		{strconv.FormatUint(uint64(maxUint), 10), uint(maxUint)},
+		{strconv.FormatUint(uint64(minUint), 10), uint(minUint)},
+	}
+)
+
 func TestParseFlags(t *testing.T) {
 	type testValue struct {
 		name string
 		args []string
 		want interface{}
+	}
+
+	mergeTestValues := func(tvss ...[]testValue) []testValue {
+		t.Helper()
+
+		var all []testValue
+
+		for _, tvs := range tvss {
+			all = append(all, tvs...)
+		}
+
+		return all
+	}
+
+	commonValuesToTestValues := func(vals []commonValue) []testValue {
+		t.Helper()
+
+		tvs := make([]testValue, 0, len(vals)*2)
+
+		// value.
+		for _, v := range vals {
+			tvs = append(tvs, testValue{
+				name: v.value + " value",
+				args: []string{"-t=" + v.value},
+				want: v.want,
+			})
+		}
+
+		// next arg
+		for _, v := range vals {
+			tvs = append(tvs, testValue{
+				name: v.value + " next arg",
+				args: []string{"-t", v.value},
+				want: v.want,
+			})
+		}
+
+		return tvs
 	}
 
 	tt := []struct {
@@ -33,89 +127,47 @@ func TestParseFlags(t *testing.T) {
 		{
 			name:  "Bool",
 			setup: func(r Register) interface{} { return Bool(r, "t") },
-			tests: []testValue{
-				{
-					name: "without value",
-					args: []string{"-t"},
-					want: true,
+			tests: mergeTestValues(
+				[]testValue{
+					{
+						name: "without value",
+						args: []string{"-t"},
+						want: true,
+					},
+					{
+						name: "empty value",
+						args: []string{"-t="},
+						want: false,
+					},
+					{
+						name: "skip not bool-like next arg",
+						args: []string{"-t", "abcd"},
+						want: true,
+					},
 				},
-				{
-					name: "empty value",
-					args: []string{"-t="},
-					want: false,
-				},
-				{
-					name: "true value",
-					args: []string{"-t=true"},
-					want: true,
-				},
-				{
-					name: "false value",
-					args: []string{"-t=false"},
-					want: false,
-				},
-				{
-					name: "false next arg",
-					args: []string{"-t", "false"},
-					want: false,
-				},
-				{
-					name: "true next arg",
-					args: []string{"-t", "true"},
-					want: true,
-				},
-				{
-					name: "skip not bool-like next arg",
-					args: []string{"-t", "abcd"},
-					want: true,
-				},
-			},
+				commonValuesToTestValues(commonBoolValues),
+			),
+		},
+		{
+			name:  "Float64",
+			setup: func(r Register) interface{} { return Float64(r, "t") },
+			tests: mergeTestValues(
+				commonValuesToTestValues(commonFloat64Values),
+			),
 		},
 		{
 			name:  "Int",
 			setup: func(r Register) interface{} { return Int(r, "t") },
-			tests: []testValue{
-				{
-					name: "0 value",
-					args: []string{"-t=0"},
-					want: 0,
-				},
-				{
-					name: "-0 value",
-					args: []string{"-t=-0"},
-					want: 0,
-				},
-				{
-					name: "1337 value",
-					args: []string{"-t=1337"},
-					want: 1337,
-				},
-				{
-					name: "-7331 value",
-					args: []string{"-t=-7331"},
-					want: -7331,
-				},
-				{
-					name: "0 next arg",
-					args: []string{"-t", "0"},
-					want: 0,
-				},
-				{
-					name: "-0 next arg",
-					args: []string{"-t", "-0"},
-					want: 0,
-				},
-				{
-					name: "1337 next arg",
-					args: []string{"-t", "1337"},
-					want: 1337,
-				},
-				{
-					name: "-7331 next arg",
-					args: []string{"-t", "-7331"},
-					want: -7331,
-				},
-			},
+			tests: mergeTestValues(
+				commonValuesToTestValues(commonIntValues),
+			),
+		},
+		{
+			name:  "Uint",
+			setup: func(r Register) interface{} { return Uint(r, "t") },
+			tests: mergeTestValues(
+				commonValuesToTestValues(commonUintValues),
+			),
 		},
 		{
 			name:  "String",
@@ -339,36 +391,66 @@ func TestParseArgs(t *testing.T) {
 		want interface{}
 	}
 
+	mergeTestValues := func(tvss ...[]testValue) []testValue {
+		t.Helper()
+
+		var all []testValue
+
+		for _, tvs := range tvss {
+			all = append(all, tvs...)
+		}
+
+		return all
+	}
+
+	commonValuesToTestValues := func(vals []commonValue) []testValue {
+		t.Helper()
+
+		tvs := make([]testValue, 0, len(vals))
+
+		for _, v := range vals {
+			tvs = append(tvs, testValue{
+				name: v.value,
+				args: []string{v.value},
+				want: v.want,
+			})
+		}
+
+		return tvs
+	}
+
 	tt := []struct {
 		name  string
 		setup func(Register) interface{}
 		tests []testValue
 	}{
 		{
+			name:  "BoolArg",
+			setup: func(r Register) interface{} { return BoolArg(r, "t") },
+			tests: mergeTestValues(
+				commonValuesToTestValues(commonBoolValues),
+			),
+		},
+		{
+			name:  "Float64Arg",
+			setup: func(r Register) interface{} { return Float64Arg(r, "t") },
+			tests: mergeTestValues(
+				commonValuesToTestValues(commonFloat64Values),
+			),
+		},
+		{
 			name:  "IntArg",
 			setup: func(r Register) interface{} { return IntArg(r, "t") },
-			tests: []testValue{
-				{
-					name: "0",
-					args: []string{"0"},
-					want: 0,
-				},
-				{
-					name: "-0",
-					args: []string{"-0"},
-					want: 0,
-				},
-				{
-					name: "1337",
-					args: []string{"1337"},
-					want: 1337,
-				},
-				{
-					name: "-7331",
-					args: []string{"-7331"},
-					want: -7331,
-				},
-			},
+			tests: mergeTestValues(
+				commonValuesToTestValues(commonIntValues),
+			),
+		},
+		{
+			name:  "UintArg",
+			setup: func(r Register) interface{} { return UintArg(r, "t") },
+			tests: mergeTestValues(
+				commonValuesToTestValues(commonUintValues),
+			),
 		},
 		{
 			name:  "StringArg",
