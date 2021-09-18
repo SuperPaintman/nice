@@ -7,29 +7,33 @@ import (
 	"strings"
 )
 
-type ParseArgError struct {
-	Arg string
-	Err error
+type ParseFlagError struct {
+	Name string
+	Err  error
 }
 
-func (e *ParseArgError) Error() string {
+func (e *ParseFlagError) Error() string {
 	msg := "unknown error"
 	if e.Err != nil {
 		msg = e.Err.Error()
 	}
 
-	return fmt.Sprintf("parse arg error: %s: %s", e.Arg, msg)
+	return fmt.Sprintf("parse flag error: '%s': %s", e.Name, msg)
 }
 
-func (e *ParseArgError) Unwrap() error { return e.Err }
+func (e *ParseFlagError) Unwrap() error { return e.Err }
 
-func (e *ParseArgError) Is(err error) bool {
-	pe, ok := err.(*ParseArgError)
-	return ok && pe.Arg == e.Arg && errors.Is(pe.Err, e.Err)
+func (e *ParseFlagError) Is(err error) bool {
+	pe, ok := err.(*ParseFlagError)
+	return ok && pe.Name == e.Name && errors.Is(pe.Err, e.Err)
 }
 
 type DuplicatedFlagError struct {
 	Flag *Flag
+}
+
+func (e *DuplicatedFlagError) Error() string {
+	return fmt.Sprintf("duplicated flag: %s", e.Flag.String())
 }
 
 func (e *DuplicatedFlagError) Is(err error) bool {
@@ -37,21 +41,17 @@ func (e *DuplicatedFlagError) Is(err error) bool {
 	return ok && pe.Flag == e.Flag
 }
 
-func (e *DuplicatedFlagError) Error() string {
-	return fmt.Sprintf("duplicated flag: %s", e.Flag.String())
-}
-
 type DuplicatedArgError struct {
 	Arg *Arg
+}
+
+func (e *DuplicatedArgError) Error() string {
+	return fmt.Sprintf("duplicated arg: %s", e.Arg.String())
 }
 
 func (e *DuplicatedArgError) Is(err error) bool {
 	pe, ok := err.(*DuplicatedArgError)
 	return ok && pe.Arg == e.Arg
-}
-
-func (e *DuplicatedArgError) Error() string {
-	return fmt.Sprintf("duplicated arg: %s", e.Arg.String())
 }
 
 type Register interface {
@@ -341,9 +341,9 @@ func (p *DefaultParser) Parse(commander Commander, arguments []string) error {
 
 		name := arg[numMinuses:]
 		if len(name) == 0 || name[0] == '-' || name[0] == '=' || name[0] == ' ' {
-			return &ParseArgError{
-				Arg: arg,
-				Err: ErrSyntax,
+			return &ParseFlagError{
+				Name: name,
+				Err:  ErrSyntax,
 			}
 		}
 

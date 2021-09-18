@@ -345,9 +345,9 @@ func BenchmarkParseBool(b *testing.B) {
 	}
 }
 
-func TestParseError_Unwrap(t *testing.T) {
+func TestParseValueError_Unwrap(t *testing.T) {
 	underlying := errors.New("test underlying")
-	err := &ParseError{Type: "test", Err: underlying}
+	err := &ParseValueError{Type: "test", Err: underlying}
 
 	got := errors.Unwrap(err)
 	if got != underlying {
@@ -355,12 +355,12 @@ func TestParseError_Unwrap(t *testing.T) {
 	}
 }
 
-func TestParseError_Is(t *testing.T) {
+func TestParseValueError_Is(t *testing.T) {
 	underlying := errors.New("test underlying")
-	a := &ParseError{Type: "test", Err: underlying}
-	b := &ParseError{Type: "test", Err: underlying}
-	c := &ParseError{Type: "test", Err: errors.New("test another")}
-	d := &ParseError{Type: "test2", Err: underlying}
+	a := &ParseValueError{Type: "test", Err: underlying}
+	b := &ParseValueError{Type: "test", Err: underlying}
+	c := &ParseValueError{Type: "test", Err: errors.New("test another")}
+	d := &ParseValueError{Type: "test2", Err: underlying}
 
 	if !errors.Is(a, a) {
 		t.Errorf("Is(a, a): expected two pointers to the same error will be matched")
@@ -379,13 +379,13 @@ func TestParseError_Is(t *testing.T) {
 	}
 }
 
-func TestParseError_As(t *testing.T) {
+func TestParseValueError_As(t *testing.T) {
 	underlying := errors.New("test underlying")
 
-	err := fmt.Errorf("wrap error: %w", &ParseError{Type: "test", Err: underlying})
+	err := fmt.Errorf("wrap error: %w", &ParseValueError{Type: "test", Err: underlying})
 
-	want := &ParseError{Type: "test", Err: underlying}
-	got := &ParseError{}
+	want := &ParseValueError{Type: "test", Err: underlying}
+	got := &ParseValueError{}
 
 	if !errors.As(err, &got) {
 		t.Errorf("As(): expected errors will be matched")

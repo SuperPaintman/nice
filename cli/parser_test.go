@@ -118,37 +118,37 @@ func uintMaxOverflowValue() string {
 
 var (
 	commonFloat64Brokens = []commonBroken{
-		{"empty", "", &ParseError{Type: "float64", Err: ErrSyntax}},
-		{"not float64-like", "abcd", &ParseError{Type: "float64", Err: ErrSyntax}},
-		{"broken float64", "12.43a", &ParseError{Type: "float64", Err: ErrSyntax}},
-		{"true", "true", &ParseError{Type: "float64", Err: ErrSyntax}},
-		{"false", "false", &ParseError{Type: "float64", Err: ErrSyntax}},
-		{"float64 max overflow", float64MaxOverflowValue, &ParseError{Type: "float64", Err: ErrRange}},
+		{"empty", "", &ParseValueError{Type: "float64", Err: ErrSyntax}},
+		{"not float64-like", "abcd", &ParseValueError{Type: "float64", Err: ErrSyntax}},
+		{"broken float64", "12.43a", &ParseValueError{Type: "float64", Err: ErrSyntax}},
+		{"true", "true", &ParseValueError{Type: "float64", Err: ErrSyntax}},
+		{"false", "false", &ParseValueError{Type: "float64", Err: ErrSyntax}},
+		{"float64 max overflow", float64MaxOverflowValue, &ParseValueError{Type: "float64", Err: ErrRange}},
 	}
 
 	commonIntBrokens = []commonBroken{
-		{"empty", "", &ParseError{Type: "int", Err: ErrSyntax}},
-		{"not int-like", "abcd", &ParseError{Type: "int", Err: ErrSyntax}},
-		{"broken int", "1337a", &ParseError{Type: "int", Err: ErrSyntax}},
-		{"true", "true", &ParseError{Type: "int", Err: ErrSyntax}},
-		{"false", "false", &ParseError{Type: "int", Err: ErrSyntax}},
-		{"float", "12.34", &ParseError{Type: "int", Err: ErrSyntax}},
-		{"negative float", "-43.21", &ParseError{Type: "int", Err: ErrSyntax}},
-		{"int max overflow", intMaxOverflowValue(), &ParseError{Type: "int", Err: ErrRange}},
-		{"int min overflow", intMinOverflowValue(), &ParseError{Type: "int", Err: ErrRange}},
+		{"empty", "", &ParseValueError{Type: "int", Err: ErrSyntax}},
+		{"not int-like", "abcd", &ParseValueError{Type: "int", Err: ErrSyntax}},
+		{"broken int", "1337a", &ParseValueError{Type: "int", Err: ErrSyntax}},
+		{"true", "true", &ParseValueError{Type: "int", Err: ErrSyntax}},
+		{"false", "false", &ParseValueError{Type: "int", Err: ErrSyntax}},
+		{"float", "12.34", &ParseValueError{Type: "int", Err: ErrSyntax}},
+		{"negative float", "-43.21", &ParseValueError{Type: "int", Err: ErrSyntax}},
+		{"int max overflow", intMaxOverflowValue(), &ParseValueError{Type: "int", Err: ErrRange}},
+		{"int min overflow", intMinOverflowValue(), &ParseValueError{Type: "int", Err: ErrRange}},
 	}
 
 	commonUintBrokens = []commonBroken{
-		{"empty", "", &ParseError{Type: "uint", Err: ErrSyntax}},
-		{"not uint-like", "abcd", &ParseError{Type: "uint", Err: ErrSyntax}},
-		{"broken uint", "1337a", &ParseError{Type: "uint", Err: ErrSyntax}},
-		{"true", "true", &ParseError{Type: "uint", Err: ErrSyntax}},
-		{"false", "false", &ParseError{Type: "uint", Err: ErrSyntax}},
-		{"negative int", "-7331", &ParseError{Type: "uint", Err: ErrSyntax}},
-		{"float", "12.34", &ParseError{Type: "uint", Err: ErrSyntax}},
-		{"negative float", "-43.21", &ParseError{Type: "uint", Err: ErrSyntax}},
-		{"uint max overflow", uintMaxOverflowValue(), &ParseError{Type: "uint", Err: ErrRange}},
-		{"uint min overflow", "-0", &ParseError{Type: "uint", Err: ErrSyntax}},
+		{"empty", "", &ParseValueError{Type: "uint", Err: ErrSyntax}},
+		{"not uint-like", "abcd", &ParseValueError{Type: "uint", Err: ErrSyntax}},
+		{"broken uint", "1337a", &ParseValueError{Type: "uint", Err: ErrSyntax}},
+		{"true", "true", &ParseValueError{Type: "uint", Err: ErrSyntax}},
+		{"false", "false", &ParseValueError{Type: "uint", Err: ErrSyntax}},
+		{"negative int", "-7331", &ParseValueError{Type: "uint", Err: ErrSyntax}},
+		{"float", "12.34", &ParseValueError{Type: "uint", Err: ErrSyntax}},
+		{"negative float", "-43.21", &ParseValueError{Type: "uint", Err: ErrSyntax}},
+		{"uint max overflow", uintMaxOverflowValue(), &ParseValueError{Type: "uint", Err: ErrRange}},
+		{"uint min overflow", "-0", &ParseValueError{Type: "uint", Err: ErrSyntax}},
 	}
 )
 
@@ -399,7 +399,7 @@ func TestParseFlags_broken_value(t *testing.T) {
 				{
 					name: "not bool-like value",
 					args: []string{"-t=abcd"},
-					want: &ParseError{
+					want: &ParseValueError{
 						Type: "bool",
 						Err:  ErrSyntax,
 					},
@@ -407,7 +407,7 @@ func TestParseFlags_broken_value(t *testing.T) {
 				{
 					name: "not bool-like value 2",
 					args: []string{"-t=2"},
-					want: &ParseError{
+					want: &ParseValueError{
 						Type: "bool",
 						Err:  ErrSyntax,
 					},
@@ -422,7 +422,7 @@ func TestParseFlags_broken_value(t *testing.T) {
 					{
 						name: "without value",
 						args: []string{"-t"},
-						want: &ParseError{
+						want: &ParseValueError{
 							Type: "float64",
 							Err:  ErrSyntax,
 						},
@@ -439,7 +439,7 @@ func TestParseFlags_broken_value(t *testing.T) {
 					{
 						name: "without value",
 						args: []string{"-t"},
-						want: &ParseError{
+						want: &ParseValueError{
 							Type: "int",
 							Err:  ErrSyntax,
 						},
@@ -456,7 +456,7 @@ func TestParseFlags_broken_value(t *testing.T) {
 					{
 						name: "without value",
 						args: []string{"-t"},
-						want: &ParseError{
+						want: &ParseValueError{
 							Type: "uint",
 							Err:  ErrSyntax,
 						},
@@ -644,7 +644,7 @@ func TestParseArgs_broken_value(t *testing.T) {
 				{
 					name: "empty",
 					args: []string{""},
-					want: &ParseError{
+					want: &ParseValueError{
 						Type: "bool",
 						Err:  ErrSyntax,
 					},
@@ -652,7 +652,7 @@ func TestParseArgs_broken_value(t *testing.T) {
 				{
 					name: "not bool-like",
 					args: []string{"abcd"},
-					want: &ParseError{
+					want: &ParseValueError{
 						Type: "bool",
 						Err:  ErrSyntax,
 					},
@@ -660,7 +660,7 @@ func TestParseArgs_broken_value(t *testing.T) {
 				{
 					name: "not bool-like 2",
 					args: []string{"2"},
-					want: &ParseError{
+					want: &ParseValueError{
 						Type: "bool",
 						Err:  ErrSyntax,
 					},
@@ -803,17 +803,17 @@ func TestParse_Parse_invalid_flags_syntax(t *testing.T) {
 		{
 			name: "extra dash",
 			arg:  "---test",
-			want: &ParseArgError{Arg: "---test", Err: ErrSyntax},
+			want: &ParseFlagError{Name: "-test", Err: ErrSyntax},
 		},
 		{
 			name: "equals after dash",
 			arg:  "--=val",
-			want: &ParseArgError{Arg: "--=val", Err: ErrSyntax},
+			want: &ParseFlagError{Name: "=val", Err: ErrSyntax},
 		},
 		{
 			name: "space after dash",
 			arg:  "-- val",
-			want: &ParseArgError{Arg: "-- val", Err: ErrSyntax},
+			want: &ParseFlagError{Name: " val", Err: ErrSyntax},
 		},
 	}
 

@@ -10,12 +10,12 @@ var ErrSyntax = errors.New("invalid syntax")
 
 var ErrRange = errors.New("value out of range")
 
-type ParseError struct {
+type ParseValueError struct {
 	Type string
 	Err  error
 }
 
-func (e *ParseError) Error() string {
+func (e *ParseValueError) Error() string {
 	msg := "unknown error"
 	if e.Err != nil {
 		msg = e.Err.Error()
@@ -24,10 +24,10 @@ func (e *ParseError) Error() string {
 	return fmt.Sprintf("parse %s error: %s", e.Type, msg)
 }
 
-func (e *ParseError) Unwrap() error { return e.Err }
+func (e *ParseValueError) Unwrap() error { return e.Err }
 
-func (e *ParseError) Is(err error) bool {
-	pe, ok := err.(*ParseError)
+func (e *ParseValueError) Is(err error) bool {
+	pe, ok := err.(*ParseValueError)
 	return ok && pe.Type == e.Type && errors.Is(pe.Err, e.Err)
 }
 
@@ -41,7 +41,7 @@ func numError(typ string, err error) error {
 		}
 	}
 
-	return &ParseError{
+	return &ParseValueError{
 		Type: typ,
 		Err:  err,
 	}
@@ -71,7 +71,7 @@ type Typer interface {
 func (b *boolValue) Set(s string) error {
 	v, err := parseBool(s)
 	if err != nil {
-		err = &ParseError{
+		err = &ParseValueError{
 			Type: "bool",
 			Err:  err,
 		}
