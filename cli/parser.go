@@ -7,6 +7,12 @@ import (
 	"strings"
 )
 
+var ErrDuplicate = errors.New("duplicate")
+
+var ErrMissingName = errors.New("missing name")
+
+var ErrInvalidName = errors.New("invalid name")
+
 type ParseFlagError struct {
 	Name string
 	Err  error
@@ -28,30 +34,59 @@ func (e *ParseFlagError) Is(err error) bool {
 	return ok && pe.Name == e.Name && errors.Is(pe.Err, e.Err)
 }
 
-type DuplicatedFlagError struct {
-	Flag *Flag
+type InvalidFlagError struct {
+	Short string
+	Long  string
+	Err   error
 }
 
-func (e *DuplicatedFlagError) Error() string {
-	return fmt.Sprintf("duplicated flag: %s", e.Flag.String())
+func (e *InvalidFlagError) Error() string {
+	name := e.Short
+	if e.Long != "" {
+		if name != "" {
+			name += "' '"
+		}
+		name += e.Long
+	}
+
+	msg := "unknown error"
+	if e.Err != nil {
+		msg = e.Err.Error()
+	}
+
+	if name == "" {
+		return fmt.Sprintf("broken flag: %s", msg)
+	} else {
+		return fmt.Sprintf("broken flag: '%s': %s", name, msg)
+	}
 }
 
-func (e *DuplicatedFlagError) Is(err error) bool {
-	pe, ok := err.(*DuplicatedFlagError)
-	return ok && pe.Flag == e.Flag
+func (e *InvalidFlagError) Is(err error) bool {
+	pe, ok := err.(*InvalidFlagError)
+	return ok && pe.Short == e.Short && pe.Long == e.Long && errors.Is(pe.Err, e.Err)
 }
 
-type DuplicatedArgError struct {
-	Arg *Arg
+type InvalidArgError struct {
+	Name string
+	Err  error
 }
 
-func (e *DuplicatedArgError) Error() string {
-	return fmt.Sprintf("duplicated arg: %s", e.Arg.String())
+func (e *InvalidArgError) Error() string {
+	msg := "unknown error"
+	if e.Err != nil {
+		msg = e.Err.Error()
+	}
+
+	if e.Name != "" {
+		return fmt.Sprintf("broken arg: %s", msg)
+	} else {
+		return fmt.Sprintf("broken arg: '%s': %s", e.Name, msg)
+	}
 }
 
-func (e *DuplicatedArgError) Is(err error) bool {
-	pe, ok := err.(*DuplicatedArgError)
-	return ok && pe.Arg == e.Arg
+func (e *InvalidArgError) Is(err error) bool {
+	pe, ok := err.(*InvalidArgError)
+	return ok && pe.Name == e.Name && errors.Is(pe.Err, e.Err)
 }
 
 type Register interface {
@@ -190,10 +225,6 @@ func (a *args) Nth(i int) (arg *Arg, ok bool) {
 }
 
 func (a *args) Add(arg Arg) {
-	if arg.Name == "" {
-		return
-	}
-
 	// Find already added arg.
 	idx, found := a.index[arg.Name]
 	if found {
@@ -228,24 +259,53 @@ type DefaultParser struct {
 
 	flags           flags
 	args            args
-	unknown         []string             // Unknown flags (without named flags).
-	rest            []string             // Other arguments (without named args).
-	registerFlagErr *DuplicatedFlagError // RegisterFlag first error.
-	registerArgErr  *DuplicatedArgError  // RegisterArg first error.
+	unknown         []string // Unknown flags (without named flags).
+	rest            []string // Other arguments (without named args).
+	registerFlagErr error    // RegisterFlag first error.
+	registerArgErr  error    // RegisterArg first error.
 }
 
-func (p *DefaultParser) RegisterFlag(flag Flag) error {
+func (p *DefaultParser) RegisterFlag(flag Flag) (err error) {
+	defer func() {
+		if err != nil && p.registerFlagErr == nil {
+			p.registerFlagErr = err
+		}
+	}()
+
+	// Check if short of long net is set.
+	if flag.Short == "" && flag.Long == "" {
+		return &InvalidFlagError{Err: ErrMissingName}
+	}
+
+	// Validate short flag.
+	if flag.Short != "" {
+		if !validShortFlag(flag.Short) {
+			return &InvalidFlagError{
+				Short: flag.Short,
+				Long:  flag.Long,
+				Err:   ErrInvalidName,
+			}
+		}
+	}
+
+	// Validate long flag.
+	if flag.Long != "" {
+		if !validLongFlag(flag.Long) {
+			return &InvalidFlagError{
+				Short: flag.Short,
+				Long:  flag.Long,
+				Err:   ErrInvalidName,
+			}
+		}
+	}
+
 	if !p.OverrideFlags {
 		if _, f, ok := p.flags.Find(flag.Long, flag.Short); ok {
-			err := &DuplicatedFlagError{
-				Flag: f,
+			return &InvalidFlagError{
+				Long:  f.Long,
+				Short: f.Short,
+				Err:   ErrDuplicate,
 			}
-
-			if p.registerFlagErr == nil {
-				p.registerFlagErr = err
-			}
-
-			return err
 		}
 	}
 
@@ -254,24 +314,104 @@ func (p *DefaultParser) RegisterFlag(flag Flag) error {
 	return nil
 }
 
-func (p *DefaultParser) RegisterArg(arg Arg) error {
+func validShortFlag(name string) bool {
+	if len(name) != 1 {
+		return false
+	}
+
+	if name[0] == '-' || name[0] == '=' || name[0] == ' ' {
+		return false
+	}
+
+	return true
+}
+
+func validLongFlag(name string) bool {
+	if len(name) < 1 {
+		return false
+	}
+
+	if name[0] == '-' || name[0] == '=' || name[0] == ' ' {
+		return false
+	}
+
+	// We need to iterate by bytes not by runes.
+	var foundValid bool
+	for i := 1; i < len(name); i++ {
+		c := name[i]
+
+		if !foundValid && c == '-' {
+			return false
+		}
+
+		if c == '=' || c == ' ' {
+			return false
+		}
+
+		foundValid = true
+	}
+
+	return true
+}
+
+func (p *DefaultParser) RegisterArg(arg Arg) (err error) {
+	defer func() {
+		if err != nil && p.registerArgErr == nil {
+			p.registerArgErr = err
+		}
+	}()
+
+	if arg.Name == "" {
+		return &InvalidArgError{Err: ErrMissingName}
+	}
+
+	if !validArg(arg.Name) {
+		return &InvalidArgError{
+			Name: arg.Name,
+			Err:  ErrInvalidName,
+		}
+	}
+
 	if !p.OverrideArgs {
-		if _, a, ok := p.args.Get(arg.Name); ok {
-			err := &DuplicatedArgError{
-				Arg: a,
+		if _, _, ok := p.args.Get(arg.Name); ok {
+			return &InvalidArgError{
+				Name: arg.Name,
+				Err:  ErrDuplicate,
 			}
-
-			if p.registerFlagErr == nil {
-				p.registerArgErr = err
-			}
-
-			return err
 		}
 	}
 
 	p.args.Add(arg)
 
 	return nil
+}
+
+func validArg(name string) bool {
+	if len(name) < 1 {
+		return false
+	}
+
+	if name[0] == '-' || name[0] == '=' || name[0] == ' ' {
+		return false
+	}
+
+	// We need to iterate by bytes not by runes.
+	var foundValid bool
+	for i := 1; i < len(name); i++ {
+		c := name[i]
+
+		if !foundValid && c == '-' {
+			return false
+		}
+
+		if c == '=' || c == ' ' {
+			return false
+		}
+
+		foundValid = true
+	}
+
+	return true
 }
 
 func (p *DefaultParser) Parse(commander Commander, arguments []string) error {

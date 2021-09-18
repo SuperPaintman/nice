@@ -716,15 +716,14 @@ func TestRegisterDuplicatedFlag(t *testing.T) {
 	var parser DefaultParser
 
 	_ = Bool(&parser, "a")
-	flag := &parser.Flags()[0]
-
 	_ = Int(&parser, "a")
 
 	args := []string{"-a", "100"}
 
 	got := parser.Parse(nil, args)
-	want := &DuplicatedFlagError{
-		Flag: flag,
+	want := &InvalidFlagError{
+		Short: "a",
+		Err:   ErrDuplicate,
 	}
 	if !errors.Is(got, want) {
 		t.Fatalf("Parse(): got error = %q, want error = %q", got, want)
@@ -757,15 +756,14 @@ func TestRegisterDuplicatedArg(t *testing.T) {
 	var parser DefaultParser
 
 	_ = StringArg(&parser, "a")
-	arg := &parser.Args()[0]
-
 	_ = IntArg(&parser, "a")
 
 	args := []string{"100"}
 
 	got := parser.Parse(nil, args)
-	want := &DuplicatedArgError{
-		Arg: arg,
+	want := &InvalidArgError{
+		Name: "a",
+		Err:  ErrDuplicate,
 	}
 	if !errors.Is(got, want) {
 		t.Fatalf("Parse(): got error = %q, want error = %q", got, want)
