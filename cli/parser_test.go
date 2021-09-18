@@ -794,6 +794,43 @@ func TestRegisterOverrideArg(t *testing.T) {
 	}
 }
 
+func TestParse_Parse_invalid_flags_syntax(t *testing.T) {
+	tt := []struct {
+		name string
+		arg  string
+		want error
+	}{
+		{
+			name: "extra dash",
+			arg:  "---test",
+			want: &ParseArgError{Arg: "---test", Err: ErrSyntax},
+		},
+		{
+			name: "equals after dash",
+			arg:  "--=val",
+			want: &ParseArgError{Arg: "--=val", Err: ErrSyntax},
+		},
+		{
+			name: "space after dash",
+			arg:  "-- val",
+			want: &ParseArgError{Arg: "-- val", Err: ErrSyntax},
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			var parser DefaultParser
+
+			args := []string{tc.arg}
+
+			err := parser.Parse(nil, args)
+			if !errors.Is(err, tc.want) {
+				t.Fatalf("Parse(%v): got error = %q, want error = %q", args, err, tc.want)
+			}
+		})
+	}
+}
+
 func TestParse_Parse_posix_style_short_flags(t *testing.T) {
 	var parser DefaultParser
 

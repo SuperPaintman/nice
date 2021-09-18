@@ -1,10 +1,32 @@
 package cli
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
 )
+
+type ParseArgError struct {
+	Arg string
+	Err error
+}
+
+func (e *ParseArgError) Error() string {
+	msg := "unknown error"
+	if e.Err != nil {
+		msg = e.Err.Error()
+	}
+
+	return fmt.Sprintf("parse arg error: %s: %s", e.Arg, msg)
+}
+
+func (e *ParseArgError) Unwrap() error { return e.Err }
+
+func (e *ParseArgError) Is(err error) bool {
+	pe, ok := err.(*ParseArgError)
+	return ok && pe.Arg == e.Arg && errors.Is(pe.Err, e.Err)
+}
 
 type DuplicatedFlagError struct {
 	Flag *Flag
@@ -318,8 +340,11 @@ func (p *DefaultParser) Parse(commander Commander, arguments []string) error {
 		shortFlag := numMinuses == 1 && !p.Universal
 
 		name := arg[numMinuses:]
-		if len(name) == 0 || name[0] == '-' || name[0] == '=' {
-			// return false, f.failf("bad flag syntax: %s", s)
+		if len(name) == 0 || name[0] == '-' || name[0] == '=' || name[0] == ' ' {
+			return &ParseArgError{
+				Arg: arg,
+				Err: ErrSyntax,
+			}
 		}
 
 		// Find a value.
