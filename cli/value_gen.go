@@ -4,6 +4,7 @@ package cli
 
 import (
 	"strconv"
+	"time"
 )
 
 // bool
@@ -285,3 +286,23 @@ func (v *uintValue) Get() interface{} { return uint(*v) }
 func (v *uintValue) String() string { return strconv.FormatUint(uint64(*v), 10) }
 
 func (*uintValue) Type() string { return "uint" }
+
+// time.Duration
+
+var (
+	_ Value  = (*timeDurationValue)(nil)
+	_ Getter = (*timeDurationValue)(nil)
+	_ Typer  = (*timeDurationValue)(nil)
+)
+
+type timeDurationValue time.Duration
+
+func newDurationValue(p *time.Duration) *timeDurationValue {
+	return (*timeDurationValue)(p)
+}
+
+func (v *timeDurationValue) Get() interface{} { return time.Duration(*v) }
+
+func (v *timeDurationValue) String() string { return strconv.FormatUint(uint64(*v), 10) }
+
+func (*timeDurationValue) Type() string { return "time.Duration" }

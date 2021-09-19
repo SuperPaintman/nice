@@ -2,6 +2,10 @@
 
 package cli
 
+import (
+	"time"
+)
+
 // []bool
 
 func BoolsVar(register Register, p *[]bool, name string, options ...FlagOptionApplyer) error {
@@ -223,5 +227,21 @@ func UintsVar(register Register, p *[]uint, name string, options ...FlagOptionAp
 func Uints(register Register, name string, options ...FlagOptionApplyer) *[]uint {
 	p := new([]uint)
 	_ = UintsVar(register, p, name, options...)
+	return p
+}
+
+// []time.Duration
+
+func DurationsVar(register Register, p *[]time.Duration, name string, options ...FlagOptionApplyer) error {
+	var opts FlagOptions
+	opts.applyName(name)
+	opts.applyFlagOptions(options)
+
+	return register.RegisterFlag(newFlag(newDurationValues(p), opts))
+}
+
+func Durations(register Register, name string, options ...FlagOptionApplyer) *[]time.Duration {
+	p := new([]time.Duration)
+	_ = DurationsVar(register, p, name, options...)
 	return p
 }

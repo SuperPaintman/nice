@@ -4,6 +4,7 @@ package cli
 
 import (
 	"strings"
+	"time"
 )
 
 // []bool
@@ -789,3 +790,59 @@ func (vs *uintValues) String() string {
 func (v *uintValues) Get() interface{} { return []uint(*v) }
 
 func (*uintValues) Type() string { return "[]uint" }
+
+// []time.Duration
+
+var (
+	_ Value  = (*timeDurationValues)(nil)
+	_ Getter = (*timeDurationValues)(nil)
+	_ Typer  = (*timeDurationValues)(nil)
+)
+
+type timeDurationValues []time.Duration
+
+func newDurationValues(p *[]time.Duration) *timeDurationValues {
+	return (*timeDurationValues)(p)
+}
+
+func (vs *timeDurationValues) Set(val string) error {
+	rest := val
+	for rest != "" {
+		idx := strings.IndexByte(rest, ',')
+		if idx != -1 {
+			val = rest[:idx]
+			rest = rest[idx+1:]
+		} else {
+			val = rest
+			rest = ""
+		}
+
+		var def time.Duration
+		*vs = append(*vs, def)
+		if err := (*timeDurationValue)(&(*vs)[len(*vs)-1]).Set(val); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (vs *timeDurationValues) String() string {
+	if len(*vs) == 0 {
+		return ""
+	}
+
+	var buf strings.Builder
+	_, _ = buf.WriteString((*timeDurationValue)(&(*vs)[0]).String())
+
+	for i := 1; i < len(*vs); i++ {
+		_ = buf.WriteByte(',')
+		_, _ = buf.WriteString((*timeDurationValue)(&(*vs)[i]).String())
+	}
+
+	return buf.String()
+}
+
+func (v *timeDurationValues) Get() interface{} { return []time.Duration(*v) }
+
+func (*timeDurationValues) Type() string { return "[]time.Duration" }

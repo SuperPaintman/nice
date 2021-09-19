@@ -2,6 +2,10 @@
 
 package cli
 
+import (
+	"time"
+)
+
 // bool
 
 func BoolArgVar(register Register, p *bool, name string, options ...ArgOptionApplyer) error {
@@ -223,5 +227,21 @@ func UintArgVar(register Register, p *uint, name string, options ...ArgOptionApp
 func UintArg(register Register, name string, options ...ArgOptionApplyer) *uint {
 	p := new(uint)
 	_ = UintArgVar(register, p, name, options...)
+	return p
+}
+
+// time.Duration
+
+func DurationArgVar(register Register, p *time.Duration, name string, options ...ArgOptionApplyer) error {
+	var opts ArgOptions
+	opts.applyName(name)
+	opts.applyArgOptions(options)
+
+	return register.RegisterArg(newArg(newDurationValue(p), opts))
+}
+
+func DurationArg(register Register, name string, options ...ArgOptionApplyer) *time.Duration {
+	p := new(time.Duration)
+	_ = DurationArgVar(register, p, name, options...)
 	return p
 }

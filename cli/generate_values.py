@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
-from gotypes import types
+from gotypes import types, imports
 
-imports = [
+local_imports = [
     "strings"
 ]
 
@@ -11,27 +11,29 @@ res += "\n"
 res += "package cli\n"
 res += "\n"
 res += "import (\n"
-for pkg in imports:
+for pkg in sorted(imports + local_imports):
     res += "\t\"%s\"\n" % pkg
 res += ")\n"
 
 for (typ, name, _) in types:
+    safe_typ = typ.replace(".", "")
+
     res += "\n"
     res += "// []%s\n" % typ
     res += "\n"
     res += "var (\n"
-    res += "\t_ Value  = (*%sValues)(nil)\n" % typ
-    res += "\t_ Getter = (*%sValues)(nil)\n" % typ
-    res += "\t_ Typer  = (*%sValues)(nil)\n" % typ
+    res += "\t_ Value  = (*%sValues)(nil)\n" % safe_typ
+    res += "\t_ Getter = (*%sValues)(nil)\n" % safe_typ
+    res += "\t_ Typer  = (*%sValues)(nil)\n" % safe_typ
     res += ")\n"
     res += "\n"
-    res += "type %sValues []%s\n" % (typ, typ)
+    res += "type %sValues []%s\n" % (safe_typ, typ)
     res += "\n"
-    res += "func new%sValues(p *[]%s) *%sValues {\n" % (name, typ, typ)
-    res += "\treturn (*%sValues)(p)\n" % typ
+    res += "func new%sValues(p *[]%s) *%sValues {\n" % (name, typ, safe_typ)
+    res += "\treturn (*%sValues)(p)\n" % safe_typ
     res += "}\n"
     res += "\n"
-    res += "func (vs *%sValues) Set(val string) error {\n" % typ
+    res += "func (vs *%sValues) Set(val string) error {\n" % safe_typ
     res += "\trest := val\n"
     res += "\tfor rest != \"\" {\n"
     res += "\t\tidx := strings.IndexByte(rest, ',')\n"
@@ -45,7 +47,7 @@ for (typ, name, _) in types:
     res += "\n"
     res += "\t\tvar def %s\n" % typ
     res += "\t\t*vs = append(*vs, def)\n"
-    res += "\t\tif err := (*%sValue)(&(*vs)[len(*vs)-1]).Set(val); err != nil {\n" % typ
+    res += "\t\tif err := (*%sValue)(&(*vs)[len(*vs)-1]).Set(val); err != nil {\n" % safe_typ
     res += "\t\t\treturn err\n"
     res += "\t\t}\n"
     res += "\t}\n"
@@ -53,25 +55,25 @@ for (typ, name, _) in types:
     res += "\treturn nil\n"
     res += "}\n"
     res += "\n"
-    res += "func (vs *%sValues) String() string {\n" % typ
+    res += "func (vs *%sValues) String() string {\n" % safe_typ
     res += "\tif len(*vs) == 0 {\n"
     res += "\t\treturn \"\"\n"
     res += "\t}\n"
     res += "\n"
     res += "\tvar buf strings.Builder\n"
-    res += "\t_, _ = buf.WriteString((*%sValue)(&(*vs)[0]).String())\n" % typ
+    res += "\t_, _ = buf.WriteString((*%sValue)(&(*vs)[0]).String())\n" % safe_typ
     res += "\n"
     res += "\tfor i := 1; i < len(*vs); i++ {\n"
     res += "\t\t_ = buf.WriteByte(',')\n"
-    res += "\t\t_, _ = buf.WriteString((*%sValue)(&(*vs)[i]).String())\n" % typ
+    res += "\t\t_, _ = buf.WriteString((*%sValue)(&(*vs)[i]).String())\n" % safe_typ
     res += "\t}\n"
     res += "\n"
     res += "\treturn buf.String()\n"
     res += "}\n"
     res += "\n"
-    res += "func (v *%sValues) Get() interface{} { return []%s(*v) }\n" % (typ, typ)
+    res += "func (v *%sValues) Get() interface{} { return []%s(*v) }\n" % (safe_typ, typ)
     res += "\n"
-    res += "func (*%sValues) Type() string { return \"[]%s\" }\n" % (typ, typ)
+    res += "func (*%sValues) Type() string { return \"[]%s\" }\n" % (safe_typ, typ)
 
 with open("./values_gen.go", "w") as f:
     f.write(res)

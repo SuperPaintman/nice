@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 )
 
 var (
@@ -557,7 +558,7 @@ func (p *DefaultParser) Parse(commander Commander, arguments []string) error {
 		arguments = arguments[1:]
 
 		// Commands or Args.
-		if len(arg) == 0 || arg[0] != '-' || isNumber(arg) {
+		if len(arg) == 0 || arg[0] != '-' || isNumber(arg) || isDuration(arg) {
 			// Check if the arg is a command.
 			if !argMode && commander != nil && commander.IsCommand(arg) {
 				// Reset previous flags and args.
@@ -681,7 +682,7 @@ func (p *DefaultParser) Parse(commander Commander, arguments []string) error {
 							setValue = true
 						}
 					}
-				} else if len(next) > 0 && (next[0] != '-' || isNumber(next)) {
+				} else if len(next) > 0 && (next[0] != '-' || isNumber(next) || isDuration(next)) {
 					// Set value if this is a known flag (if it is a bool we also check the value).
 					setValue = knownflag
 
@@ -801,6 +802,16 @@ func isNumber(s string) bool {
 	}
 
 	if _, err := strconv.ParseUint(s, 0, 0); err == nil {
+		return true
+	}
+
+	return false
+}
+
+func isDuration(s string) bool {
+	// TODO(SuperPaintman): optimize it.
+
+	if _, err := time.ParseDuration(s); err == nil {
 		return true
 	}
 

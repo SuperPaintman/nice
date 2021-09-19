@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"time"
 )
 
 var (
@@ -307,6 +308,21 @@ func (u *uintValue) Set(s string) error {
 		err = numError("uint", err)
 	}
 	*u = uintValue(v)
+	return err
+}
+
+// time.Duration
+
+func (d *timeDurationValue) Set(s string) error {
+	v, err := time.ParseDuration(s)
+	if err != nil {
+		err = &ParseValueError{
+			Type: "time.Duration",
+			Err:  ErrSyntax,
+		}
+	}
+
+	*d = timeDurationValue(v)
 	return err
 }
 

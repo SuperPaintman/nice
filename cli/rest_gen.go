@@ -2,6 +2,10 @@
 
 package cli
 
+import (
+	"time"
+)
+
 // []bool
 
 func RestBoolsVar(register Register, p *[]bool, name string, options ...RestOptionApplyer) error {
@@ -223,5 +227,21 @@ func RestUintsVar(register Register, p *[]uint, name string, options ...RestOpti
 func RestUints(register Register, name string, options ...RestOptionApplyer) *[]uint {
 	p := new([]uint)
 	_ = RestUintsVar(register, p, name, options...)
+	return p
+}
+
+// []time.Duration
+
+func RestDurationsVar(register Register, p *[]time.Duration, name string, options ...RestOptionApplyer) error {
+	var opts RestOptions
+	opts.applyName(name)
+	opts.applyRestOptions(options)
+
+	return register.RegisterRestArgs(newRest(newDurationValues(p), opts))
+}
+
+func RestDurations(register Register, name string, options ...RestOptionApplyer) *[]time.Duration {
+	p := new([]time.Duration)
+	_ = RestDurationsVar(register, p, name, options...)
 	return p
 }

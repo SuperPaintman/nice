@@ -15,8 +15,12 @@ types = [
     ("string", "String", "string(*%s)"),
     ("int", "Int", "strconv.Itoa(int(*%s))"),
     ("uint", "Uint", "strconv.FormatUint(uint64(*%s), 10)"),
-    # TODO: Duration
+    ("time.Duration", "Duration", "(*time.Duration)(%s).String()"),
     # TODO: Func
+]
+
+imports = [
+    "time"
 ]
 
 imports_stringer = [

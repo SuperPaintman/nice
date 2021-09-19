@@ -7,6 +7,7 @@ import (
 	"reflect"
 	"strconv"
 	"testing"
+	"time"
 	"unsafe"
 )
 
@@ -72,6 +73,16 @@ var (
 		{"0b10111011", uint(0b10111011)},
 		{strconv.FormatUint(uint64(maxUint), 10), uint(maxUint)},
 		{strconv.FormatUint(uint64(minUint), 10), uint(minUint)},
+	}
+
+	commonDurationValues = []commonValue{
+		{"0ns", 0 * time.Nanosecond},
+		{"123ns", 123 * time.Nanosecond},
+		{"0s", 0 * time.Second},
+		{"-5s", -5 * time.Second},
+		{"2h45m", 2*time.Hour + 45*time.Minute},
+		{"+2h45m", 2*time.Hour + 45*time.Minute},
+		{"4.1s", 4*time.Second + 100*time.Millisecond},
 	}
 )
 
@@ -149,6 +160,14 @@ var (
 		{"negative float", "-43.21", &ParseValueError{Type: "uint", Err: ErrSyntax}},
 		{"uint max overflow", uintMaxOverflowValue(), &ParseValueError{Type: "uint", Err: ErrRange}},
 		{"uint min overflow", "-0", &ParseValueError{Type: "uint", Err: ErrSyntax}},
+	}
+
+	commonDurationBrokens = []commonBroken{
+		{"empty", "", &ParseValueError{Type: "time.Duration", Err: ErrSyntax}},
+		{"not duration-like", "100", &ParseValueError{Type: "time.Duration", Err: ErrSyntax}},
+		{"broken duration", "100sm", &ParseValueError{Type: "time.Duration", Err: ErrSyntax}},
+		{"true", "true", &ParseValueError{Type: "time.Duration", Err: ErrSyntax}},
+		{"false", "false", &ParseValueError{Type: "time.Duration", Err: ErrSyntax}},
 	}
 )
 
@@ -330,6 +349,13 @@ func TestParseFlags(t *testing.T) {
 				},
 			},
 		},
+		{
+			name:  "Duration",
+			setup: func(r Register) interface{} { return Duration(r, "t") },
+			tests: mergeTestValues(
+				commonValuesToTestValues(commonDurationValues),
+			),
+		},
 	}
 
 	for _, tc := range tt {
@@ -337,6 +363,10 @@ func TestParseFlags(t *testing.T) {
 			for _, tvc := range tc.tests {
 				t.Run(tvc.name, func(t *testing.T) {
 					var parser DefaultParser
+
+					if len(tvc.args) > 1 && tvc.args[1] == "-5s" {
+						t.Log("g")
+					}
 
 					f := tc.setup(&parser)
 
@@ -491,6 +521,23 @@ func TestParseFlags_broken_value(t *testing.T) {
 			name:  "String",
 			setup: func(r Register) interface{} { return String(r, "t") },
 		},
+		{
+			name:  "Duration",
+			setup: func(r Register) interface{} { return Duration(r, "t") },
+			tests: mergeTestValues(
+				[]testValue{
+					{
+						name: "without value",
+						args: []string{"-t"},
+						want: &ParseValueError{
+							Type: "time.Duration",
+							Err:  ErrSyntax,
+						},
+					},
+				},
+				commonBrokensToTestValues(commonDurationBrokens),
+			),
+		},
 	}
 
 	for _, tc := range tt {
@@ -637,6 +684,13 @@ func TestParseArgs(t *testing.T) {
 				},
 			},
 		},
+		{
+			name:  "DurationArg",
+			setup: func(r Register) interface{} { return DurationArg(r, "t") },
+			tests: mergeTestValues(
+				commonValuesToTestValues(commonDurationValues),
+			),
+		},
 	}
 
 	for _, tc := range tt {
@@ -755,6 +809,13 @@ func TestParseArgs_broken_value(t *testing.T) {
 		{
 			name:  "StringArg",
 			setup: func(r Register) interface{} { return StringArg(r, "t") },
+		},
+		{
+			name:  "DurationArg",
+			setup: func(r Register) interface{} { return DurationArg(r, "t") },
+			tests: mergeTestValues(
+				commonBrokensToTestValues(commonDurationBrokens),
+			),
 		},
 	}
 
