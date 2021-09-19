@@ -64,6 +64,7 @@ type Getter interface {
 }
 
 type Typer interface {
+	Value
 	Type() string
 }
 
