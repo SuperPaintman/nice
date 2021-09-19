@@ -1038,7 +1038,7 @@ func TestParser_Parse(t *testing.T) {
 		Usage("Current User ID"),
 	)
 
-	rest := Rest(&parser, "rest")
+	rest := RestStrings(&parser, "rest")
 
 	args := []string{
 		"--show", "--recreate=false", "-c", "100500", "1337", "--update", "true",
@@ -1192,7 +1192,7 @@ func TestParser_Parse_with_commands(t *testing.T) {
 				Usage("Current User ID"),
 			)
 
-			rest = Rest(&parser, "rest")
+			rest = RestStrings(&parser, "rest")
 
 			return nil
 		},
@@ -1339,7 +1339,7 @@ func TestParser_Parse_rest(t *testing.T) {
 	_ = BoolArg(&parser, "b")
 
 	var rest []string
-	_ = RestVar(&parser, &rest, "rest")
+	_ = RestStringsVar(&parser, &rest, "rest")
 
 	args := []string{"true", "false", "c", "d", "1337", "false", "e"}
 
@@ -1394,7 +1394,7 @@ func TestRegisterInvalidNameRestArgs(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			var parser DefaultParser
 
-			_ = Rest(&parser, tc.restArgs)
+			_ = RestStrings(&parser, tc.restArgs)
 
 			got := parser.Parse(nil, nil)
 			if !errors.Is(got, tc.want) {
@@ -1411,7 +1411,7 @@ func TestParser_Parse_rest_after_optional_arg(t *testing.T) {
 	_ = BoolArg(&parser, "b", Optional)
 
 	var rest []string
-	_ = RestVar(&parser, &rest, "rest")
+	_ = RestStringsVar(&parser, &rest, "rest")
 
 	args := []string{"true", "false", "c", "d", "1337", "false", "e"}
 
@@ -1428,8 +1428,8 @@ func TestParser_Parse_rest_after_optional_arg(t *testing.T) {
 func TestParser_Parse_multi_rest(t *testing.T) {
 	var parser DefaultParser
 
-	_ = Rest(&parser, "rest")
-	_ = Rest(&parser, "other")
+	_ = RestStrings(&parser, "rest")
+	_ = RestStrings(&parser, "other")
 
 	got := parser.Parse(nil, nil)
 	want := &RestArgsError{Name: "other", Err: ErrDuplicate}
@@ -1442,7 +1442,7 @@ func TestParser_Parse_arg_after_rest(t *testing.T) {
 	var parser DefaultParser
 
 	_ = BoolArg(&parser, "a")
-	_ = Rest(&parser, "rest")
+	_ = RestStrings(&parser, "rest")
 	_ = BoolArg(&parser, "b")
 
 	got := parser.Parse(nil, nil)
@@ -1456,7 +1456,7 @@ func TestParser_Parse_optional_arg_after_rest(t *testing.T) {
 	var parser DefaultParser
 
 	_ = BoolArg(&parser, "a")
-	_ = Rest(&parser, "rest")
+	_ = RestStrings(&parser, "rest")
 	_ = BoolArg(&parser, "b", Optional)
 
 	got := parser.Parse(nil, nil)

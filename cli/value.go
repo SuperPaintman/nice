@@ -64,7 +64,6 @@ type Getter interface {
 }
 
 type Typer interface {
-	Value
 	Type() string
 }
 
@@ -311,3 +310,5 @@ func (u *uintValue) Set(s string) error {
 }
 
 //go:generate python ./generate_value.py
+
+//go:generate python ./generate_values.py

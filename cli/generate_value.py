@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 imports = [
-  "strconv"
+    "strconv"
 ]
 
 values = [
