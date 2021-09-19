@@ -65,3 +65,5 @@ func (f *Flag) String() string {
 }
 
 //go:generate python ./generate_flags.py
+
+//go:generate python ./generate_multi_flags.py

@@ -511,6 +511,48 @@ func TestParseFlags_broken_value(t *testing.T) {
 	}
 }
 
+func TestParseMultiFlags(t *testing.T) {
+	var parser DefaultParser
+
+	a := Bool(&parser, "a")
+	b := Ints(&parser, "b")
+	c := String(&parser, "c")
+	d := Int(&parser, "d")
+
+	args := []string{
+		"-a", "-b", "1", "-d=99", "-b=2,-3,4", "-c", "test", "-b", "5,6", "-b", "7",
+		"-d", "8", "-b=9",
+	}
+
+	if err := parser.Parse(nil, args); err != nil {
+		t.Fatalf("Parse(): failed to parse args: %s", err)
+	}
+
+	// Check flags.
+	const (
+		wantA = true
+		wantC = "test"
+		wantD = 8
+	)
+	wantB := []int{1, 2, -3, 4, 5, 6, 7, 9}
+
+	if *a != wantA {
+		t.Errorf("Parse(): a: got = %v, want = %v", *a, wantA)
+	}
+
+	if !reflect.DeepEqual(*b, wantB) {
+		t.Errorf("Parse(): b: got = %#v, want = %#v", *b, wantB)
+	}
+
+	if *c != wantC {
+		t.Errorf("Parse(): c: got = %v, want = %v", *c, wantC)
+	}
+
+	if *d != wantD {
+		t.Errorf("Parse(): a: got = %v, want = %v", *d, wantD)
+	}
+}
+
 func TestParseArgs(t *testing.T) {
 	type testValue struct {
 		name string
@@ -767,6 +809,11 @@ func TestRegisterInvalidNameFlag(t *testing.T) {
 			want:  &FlagError{Short: " ", Err: ErrInvalidName},
 		},
 		{
+			name:  "comma in short name",
+			short: ",",
+			want:  &FlagError{Short: ",", Err: ErrInvalidName},
+		},
+		{
 			name: "start dash in long name",
 			long: "-help",
 			want: &FlagError{Long: "-help", Err: ErrInvalidName},
@@ -790,6 +837,11 @@ func TestRegisterInvalidNameFlag(t *testing.T) {
 			name: "space in long name",
 			long: "help test",
 			want: &FlagError{Long: "help test", Err: ErrInvalidName},
+		},
+		{
+			name: "comma in long name",
+			long: "help,test",
+			want: &FlagError{Long: "help,test", Err: ErrInvalidName},
 		},
 	}
 
@@ -883,6 +935,11 @@ func TestRegisterInvalidNameArg(t *testing.T) {
 			arg:  "help test",
 			want: &ArgError{Name: "help test", Err: ErrInvalidName},
 		},
+		{
+			name: "comma in arg name",
+			arg:  "help,test",
+			want: &ArgError{Name: "help,test", Err: ErrInvalidName},
+		},
 	}
 
 	for _, tc := range tt {
@@ -958,6 +1015,11 @@ func TestParse_Parse_invalid_flags_syntax(t *testing.T) {
 			name: "space after dash",
 			arg:  "-- val",
 			want: &ParseFlagError{Name: " val", Err: ErrSyntax},
+		},
+		{
+			name: "comma after dash",
+			arg:  "--,val",
+			want: &ParseFlagError{Name: ",val", Err: ErrSyntax},
 		},
 	}
 
@@ -1281,6 +1343,24 @@ func TestParser_Parse_required_flag(t *testing.T) {
 	}
 }
 
+func TestParser_Parse_required_multi_flag(t *testing.T) {
+	var parser DefaultParser
+
+	_ = Bool(&parser, "a")
+	_ = Bools(&parser, "b")
+	_ = Bools(&parser, "c", Required)
+	_ = Bools(&parser, "d", Required)
+	_ = Bools(&parser, "e")
+
+	args := []string{"-a", "-c"}
+
+	got := parser.Parse(nil, args)
+	want := &FlagError{Short: "d", Err: ErrNotProvided}
+	if !errors.Is(got, want) {
+		t.Fatalf("Parse(): got error = %q, want error = %q", got, want)
+	}
+}
+
 func TestParser_Parse_required_arg(t *testing.T) {
 	var parser DefaultParser
 
@@ -1341,13 +1421,13 @@ func TestParser_Parse_rest(t *testing.T) {
 	var rest []string
 	_ = RestStringsVar(&parser, &rest, "rest")
 
-	args := []string{"true", "false", "c", "d", "1337", "false", "e"}
+	args := []string{"true", "false", "c", "d", "1337", "false", "e,d,f", "g"}
 
 	if err := parser.Parse(nil, args); err != nil {
 		t.Fatalf("Parse(): failed to parse args: %s", err)
 	}
 
-	want := []string{"c", "d", "1337", "false", "e"}
+	want := []string{"c", "d", "1337", "false", "e", "d", "f", "g"}
 	if !reflect.DeepEqual(rest, want) {
 		t.Errorf("Parse(): rest: got = %#v, want = %#v", rest, want)
 	}
@@ -1387,6 +1467,11 @@ func TestRegisterInvalidNameRestArgs(t *testing.T) {
 			name:     "space in rest args name",
 			restArgs: "help test",
 			want:     &RestArgsError{Name: "help test", Err: ErrInvalidName},
+		},
+		{
+			name:     "comma in rest args name",
+			restArgs: "help,test",
+			want:     &RestArgsError{Name: "help,test", Err: ErrInvalidName},
 		},
 	}
 

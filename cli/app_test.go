@@ -40,6 +40,11 @@ func TestCommanderInvalidNameCommand(t *testing.T) {
 			command: "help test",
 			want:    &InvalidCommandError{Name: "help test", Err: ErrInvalidName},
 		},
+		{
+			name:    "comma in command name",
+			command: "help,test",
+			want:    &InvalidCommandError{Name: "help,test", Err: ErrInvalidName},
+		},
 	}
 
 	for _, tc := range tt {

@@ -386,7 +386,7 @@ func validShortFlag(name string) bool {
 		return false
 	}
 
-	if name[0] == '-' || name[0] == '=' || name[0] == ' ' {
+	if name[0] == '-' || name[0] == '=' || name[0] == ' ' || name[0] == ',' {
 		return false
 	}
 
@@ -398,7 +398,7 @@ func validLongFlag(name string) bool {
 		return false
 	}
 
-	if name[0] == '-' || name[0] == '=' || name[0] == ' ' {
+	if name[0] == '-' || name[0] == '=' || name[0] == ' ' || name[0] == ',' {
 		return false
 	}
 
@@ -411,7 +411,7 @@ func validLongFlag(name string) bool {
 			return false
 		}
 
-		if c == '=' || c == ' ' {
+		if c == '=' || c == ' ' || c == ',' {
 			return false
 		}
 
@@ -476,7 +476,7 @@ func validArg(name string) bool {
 		return false
 	}
 
-	if name[0] == '-' || name[0] == '=' || name[0] == ' ' {
+	if name[0] == '-' || name[0] == '=' || name[0] == ' ' || name[0] == ',' {
 		return false
 	}
 
@@ -489,7 +489,7 @@ func validArg(name string) bool {
 			return false
 		}
 
-		if c == '=' || c == ' ' {
+		if c == '=' || c == ' ' || c == ',' {
 			return false
 		}
 
@@ -610,7 +610,7 @@ func (p *DefaultParser) Parse(commander Commander, arguments []string) error {
 		shortFlag := numMinuses == 1 && !p.Universal
 
 		name := arg[numMinuses:]
-		if len(name) == 0 || name[0] == '-' || name[0] == '=' || name[0] == ' ' {
+		if len(name) == 0 || name[0] == '-' || name[0] == '=' || name[0] == ' ' || name[0] == ',' {
 			return &ParseFlagError{
 				Name: name,
 				Err:  ErrSyntax,
