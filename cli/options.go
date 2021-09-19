@@ -1,7 +1,5 @@
 package cli
 
-import "unicode/utf8"
-
 // Option interfaces.
 
 type FlagOptionApplyer interface {
@@ -159,7 +157,7 @@ func (o FlagOptions) FlagOptionApply(opts *FlagOptions) {
 }
 
 func (o *FlagOptions) applyName(name string) {
-	nameCount := utf8.RuneCountInString(name)
+	nameCount := len(name)
 	if nameCount > 1 {
 		o.Long = name
 	} else if nameCount == 1 {

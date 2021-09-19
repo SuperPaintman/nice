@@ -712,15 +712,89 @@ func TestParseArgs_broken_value(t *testing.T) {
 	}
 }
 
+func TestRegisterInvalidNameFlag(t *testing.T) {
+	tt := []struct {
+		name  string
+		short string
+		long  string
+		want  error
+	}{
+		{
+			name: "empty short and long names",
+			want: &InvalidFlagError{Err: ErrMissingName},
+		},
+		{
+			name:  "too long short name",
+			short: "he",
+			long:  "help",
+			want:  &InvalidFlagError{Short: "he", Long: "help", Err: ErrInvalidName},
+		},
+		{
+			name:  "dash in short name",
+			short: "-",
+			want:  &InvalidFlagError{Short: "-", Err: ErrInvalidName},
+		},
+		{
+			name:  "equal in short name",
+			short: "=",
+			want:  &InvalidFlagError{Short: "=", Err: ErrInvalidName},
+		},
+		{
+			name:  "space in short name",
+			short: " ",
+			want:  &InvalidFlagError{Short: " ", Err: ErrInvalidName},
+		},
+		{
+			name: "start dash in long name",
+			long: "-help",
+			want: &InvalidFlagError{Long: "-help", Err: ErrInvalidName},
+		},
+		{
+			name: "ignore non-start dash in long name",
+			long: "go-help",
+			want: nil,
+		},
+		{
+			name: "ignore end dash in long name",
+			long: "help-",
+			want: nil,
+		},
+		{
+			name: "equal in long name",
+			long: "help=test",
+			want: &InvalidFlagError{Long: "help=test", Err: ErrInvalidName},
+		},
+		{
+			name: "space in long name",
+			long: "help test",
+			want: &InvalidFlagError{Long: "help test", Err: ErrInvalidName},
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			var parser DefaultParser
+
+			_ = Bool(&parser, "", FlagOptions{
+				Short: tc.short,
+				Long:  tc.long,
+			})
+
+			got := parser.Parse(nil, nil)
+			if !errors.Is(got, tc.want) {
+				t.Fatalf("Parse(): got error = %q, want error = %q", got, tc.want)
+			}
+		})
+	}
+}
+
 func TestRegisterDuplicatedFlag(t *testing.T) {
 	var parser DefaultParser
 
 	_ = Bool(&parser, "a")
 	_ = Int(&parser, "a")
 
-	args := []string{"-a", "100"}
-
-	got := parser.Parse(nil, args)
+	got := parser.Parse(nil, nil)
 	want := &InvalidFlagError{
 		Short: "a",
 		Err:   ErrDuplicate,
@@ -752,15 +826,64 @@ func TestRegisterOverrideFlag(t *testing.T) {
 	}
 }
 
+func TestRegisterInvalidNameArg(t *testing.T) {
+	tt := []struct {
+		name string
+		arg  string
+		want error
+	}{
+		{
+			name: "empty arg name",
+			want: &InvalidArgError{Err: ErrMissingName},
+		},
+		{
+			name: "start dash in arg name",
+			arg:  "-help",
+			want: &InvalidArgError{Name: "-help", Err: ErrInvalidName},
+		},
+		{
+			name: "ignore non-start dash in arg name",
+			arg:  "go-help",
+			want: nil,
+		},
+		{
+			name: "ignore end dash in arg name",
+			arg:  "help-",
+			want: nil,
+		},
+		{
+			name: "equal in arg name",
+			arg:  "help=test",
+			want: &InvalidArgError{Name: "help=test", Err: ErrInvalidName},
+		},
+		{
+			name: "space in arg name",
+			arg:  "help test",
+			want: &InvalidArgError{Name: "help test", Err: ErrInvalidName},
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			var parser DefaultParser
+
+			_ = BoolArg(&parser, tc.arg)
+
+			got := parser.Parse(nil, nil)
+			if !errors.Is(got, tc.want) {
+				t.Fatalf("Parse(): got error = %q, want error = %q", got, tc.want)
+			}
+		})
+	}
+}
+
 func TestRegisterDuplicatedArg(t *testing.T) {
 	var parser DefaultParser
 
 	_ = StringArg(&parser, "a")
 	_ = IntArg(&parser, "a")
 
-	args := []string{"100"}
-
-	got := parser.Parse(nil, args)
+	got := parser.Parse(nil, nil)
 	want := &InvalidArgError{
 		Name: "a",
 		Err:  ErrDuplicate,
