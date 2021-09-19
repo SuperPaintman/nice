@@ -721,33 +721,33 @@ func TestRegisterInvalidNameFlag(t *testing.T) {
 	}{
 		{
 			name: "empty short and long names",
-			want: &InvalidFlagError{Err: ErrMissingName},
+			want: &FlagError{Err: ErrMissingName},
 		},
 		{
 			name:  "too long short name",
 			short: "he",
 			long:  "help",
-			want:  &InvalidFlagError{Short: "he", Long: "help", Err: ErrInvalidName},
+			want:  &FlagError{Short: "he", Long: "help", Err: ErrInvalidName},
 		},
 		{
 			name:  "dash in short name",
 			short: "-",
-			want:  &InvalidFlagError{Short: "-", Err: ErrInvalidName},
+			want:  &FlagError{Short: "-", Err: ErrInvalidName},
 		},
 		{
 			name:  "equal in short name",
 			short: "=",
-			want:  &InvalidFlagError{Short: "=", Err: ErrInvalidName},
+			want:  &FlagError{Short: "=", Err: ErrInvalidName},
 		},
 		{
 			name:  "space in short name",
 			short: " ",
-			want:  &InvalidFlagError{Short: " ", Err: ErrInvalidName},
+			want:  &FlagError{Short: " ", Err: ErrInvalidName},
 		},
 		{
 			name: "start dash in long name",
 			long: "-help",
-			want: &InvalidFlagError{Long: "-help", Err: ErrInvalidName},
+			want: &FlagError{Long: "-help", Err: ErrInvalidName},
 		},
 		{
 			name: "ignore non-start dash in long name",
@@ -762,12 +762,12 @@ func TestRegisterInvalidNameFlag(t *testing.T) {
 		{
 			name: "equal in long name",
 			long: "help=test",
-			want: &InvalidFlagError{Long: "help=test", Err: ErrInvalidName},
+			want: &FlagError{Long: "help=test", Err: ErrInvalidName},
 		},
 		{
 			name: "space in long name",
 			long: "help test",
-			want: &InvalidFlagError{Long: "help test", Err: ErrInvalidName},
+			want: &FlagError{Long: "help test", Err: ErrInvalidName},
 		},
 	}
 
@@ -795,7 +795,7 @@ func TestRegisterDuplicatedFlag(t *testing.T) {
 	_ = Int(&parser, "a")
 
 	got := parser.Parse(nil, nil)
-	want := &InvalidFlagError{
+	want := &FlagError{
 		Short: "a",
 		Err:   ErrDuplicate,
 	}
@@ -834,12 +834,12 @@ func TestRegisterInvalidNameArg(t *testing.T) {
 	}{
 		{
 			name: "empty arg name",
-			want: &InvalidArgError{Err: ErrMissingName},
+			want: &ArgError{Err: ErrMissingName},
 		},
 		{
 			name: "start dash in arg name",
 			arg:  "-help",
-			want: &InvalidArgError{Name: "-help", Err: ErrInvalidName},
+			want: &ArgError{Name: "-help", Err: ErrInvalidName},
 		},
 		{
 			name: "ignore non-start dash in arg name",
@@ -854,12 +854,12 @@ func TestRegisterInvalidNameArg(t *testing.T) {
 		{
 			name: "equal in arg name",
 			arg:  "help=test",
-			want: &InvalidArgError{Name: "help=test", Err: ErrInvalidName},
+			want: &ArgError{Name: "help=test", Err: ErrInvalidName},
 		},
 		{
 			name: "space in arg name",
 			arg:  "help test",
-			want: &InvalidArgError{Name: "help test", Err: ErrInvalidName},
+			want: &ArgError{Name: "help test", Err: ErrInvalidName},
 		},
 	}
 
@@ -869,7 +869,8 @@ func TestRegisterInvalidNameArg(t *testing.T) {
 
 			_ = BoolArg(&parser, tc.arg)
 
-			got := parser.Parse(nil, nil)
+			args := []string{"true"}
+			got := parser.Parse(nil, args)
 			if !errors.Is(got, tc.want) {
 				t.Fatalf("Parse(): got error = %q, want error = %q", got, tc.want)
 			}
@@ -884,7 +885,7 @@ func TestRegisterDuplicatedArg(t *testing.T) {
 	_ = IntArg(&parser, "a")
 
 	got := parser.Parse(nil, nil)
-	want := &InvalidArgError{
+	want := &ArgError{
 		Name: "a",
 		Err:  ErrDuplicate,
 	}
@@ -1219,6 +1220,74 @@ func TestParser_Parse_with_commands(t *testing.T) {
 	wantRest := []string{"other", "vals", "in", "args"}
 	if !reflect.DeepEqual(parser.rest, wantRest) {
 		t.Errorf("Parse(): rest: got = %#v, want = %#v", parser.rest, wantRest)
+	}
+}
+
+func TestParser_Parse_required_flag(t *testing.T) {
+	var parser DefaultParser
+
+	_ = Bool(&parser, "a")
+	_ = Bool(&parser, "b", Required)
+	_ = Bool(&parser, "c")
+
+	args := []string{"-a"}
+
+	got := parser.Parse(nil, args)
+	want := &FlagError{Short: "b", Err: ErrNotProvided}
+	if !errors.Is(got, want) {
+		t.Fatalf("Parse(): got error = %q, want error = %q", got, want)
+	}
+}
+
+func TestParser_Parse_required_arg(t *testing.T) {
+	var parser DefaultParser
+
+	// Args are implicitly required.
+	_ = BoolArg(&parser, "a")
+	_ = BoolArg(&parser, "b")
+	_ = BoolArg(&parser, "c")
+	_ = BoolArg(&parser, "d")
+
+	args := []string{"true", "false"}
+
+	got := parser.Parse(nil, args)
+	want := &ArgError{Name: "c", Err: ErrNotProvided}
+	if !errors.Is(got, want) {
+		t.Fatalf("Parse(): got error = %q, want error = %q", got, want)
+	}
+}
+
+func TestParser_Parse_optional_arg(t *testing.T) {
+	var parser DefaultParser
+
+	// Args are implicitly required.
+	_ = BoolArg(&parser, "a")
+	_ = BoolArg(&parser, "b")
+	_ = BoolArg(&parser, "c", Optional)
+	_ = BoolArg(&parser, "d", Optional)
+
+	args := []string{"true", "false"}
+
+	err := parser.Parse(nil, args)
+	if err != nil {
+		t.Fatalf("Parse(): unexpected error = %q", err)
+	}
+}
+
+func TestParser_Parse_optional_arg_after_required(t *testing.T) {
+	var parser DefaultParser
+
+	_ = BoolArg(&parser, "a")
+	_ = BoolArg(&parser, "b", Optional)
+	_ = BoolArg(&parser, "c")
+	_ = BoolArg(&parser, "d", Optional)
+
+	args := []string{"true", "false", "true", "true"}
+
+	got := parser.Parse(nil, args)
+	want := &ArgError{Name: "c", Err: ErrRequiredAfterOptional}
+	if !errors.Is(got, want) {
+		t.Fatalf("Parse(): got error = %q, want error = %q", got, want)
 	}
 }
 

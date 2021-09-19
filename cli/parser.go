@@ -7,11 +7,17 @@ import (
 	"strings"
 )
 
-var ErrDuplicate = errors.New("duplicate")
+var (
+	ErrDuplicate = errors.New("duplicate")
 
-var ErrMissingName = errors.New("missing name")
+	ErrMissingName = errors.New("missing name")
 
-var ErrInvalidName = errors.New("invalid name")
+	ErrInvalidName = errors.New("invalid name")
+
+	ErrNotProvided = errors.New("not provided")
+
+	ErrRequiredAfterOptional = errors.New("required after optional")
+)
 
 type ParseFlagError struct {
 	Name string
@@ -34,13 +40,13 @@ func (e *ParseFlagError) Is(err error) bool {
 	return ok && pe.Name == e.Name && errors.Is(pe.Err, e.Err)
 }
 
-type InvalidFlagError struct {
+type FlagError struct {
 	Short string
 	Long  string
 	Err   error
 }
 
-func (e *InvalidFlagError) Error() string {
+func (e *FlagError) Error() string {
 	name := e.Short
 	if e.Long != "" {
 		if name != "" {
@@ -55,37 +61,37 @@ func (e *InvalidFlagError) Error() string {
 	}
 
 	if name == "" {
-		return fmt.Sprintf("broken flag: %s", msg)
+		return fmt.Sprintf("flag error: %s", msg)
 	} else {
-		return fmt.Sprintf("broken flag: '%s': %s", name, msg)
+		return fmt.Sprintf("flag error: '%s': %s", name, msg)
 	}
 }
 
-func (e *InvalidFlagError) Is(err error) bool {
-	pe, ok := err.(*InvalidFlagError)
+func (e *FlagError) Is(err error) bool {
+	pe, ok := err.(*FlagError)
 	return ok && pe.Short == e.Short && pe.Long == e.Long && errors.Is(pe.Err, e.Err)
 }
 
-type InvalidArgError struct {
+type ArgError struct {
 	Name string
 	Err  error
 }
 
-func (e *InvalidArgError) Error() string {
+func (e *ArgError) Error() string {
 	msg := "unknown error"
 	if e.Err != nil {
 		msg = e.Err.Error()
 	}
 
 	if e.Name != "" {
-		return fmt.Sprintf("broken arg: %s", msg)
+		return fmt.Sprintf("arg error: %s", msg)
 	} else {
-		return fmt.Sprintf("broken arg: '%s': %s", e.Name, msg)
+		return fmt.Sprintf("arg error: '%s': %s", e.Name, msg)
 	}
 }
 
-func (e *InvalidArgError) Is(err error) bool {
-	pe, ok := err.(*InvalidArgError)
+func (e *ArgError) Is(err error) bool {
+	pe, ok := err.(*ArgError)
 	return ok && pe.Name == e.Name && errors.Is(pe.Err, e.Err)
 }
 
@@ -110,6 +116,7 @@ type Parser interface {
 
 type flags struct {
 	data  []Flag
+	set   []bool         // Markers if flags were set.
 	long  map[string]int // Indexes of flags in the data. It contains all long names.
 	short map[string]int // Indexes of flags in the data. It contains all short names.
 }
@@ -160,6 +167,7 @@ func (f *flags) Add(flag Flag) {
 		idx, found = f.long[flag.Long]
 		if found {
 			f.data[idx] = flag
+			f.set[idx] = false
 		}
 	}
 
@@ -168,6 +176,7 @@ func (f *flags) Add(flag Flag) {
 			idx, found = f.short[flag.Short]
 			if found {
 				f.data[idx] = flag
+				f.set[idx] = false
 			}
 		}
 	}
@@ -178,6 +187,7 @@ func (f *flags) Add(flag Flag) {
 
 	// Append a new flag.
 	f.data = append(f.data, flag)
+	f.set = append(f.set, false)
 	idx = len(f.data) - 1
 
 	if flag.Long != "" {
@@ -199,12 +209,14 @@ func (f *flags) Add(flag Flag) {
 
 func (f *flags) Reset() {
 	f.data = f.data[:0]
+	f.set = f.set[:0]
 	f.long = nil
 	f.short = nil
 }
 
 type args struct {
 	data  []Arg
+	set   []bool         // Markers if args were set.
 	index map[string]int // Indexes of named arg in the data.
 }
 
@@ -229,11 +241,13 @@ func (a *args) Add(arg Arg) {
 	idx, found := a.index[arg.Name]
 	if found {
 		a.data[idx] = arg
+		a.set[idx] = false
 		return
 	}
 
 	// Append a new arg.
 	a.data = append(a.data, arg)
+	a.set = append(a.set, false)
 	idx = len(a.data) - 1
 
 	if a.index == nil {
@@ -245,6 +259,7 @@ func (a *args) Add(arg Arg) {
 
 func (a *args) Reset() {
 	a.data = a.data[:0]
+	a.set = a.set[:0]
 	a.index = nil
 }
 
@@ -261,6 +276,7 @@ type DefaultParser struct {
 	args            args
 	unknown         []string // Unknown flags (without named flags).
 	rest            []string // Other arguments (without named args).
+	lastArgOptional bool     // Is last arg optional.
 	registerFlagErr error    // RegisterFlag first error.
 	registerArgErr  error    // RegisterArg first error.
 }
@@ -274,13 +290,13 @@ func (p *DefaultParser) RegisterFlag(flag Flag) (err error) {
 
 	// Check if short of long net is set.
 	if flag.Short == "" && flag.Long == "" {
-		return &InvalidFlagError{Err: ErrMissingName}
+		return &FlagError{Err: ErrMissingName}
 	}
 
 	// Validate short flag.
 	if flag.Short != "" {
 		if !validShortFlag(flag.Short) {
-			return &InvalidFlagError{
+			return &FlagError{
 				Short: flag.Short,
 				Long:  flag.Long,
 				Err:   ErrInvalidName,
@@ -291,7 +307,7 @@ func (p *DefaultParser) RegisterFlag(flag Flag) (err error) {
 	// Validate long flag.
 	if flag.Long != "" {
 		if !validLongFlag(flag.Long) {
-			return &InvalidFlagError{
+			return &FlagError{
 				Short: flag.Short,
 				Long:  flag.Long,
 				Err:   ErrInvalidName,
@@ -301,7 +317,7 @@ func (p *DefaultParser) RegisterFlag(flag Flag) (err error) {
 
 	if !p.OverrideFlags {
 		if _, f, ok := p.flags.Find(flag.Long, flag.Short); ok {
-			return &InvalidFlagError{
+			return &FlagError{
 				Long:  f.Long,
 				Short: f.Short,
 				Err:   ErrDuplicate,
@@ -361,12 +377,23 @@ func (p *DefaultParser) RegisterArg(arg Arg) (err error) {
 		}
 	}()
 
+	if arg.Required() {
+		if p.lastArgOptional {
+			return &ArgError{
+				Name: arg.Name,
+				Err:  ErrRequiredAfterOptional,
+			}
+		}
+	} else {
+		p.lastArgOptional = true
+	}
+
 	if arg.Name == "" {
-		return &InvalidArgError{Err: ErrMissingName}
+		return &ArgError{Err: ErrMissingName}
 	}
 
 	if !validArg(arg.Name) {
-		return &InvalidArgError{
+		return &ArgError{
 			Name: arg.Name,
 			Err:  ErrInvalidName,
 		}
@@ -374,7 +401,7 @@ func (p *DefaultParser) RegisterArg(arg Arg) (err error) {
 
 	if !p.OverrideArgs {
 		if _, _, ok := p.args.Get(arg.Name); ok {
-			return &InvalidArgError{
+			return &ArgError{
 				Name: arg.Name,
 				Err:  ErrDuplicate,
 			}
@@ -457,6 +484,9 @@ func (p *DefaultParser) Parse(commander Commander, arguments []string) error {
 				if err := a.Value.Set(arg); err != nil {
 					return err
 				}
+
+				// Mark the arg as set.
+				p.args.set[argIdx] = true
 			} else {
 				p.rest = append(p.rest, arg)
 			}
@@ -465,9 +495,6 @@ func (p *DefaultParser) Parse(commander Commander, arguments []string) error {
 
 			continue
 		}
-
-		// TODO(SuperPaintman): add required flags.
-		// TODO(SuperPaintman): add optional args.
 
 		// Flags.
 		numMinuses := 1
@@ -509,6 +536,7 @@ func (p *DefaultParser) Parse(commander Commander, arguments []string) error {
 		for len(restName) > 0 {
 			// Parse POSIX-style short flag combining (-a -b -> -ab).
 			var (
+				idx           int
 				flag          *Flag
 				knownflag     bool
 				lastShortFlag bool
@@ -526,7 +554,7 @@ func (p *DefaultParser) Parse(commander Commander, arguments []string) error {
 					value = ""
 				}
 
-				_, flag, knownflag = p.flags.GetShort(name)
+				idx, flag, knownflag = p.flags.GetShort(name)
 				if knownflag {
 					if fv, ok := flag.Value.(boolFlag); ok && fv.IsBoolFlag() {
 					}
@@ -536,7 +564,7 @@ func (p *DefaultParser) Parse(commander Commander, arguments []string) error {
 			} else {
 				restName = ""
 
-				_, flag, knownflag = p.flags.GetLong(name)
+				idx, flag, knownflag = p.flags.GetLong(name)
 			}
 
 			if (!shortFlag || lastShortFlag) && !hasValue && len(arguments) > 0 {
@@ -576,6 +604,38 @@ func (p *DefaultParser) Parse(commander Commander, arguments []string) error {
 
 			if err := flag.Value.Set(value); err != nil {
 				return err
+			}
+
+			// Mark the flag as set.
+			p.flags.set[idx] = true
+		}
+	}
+
+	// Check required flags.
+	for idx, v := range p.flags.set {
+		if !v {
+			flag := &p.flags.data[idx]
+
+			if flag.Required() {
+				return &FlagError{
+					Short: flag.Short,
+					Long:  flag.Long,
+					Err:   ErrNotProvided,
+				}
+			}
+		}
+	}
+
+	// Check required args.
+	for idx, v := range p.args.set {
+		if !v {
+			arg := &p.args.data[idx]
+
+			if arg.Required() {
+				return &ArgError{
+					Name: arg.Name,
+					Err:  ErrNotProvided,
+				}
 			}
 		}
 	}

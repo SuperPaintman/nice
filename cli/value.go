@@ -6,9 +6,11 @@ import (
 	"strconv"
 )
 
-var ErrSyntax = errors.New("invalid syntax")
+var (
+	ErrSyntax = errors.New("invalid syntax")
 
-var ErrRange = errors.New("value out of range")
+	ErrRange = errors.New("value out of range")
+)
 
 type ParseValueError struct {
 	Type string
