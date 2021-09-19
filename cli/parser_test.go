@@ -1612,6 +1612,49 @@ func TestParser_Parse_optional_arg_after_rest(t *testing.T) {
 	}
 }
 
+func TestParser_Parse_flags_terminator(t *testing.T) {
+	var parser DefaultParser
+
+	a := Bool(&parser, "a")
+	b := Bool(&parser, "b")
+	c := StringArg(&parser, "c")
+	d := StringArg(&parser, "d")
+
+	var rest []string
+	_ = RestStringsVar(&parser, &rest, "rest")
+
+	args := []string{
+		"-a", "true", "testC", "--", "-b", "-a=false", "-c", "--", "d",
+	}
+
+	if err := parser.Parse(nil, args); err != nil {
+		t.Fatalf("Parse(): failed to parse args: %s", err)
+	}
+
+	const (
+		wantA = true
+		wantB = false
+		wantC = "testC"
+		wantD = "-b"
+	)
+
+	assertParseBoolFlags(t, "a", *a, wantA)
+	assertParseBoolFlags(t, "b", *b, wantB)
+
+	if *c != wantC {
+		t.Errorf("Parse(): c: got = %q, want = %q", *c, wantC)
+	}
+
+	if *d != wantD {
+		t.Errorf("Parse(): d: got = %q, want = %q", *d, wantD)
+	}
+
+	want := []string{"-a=false", "-c", "--", "d"}
+	if !reflect.DeepEqual(rest, want) {
+		t.Errorf("Parse(): rest: got = %#v, want = %#v", rest, want)
+	}
+}
+
 func assertParseBoolFlags(t *testing.T, name string, got, want bool) {
 	t.Helper()
 

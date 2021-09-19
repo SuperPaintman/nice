@@ -546,8 +546,9 @@ func (p *DefaultParser) Parse(commander Commander, arguments []string) error {
 	}
 
 	var (
-		argMode bool
-		argIdx  int
+		argMode         bool
+		argIdx          int
+		flagsTerminated bool
 	)
 	for {
 		if len(arguments) == 0 {
@@ -558,7 +559,9 @@ func (p *DefaultParser) Parse(commander Commander, arguments []string) error {
 		arguments = arguments[1:]
 
 		// Commands or Args.
-		if len(arg) == 0 || arg[0] != '-' || isNumber(arg) || isDuration(arg) {
+		if len(arg) == 0 || flagsTerminated || arg[0] != '-' || isNumber(arg) || isDuration(arg) {
+			// TODO: "-" for strings
+
 			// Check if the arg is a command.
 			if !argMode && commander != nil && commander.IsCommand(arg) {
 				// Reset previous flags and args.
@@ -605,7 +608,11 @@ func (p *DefaultParser) Parse(commander Commander, arguments []string) error {
 		if arg[1] == '-' {
 			numMinuses++
 
-			// TODO(SuperPaintman): add the "--" bypass.
+			// "--" terminates the flags.
+			if len(arg) == 2 {
+				flagsTerminated = true
+				continue
+			}
 		}
 
 		shortFlag := numMinuses == 1 && !p.Universal
