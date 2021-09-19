@@ -1077,7 +1077,7 @@ func TestParser_Parse(t *testing.T) {
 
 type testCommander struct {
 	commands []string
-	next     func() error
+	use      func() error
 
 	path []string
 	i    int
@@ -1106,7 +1106,7 @@ func (c *testCommander) SetCommand(name string) error {
 	c.i++
 	c.path = append(c.path, cmd)
 
-	if err := c.next(); err != nil {
+	if err := c.use(); err != nil {
 		return err
 	}
 
@@ -1127,7 +1127,7 @@ func TestParser_Parse_with_commands(t *testing.T) {
 
 	commander := testCommander{
 		commands: []string{"first", "second", "third"},
-		next: func() error {
+		use: func() error {
 			show = Bool(&parser, "show",
 				WithShort("s"),
 				Usage("Show the resuld of the function"),

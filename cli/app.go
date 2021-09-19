@@ -2,10 +2,34 @@ package cli
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
 )
+
+type InvalidCommandError struct {
+	Name string
+	Err  error
+}
+
+func (e *InvalidCommandError) Error() string {
+	msg := "unknown error"
+	if e.Err != nil {
+		msg = e.Err.Error()
+	}
+
+	if e.Name != "" {
+		return fmt.Sprintf("broken command: %s", msg)
+	} else {
+		return fmt.Sprintf("broken command: '%s': %s", e.Name, msg)
+	}
+}
+
+func (e *InvalidCommandError) Is(err error) bool {
+	pe, ok := err.(*InvalidCommandError)
+	return ok && pe.Name == e.Name && errors.Is(pe.Err, e.Err)
+}
 
 type App struct {
 	Name         string
@@ -24,8 +48,8 @@ type App struct {
 }
 
 type commander struct {
-	app  *App
-	next func(*Command) error
+	app *App
+	use func(*Command) error
 
 	command *Command
 	found   *Command
@@ -50,18 +74,34 @@ func (c *commander) IsCommand(name string) bool {
 }
 
 func (c *commander) SetCommand(name string) error {
+	if name == "" {
+		return &InvalidCommandError{Err: ErrMissingName}
+	}
+
+	if !validCommandName(name) {
+		return &InvalidCommandError{
+			Name: name,
+			Err:  ErrInvalidName,
+		}
+	}
+
 	if c.found.Name != name {
+		// Internal error. Something went wrong in IsCommand.
 		return fmt.Errorf("cli: command not found: %s", name)
 	}
 
 	c.command = c.found
 	c.found = nil
 
-	if err := c.next(c.command); err != nil {
+	if err := c.use(c.command); err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func validCommandName(name string) bool {
+	return validArg(name)
 }
 
 func (app *App) RunContext(ctx context.Context) error {
@@ -104,7 +144,7 @@ func (app *App) RunContext(ctx context.Context) error {
 
 	cmder := commander{
 		app: app,
-		next: func(c *Command) error {
+		use: func(c *Command) error {
 			cmd = c
 
 			// Update path and context.
