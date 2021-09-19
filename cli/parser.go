@@ -559,9 +559,7 @@ func (p *DefaultParser) Parse(commander Commander, arguments []string) error {
 		arguments = arguments[1:]
 
 		// Commands or Args.
-		if len(arg) == 0 || flagsTerminated || arg[0] != '-' || isNumber(arg) || isDuration(arg) {
-			// TODO: "-" for strings
-
+		if len(arg) == 0 || flagsTerminated || arg[0] != '-' || arg == "-" || isNumber(arg) || isDuration(arg) {
 			// Check if the arg is a command.
 			if !argMode && commander != nil && commander.IsCommand(arg) {
 				// Reset previous flags and args.
@@ -689,7 +687,7 @@ func (p *DefaultParser) Parse(commander Commander, arguments []string) error {
 							setValue = true
 						}
 					}
-				} else if len(next) > 0 && (next[0] != '-' || isNumber(next) || isDuration(next)) {
+				} else if len(next) > 0 && (next[0] != '-' || next == "-" || isNumber(next) || isDuration(next)) {
 					// Set value if this is a known flag (if it is a bool we also check the value).
 					setValue = knownflag
 

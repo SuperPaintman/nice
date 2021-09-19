@@ -293,9 +293,19 @@ func TestParseFlags(t *testing.T) {
 					want: "",
 				},
 				{
+					name: "single dash value",
+					args: []string{"-t=-"},
+					want: "-",
+				},
+				{
 					name: "test next arg",
 					args: []string{"-t", "test"},
 					want: "test",
+				},
+				{
+					name: "single dash next arg",
+					args: []string{"-t", "-"},
+					want: "-",
 				},
 				{
 					name: "without value",
@@ -681,6 +691,11 @@ func TestParseArgs(t *testing.T) {
 					name: "empty",
 					args: []string{""},
 					want: "",
+				},
+				{
+					name: "single dash",
+					args: []string{"-"},
+					want: "-",
 				},
 			},
 		},
