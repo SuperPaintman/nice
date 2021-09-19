@@ -17,6 +17,7 @@ type Context interface {
 	Help(ctx Context, w io.Writer) error
 	Parser() Parser
 	Args() []Arg
+	Rest() *RestArgs
 	Flags() []Flag
 	Stdout() io.Writer
 	Stderr() io.Writer
@@ -88,6 +89,10 @@ func (c *commandContext) RegisterArg(arg Arg) error {
 	return c.app.parser().RegisterArg(arg)
 }
 
+func (c *commandContext) RegisterRestArgs(rest RestArgs) error {
+	return c.app.parser().RegisterRestArgs(rest)
+}
+
 func (c *commandContext) App() *App { return c.app }
 
 func (c *commandContext) Command() *Command { return c.command }
@@ -99,6 +104,8 @@ func (c *commandContext) Help(ctx Context, w io.Writer) error { return c.app.hel
 func (c *commandContext) Parser() Parser { return c.app.parser() }
 
 func (c *commandContext) Args() []Arg { return c.app.parser().Args() }
+
+func (c *commandContext) Rest() *RestArgs { return c.app.parser().Rest() }
 
 func (c *commandContext) Flags() []Flag { return c.app.parser().Flags() }
 

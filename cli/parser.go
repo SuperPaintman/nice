@@ -17,7 +17,32 @@ var (
 	ErrNotProvided = errors.New("not provided")
 
 	ErrRequiredAfterOptional = errors.New("required after optional")
+
+	ErrArgAfterRest = errors.New("arg after rest")
+
+	ErrUnknownArg = errors.New("unknown arg")
 )
+
+type ParseArgError struct {
+	Arg string
+	Err error
+}
+
+func (e *ParseArgError) Error() string {
+	msg := "unknown error"
+	if e.Err != nil {
+		msg = e.Err.Error()
+	}
+
+	return fmt.Sprintf("parse arg error: '%s': %s", e.Arg, msg)
+}
+
+func (e *ParseArgError) Unwrap() error { return e.Err }
+
+func (e *ParseArgError) Is(err error) bool {
+	pe, ok := err.(*ParseArgError)
+	return ok && pe.Arg == e.Arg && errors.Is(pe.Err, e.Err)
+}
 
 type ParseFlagError struct {
 	Name string
@@ -83,7 +108,7 @@ func (e *ArgError) Error() string {
 		msg = e.Err.Error()
 	}
 
-	if e.Name != "" {
+	if e.Name == "" {
 		return fmt.Sprintf("arg error: %s", msg)
 	} else {
 		return fmt.Sprintf("arg error: '%s': %s", e.Name, msg)
@@ -95,9 +120,33 @@ func (e *ArgError) Is(err error) bool {
 	return ok && pe.Name == e.Name && errors.Is(pe.Err, e.Err)
 }
 
+type RestArgsError struct {
+	Name string
+	Err  error
+}
+
+func (e *RestArgsError) Error() string {
+	msg := "unknown error"
+	if e.Err != nil {
+		msg = e.Err.Error()
+	}
+
+	if e.Name == "" {
+		return fmt.Sprintf("rest args error: %s", msg)
+	} else {
+		return fmt.Sprintf("rest args error: '%s': %s", e.Name, msg)
+	}
+}
+
+func (e *RestArgsError) Is(err error) bool {
+	pe, ok := err.(*RestArgsError)
+	return ok && pe.Name == e.Name && errors.Is(pe.Err, e.Err)
+}
+
 type Register interface {
 	RegisterFlag(flag Flag) error
 	RegisterArg(arg Arg) error
+	RegisterRestArgs(rest RestArgs) error
 }
 
 type Commander interface {
@@ -109,6 +158,7 @@ type Parser interface {
 	Register
 	Parse(commander Commander, arguments []string) error
 	Args() []Arg
+	Rest() *RestArgs
 	Flags() []Flag
 	FormatLongFlag(name string) string
 	FormatShortFlag(name string) string
@@ -272,13 +322,14 @@ type DefaultParser struct {
 	// TODO(SuperPaintman): disable POSIX-style short flag combining (-a -b -> -ab).
 	// TODO(SuperPaintman): disable Short-flag+parameter combining (-a parm -> -aparm).
 
-	flags           flags
-	args            args
-	unknown         []string // Unknown flags (without named flags).
-	rest            []string // Other arguments (without named args).
-	lastArgOptional bool     // Is last arg optional.
-	registerFlagErr error    // RegisterFlag first error.
-	registerArgErr  error    // RegisterArg first error.
+	flags               flags
+	args                args
+	rest                RestArgs // Other arguments (without named args).
+	unknown             []string // Unknown flags (without named flags).
+	lastArgOptional     bool     // Is last arg optional.
+	registerFlagErr     error    // RegisterFlag first error.
+	registerArgErr      error    // RegisterArg first error.
+	registerRestArgsErr error    // RegisterRestArgs first error.
 }
 
 func (p *DefaultParser) RegisterFlag(flag Flag) (err error) {
@@ -388,6 +439,13 @@ func (p *DefaultParser) RegisterArg(arg Arg) (err error) {
 		p.lastArgOptional = true
 	}
 
+	if !p.rest.IsZero() {
+		return &ArgError{
+			Name: arg.Name,
+			Err:  ErrArgAfterRest,
+		}
+	}
+
 	if arg.Name == "" {
 		return &ArgError{Err: ErrMissingName}
 	}
@@ -441,12 +499,49 @@ func validArg(name string) bool {
 	return true
 }
 
+func (p *DefaultParser) RegisterRestArgs(rest RestArgs) (err error) {
+	defer func() {
+		if err != nil && p.registerRestArgsErr == nil {
+			p.registerRestArgsErr = err
+		}
+	}()
+
+	if rest.Name == "" {
+		return &RestArgsError{Err: ErrMissingName}
+	}
+
+	if !validRestArgs(rest.Name) {
+		return &RestArgsError{
+			Name: rest.Name,
+			Err:  ErrInvalidName,
+		}
+	}
+
+	if !p.rest.IsZero() {
+		return &RestArgsError{
+			Name: rest.Name,
+			Err:  ErrDuplicate,
+		}
+	}
+
+	p.rest = rest
+
+	return nil
+}
+
+func validRestArgs(name string) bool {
+	return validArg(name)
+}
+
 func (p *DefaultParser) Parse(commander Commander, arguments []string) error {
 	if p.registerFlagErr != nil {
 		return p.registerFlagErr
 	}
 	if p.registerArgErr != nil {
 		return p.registerArgErr
+	}
+	if p.registerRestArgsErr != nil {
+		return p.registerRestArgsErr
 	}
 
 	var (
@@ -468,6 +563,7 @@ func (p *DefaultParser) Parse(commander Commander, arguments []string) error {
 				// Reset previous flags and args.
 				p.flags.Reset()
 				p.args.Reset()
+				p.rest = RestArgs{}
 
 				if err := commander.SetCommand(arg); err != nil {
 					return err
@@ -488,7 +584,14 @@ func (p *DefaultParser) Parse(commander Commander, arguments []string) error {
 				// Mark the arg as set.
 				p.args.set[argIdx] = true
 			} else {
-				p.rest = append(p.rest, arg)
+				if p.rest.IsZero() {
+					return &ParseArgError{
+						Arg: arg,
+						Err: ErrUnknownArg,
+					}
+				}
+
+				p.rest.Add(arg)
 			}
 
 			argIdx++
@@ -569,20 +672,31 @@ func (p *DefaultParser) Parse(commander Commander, arguments []string) error {
 
 			if (!shortFlag || lastShortFlag) && !hasValue && len(arguments) > 0 {
 				next := arguments[0]
-				if len(next) > 0 && (next[0] != '-' || isNumber(next)) {
-					setValue := knownflag
+
+				var setValue bool
+				if len(next) == 0 {
+					if knownflag {
+						// Special case for empty string flags.
+						if fv, ok := flag.Value.(stringFlag); ok && fv.IsStringFlag() {
+							setValue = true
+						}
+					}
+				} else if len(next) > 0 && (next[0] != '-' || isNumber(next)) {
+					// Set value if this is a known flag (if it is a bool we also check the value).
+					setValue = knownflag
+
 					if knownflag {
 						// Special case for bool flags. Allow only bool-like values.
 						if fv, ok := flag.Value.(boolFlag); ok && fv.IsBoolFlag() {
 							setValue = isBoolValue(next)
 						}
 					}
+				}
 
-					if setValue {
-						value = next
-						hasValue = true
-						arguments = arguments[1:]
-					}
+				if setValue {
+					value = next
+					hasValue = true
+					arguments = arguments[1:]
 				}
 			}
 
@@ -645,6 +759,10 @@ func (p *DefaultParser) Parse(commander Commander, arguments []string) error {
 
 func (p *DefaultParser) Args() []Arg {
 	return p.args.data
+}
+
+func (p *DefaultParser) Rest() *RestArgs {
+	return &p.rest
 }
 
 func (p *DefaultParser) Flags() []Flag {

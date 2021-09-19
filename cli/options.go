@@ -26,17 +26,31 @@ func (fn ArgOptionFunc) ArgOptionApply(o *ArgOptions) {
 	fn(o)
 }
 
+type RestOptionApplyer interface {
+	RestOptionApply(*RestOptions)
+}
+
+var _ RestOptionApplyer = (RestOptionFunc)(nil)
+
+type RestOptionFunc func(*RestOptions)
+
+func (fn RestOptionFunc) RestOptionApply(o *RestOptions) {
+	fn(o)
+}
+
 // Common options.
 
 var (
 	_ FlagOptionApplyer = NoopOption{}
 	_ ArgOptionApplyer  = NoopOption{}
+	_ RestOptionApplyer = NoopOption{}
 )
 
 type NoopOption struct{}
 
 func (opt NoopOption) FlagOptionApply(o *FlagOptions) {}
 func (opt NoopOption) ArgOptionApply(o *ArgOptions)   {}
+func (opt NoopOption) RestOptionApply(o *RestOptions) {}
 
 func WithNoop() NoopOption {
 	return NoopOption{}
@@ -68,6 +82,7 @@ func (opt Necessary) ArgOptionApply(o *ArgOptions) {
 var (
 	_ FlagOptionApplyer = (UsagerFunc)(nil)
 	_ ArgOptionApplyer  = (UsagerFunc)(nil)
+	_ RestOptionApplyer = (UsagerFunc)(nil)
 )
 
 func (fn UsagerFunc) FlagOptionApply(o *FlagOptions) {
@@ -82,9 +97,16 @@ func (fn UsagerFunc) ArgOptionApply(o *ArgOptions) {
 	}
 }
 
+func (fn UsagerFunc) RestOptionApply(o *RestOptions) {
+	if fn != nil {
+		o.Usage = fn
+	}
+}
+
 var (
 	_ FlagOptionApplyer = Usage("")
 	_ ArgOptionApplyer  = Usage("")
+	_ RestOptionApplyer = Usage("")
 )
 
 func (s Usage) FlagOptionApply(o *FlagOptions) {
@@ -99,9 +121,16 @@ func (s Usage) ArgOptionApply(o *ArgOptions) {
 	}
 }
 
+func (s Usage) RestOptionApply(o *RestOptions) {
+	if s != "" {
+		o.Usage = s
+	}
+}
+
 var (
 	_ FlagOptionApplyer = usager{}
 	_ ArgOptionApplyer  = usager{}
+	_ RestOptionApplyer = usager{}
 )
 
 type usager struct{ usager Usager }
@@ -118,9 +147,16 @@ func (u usager) ArgOptionApply(o *ArgOptions) {
 	}
 }
 
+func (u usager) RestOptionApply(o *RestOptions) {
+	if u.usager != nil {
+		o.Usage = u.usager
+	}
+}
+
 type UsageOption interface {
 	FlagOptionApplyer
 	ArgOptionApplyer
+	RestOptionApplyer
 }
 
 func WithUsage(u Usager) UsageOption {
@@ -228,6 +264,37 @@ func (o *ArgOptions) applyArgOptions(options []ArgOptionApplyer) {
 	for _, opt := range options {
 		if opt != nil {
 			opt.ArgOptionApply(o)
+		}
+	}
+}
+
+// Rest options.
+
+var _ RestOptionApplyer = RestOptions{}
+
+type RestOptions struct {
+	Name  string
+	Usage Usager
+}
+
+func (o RestOptions) RestOptionApply(opts *RestOptions) {
+	if o.Name != "" {
+		opts.Name = o.Name
+	}
+
+	if o.Usage != nil {
+		opts.Usage = o.Usage
+	}
+}
+
+func (o *RestOptions) applyName(name string) {
+	o.Name = name
+}
+
+func (o *RestOptions) applyRestOptions(options []RestOptionApplyer) {
+	for _, opt := range options {
+		if opt != nil {
+			opt.RestOptionApply(o)
 		}
 	}
 }

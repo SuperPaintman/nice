@@ -154,9 +154,11 @@ var (
 
 func TestParseFlags(t *testing.T) {
 	type testValue struct {
-		name string
-		args []string
-		want interface{}
+		name       string
+		extraSetup func(Register) interface{}
+		extraCheck func(t *testing.T, v interface{})
+		args       []string
+		want       interface{}
 	}
 
 	mergeTestValues := func(tvss ...[]testValue) []testValue {
@@ -219,6 +221,16 @@ func TestParseFlags(t *testing.T) {
 					},
 					{
 						name: "skip not bool-like next arg",
+						// Add extra arg.
+						extraSetup: func(r Register) interface{} { return StringArg(r, "extra") },
+						extraCheck: func(t *testing.T, got interface{}) {
+							t.Helper()
+
+							const want = "abcd"
+							if !reflect.DeepEqual(got, want) {
+								t.Errorf("Parse(): extra: got = %#v, want = %#v", got, want)
+							}
+						},
 						args: []string{"-t", "abcd"},
 						want: true,
 					},
@@ -328,6 +340,11 @@ func TestParseFlags(t *testing.T) {
 
 					f := tc.setup(&parser)
 
+					var extra interface{}
+					if tvc.extraSetup != nil {
+						extra = tvc.extraSetup(&parser)
+					}
+
 					if err := parser.Parse(nil, tvc.args); err != nil {
 						t.Fatalf("Parse(%v): failed to parse flags: %s", tvc.args, err)
 					}
@@ -335,6 +352,11 @@ func TestParseFlags(t *testing.T) {
 					got := deref(t, f)
 					if !reflect.DeepEqual(got, tvc.want) {
 						t.Errorf("Parse(%v): got = %#v, want = %#v", tvc.args, got, tvc.want)
+					}
+
+					if tvc.extraCheck != nil {
+						gotExtra := deref(t, extra)
+						tvc.extraCheck(t, gotExtra)
 					}
 				})
 			}
@@ -1016,6 +1038,8 @@ func TestParser_Parse(t *testing.T) {
 		Usage("Current User ID"),
 	)
 
+	rest := Rest(&parser, "rest")
+
 	args := []string{
 		"--show", "--recreate=false", "-c", "100500", "1337", "--update", "true",
 		"--first-unknown", "other", "vals", "--second-unknown", "in", "args",
@@ -1071,8 +1095,23 @@ func TestParser_Parse(t *testing.T) {
 
 	// Check unknown.
 	wantRest := []string{"other", "vals", "in", "args"}
-	if !reflect.DeepEqual(parser.rest, wantRest) {
-		t.Errorf("Parse(): rest: got = %#v, want = %#v", parser.rest, wantRest)
+	if !reflect.DeepEqual(*rest, wantRest) {
+		t.Errorf("Parse(): rest: got = %#v, want = %#v", *rest, wantRest)
+	}
+}
+
+func TestParser_Parse_unexpected_rest(t *testing.T) {
+	var parser DefaultParser
+
+	_ = BoolArg(&parser, "a")
+	_ = BoolArg(&parser, "b", Optional)
+
+	args := []string{"true", "false", "c", "d", "1337", "false", "e"}
+
+	got := parser.Parse(nil, args)
+	want := &ParseArgError{Arg: "c", Err: ErrUnknownArg}
+	if !errors.Is(got, want) {
+		t.Fatalf("Parse(): got error = %q, want error = %q", got, want)
 	}
 }
 
@@ -1125,6 +1164,7 @@ func TestParser_Parse_with_commands(t *testing.T) {
 	unused := new(bool)
 	count := new(int)
 	userID := new(int)
+	rest := new([]string)
 
 	commander := testCommander{
 		commands: []string{"first", "second", "third"},
@@ -1151,6 +1191,8 @@ func TestParser_Parse_with_commands(t *testing.T) {
 			userID = IntArg(&parser, "user-id",
 				Usage("Current User ID"),
 			)
+
+			rest = Rest(&parser, "rest")
 
 			return nil
 		},
@@ -1218,8 +1260,8 @@ func TestParser_Parse_with_commands(t *testing.T) {
 
 	// Check unknown.
 	wantRest := []string{"other", "vals", "in", "args"}
-	if !reflect.DeepEqual(parser.rest, wantRest) {
-		t.Errorf("Parse(): rest: got = %#v, want = %#v", parser.rest, wantRest)
+	if !reflect.DeepEqual(*rest, wantRest) {
+		t.Errorf("Parse(): rest: got = %#v, want = %#v", *rest, wantRest)
 	}
 }
 
@@ -1268,9 +1310,8 @@ func TestParser_Parse_optional_arg(t *testing.T) {
 
 	args := []string{"true", "false"}
 
-	err := parser.Parse(nil, args)
-	if err != nil {
-		t.Fatalf("Parse(): unexpected error = %q", err)
+	if err := parser.Parse(nil, args); err != nil {
+		t.Fatalf("Parse(): failed to parse args: %s", err)
 	}
 }
 
@@ -1286,6 +1327,140 @@ func TestParser_Parse_optional_arg_after_required(t *testing.T) {
 
 	got := parser.Parse(nil, args)
 	want := &ArgError{Name: "c", Err: ErrRequiredAfterOptional}
+	if !errors.Is(got, want) {
+		t.Fatalf("Parse(): got error = %q, want error = %q", got, want)
+	}
+}
+
+func TestParser_Parse_rest(t *testing.T) {
+	var parser DefaultParser
+
+	_ = BoolArg(&parser, "a")
+	_ = BoolArg(&parser, "b")
+
+	var rest []string
+	_ = RestVar(&parser, &rest, "rest")
+
+	args := []string{"true", "false", "c", "d", "1337", "false", "e"}
+
+	if err := parser.Parse(nil, args); err != nil {
+		t.Fatalf("Parse(): failed to parse args: %s", err)
+	}
+
+	want := []string{"c", "d", "1337", "false", "e"}
+	if !reflect.DeepEqual(rest, want) {
+		t.Errorf("Parse(): rest: got = %#v, want = %#v", rest, want)
+	}
+}
+
+func TestRegisterInvalidNameRestArgs(t *testing.T) {
+	tt := []struct {
+		name     string
+		restArgs string
+		want     error
+	}{
+		{
+			name: "empty rest args name",
+			want: &RestArgsError{Err: ErrMissingName},
+		},
+		{
+			name:     "start dash in rest args name",
+			restArgs: "-help",
+			want:     &RestArgsError{Name: "-help", Err: ErrInvalidName},
+		},
+		{
+			name:     "ignore non-start dash in rest args name",
+			restArgs: "go-help",
+			want:     nil,
+		},
+		{
+			name:     "ignore end dash in rest args name",
+			restArgs: "help-",
+			want:     nil,
+		},
+		{
+			name:     "equal in rest args name",
+			restArgs: "help=test",
+			want:     &RestArgsError{Name: "help=test", Err: ErrInvalidName},
+		},
+		{
+			name:     "space in rest args name",
+			restArgs: "help test",
+			want:     &RestArgsError{Name: "help test", Err: ErrInvalidName},
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			var parser DefaultParser
+
+			_ = Rest(&parser, tc.restArgs)
+
+			got := parser.Parse(nil, nil)
+			if !errors.Is(got, tc.want) {
+				t.Fatalf("Parse(): got error = %q, want error = %q", got, tc.want)
+			}
+		})
+	}
+}
+
+func TestParser_Parse_rest_after_optional_arg(t *testing.T) {
+	var parser DefaultParser
+
+	_ = BoolArg(&parser, "a")
+	_ = BoolArg(&parser, "b", Optional)
+
+	var rest []string
+	_ = RestVar(&parser, &rest, "rest")
+
+	args := []string{"true", "false", "c", "d", "1337", "false", "e"}
+
+	if err := parser.Parse(nil, args); err != nil {
+		t.Fatalf("Parse(): failed to parse args: %s", err)
+	}
+
+	want := []string{"c", "d", "1337", "false", "e"}
+	if !reflect.DeepEqual(rest, want) {
+		t.Errorf("Parse(): rest: got = %#v, want = %#v", rest, want)
+	}
+}
+
+func TestParser_Parse_multi_rest(t *testing.T) {
+	var parser DefaultParser
+
+	_ = Rest(&parser, "rest")
+	_ = Rest(&parser, "other")
+
+	got := parser.Parse(nil, nil)
+	want := &RestArgsError{Name: "other", Err: ErrDuplicate}
+	if !errors.Is(got, want) {
+		t.Fatalf("Parse(): got error = %q, want error = %q", got, want)
+	}
+}
+
+func TestParser_Parse_arg_after_rest(t *testing.T) {
+	var parser DefaultParser
+
+	_ = BoolArg(&parser, "a")
+	_ = Rest(&parser, "rest")
+	_ = BoolArg(&parser, "b")
+
+	got := parser.Parse(nil, nil)
+	want := &ArgError{Name: "b", Err: ErrArgAfterRest}
+	if !errors.Is(got, want) {
+		t.Fatalf("Parse(): got error = %q, want error = %q", got, want)
+	}
+}
+
+func TestParser_Parse_optional_arg_after_rest(t *testing.T) {
+	var parser DefaultParser
+
+	_ = BoolArg(&parser, "a")
+	_ = Rest(&parser, "rest")
+	_ = BoolArg(&parser, "b", Optional)
+
+	got := parser.Parse(nil, nil)
+	want := &ArgError{Name: "b", Err: ErrArgAfterRest}
 	if !errors.Is(got, want) {
 		t.Fatalf("Parse(): got error = %q, want error = %q", got, want)
 	}

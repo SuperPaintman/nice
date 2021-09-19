@@ -281,6 +281,13 @@ func (s *stringValue) Set(val string) error {
 	return nil
 }
 
+func (s *stringValue) IsStringFlag() bool { return true }
+
+type stringFlag interface {
+	Value
+	IsStringFlag() bool
+}
+
 // int
 
 func (i *intValue) Set(s string) error {
