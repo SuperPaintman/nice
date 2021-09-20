@@ -16,11 +16,7 @@ for (typ, name, _) in types:
     res += "// %s\n" % typ
     res += "\n"
     res += "func %sArgVar(register Register, p *%s, name string, options ...ArgOptionApplyer) error {\n" % (name, typ)
-    res += "\tvar opts ArgOptions\n"
-    res += "\topts.applyName(name)\n"
-    res += "\topts.applyArgOptions(options)\n"
-    res += "\n"
-    res += "\treturn register.RegisterArg(newArg(new%sValue(p), opts))\n" % name
+    res += "\treturn ArgVar(register, new%sValue(p), name, options...)\n" % name
     res += "}\n"
     res += "\n"
     res += "func %sArg(register Register, name string, options ...ArgOptionApplyer) *%s {\n" % (name, typ)

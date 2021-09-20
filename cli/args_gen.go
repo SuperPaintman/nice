@@ -9,11 +9,7 @@ import (
 // bool
 
 func BoolArgVar(register Register, p *bool, name string, options ...ArgOptionApplyer) error {
-	var opts ArgOptions
-	opts.applyName(name)
-	opts.applyArgOptions(options)
-
-	return register.RegisterArg(newArg(newBoolValue(p), opts))
+	return ArgVar(register, newBoolValue(p), name, options...)
 }
 
 func BoolArg(register Register, name string, options ...ArgOptionApplyer) *bool {
@@ -25,11 +21,7 @@ func BoolArg(register Register, name string, options ...ArgOptionApplyer) *bool 
 // uint8
 
 func Uint8ArgVar(register Register, p *uint8, name string, options ...ArgOptionApplyer) error {
-	var opts ArgOptions
-	opts.applyName(name)
-	opts.applyArgOptions(options)
-
-	return register.RegisterArg(newArg(newUint8Value(p), opts))
+	return ArgVar(register, newUint8Value(p), name, options...)
 }
 
 func Uint8Arg(register Register, name string, options ...ArgOptionApplyer) *uint8 {
@@ -41,11 +33,7 @@ func Uint8Arg(register Register, name string, options ...ArgOptionApplyer) *uint
 // uint16
 
 func Uint16ArgVar(register Register, p *uint16, name string, options ...ArgOptionApplyer) error {
-	var opts ArgOptions
-	opts.applyName(name)
-	opts.applyArgOptions(options)
-
-	return register.RegisterArg(newArg(newUint16Value(p), opts))
+	return ArgVar(register, newUint16Value(p), name, options...)
 }
 
 func Uint16Arg(register Register, name string, options ...ArgOptionApplyer) *uint16 {
@@ -57,11 +45,7 @@ func Uint16Arg(register Register, name string, options ...ArgOptionApplyer) *uin
 // uint32
 
 func Uint32ArgVar(register Register, p *uint32, name string, options ...ArgOptionApplyer) error {
-	var opts ArgOptions
-	opts.applyName(name)
-	opts.applyArgOptions(options)
-
-	return register.RegisterArg(newArg(newUint32Value(p), opts))
+	return ArgVar(register, newUint32Value(p), name, options...)
 }
 
 func Uint32Arg(register Register, name string, options ...ArgOptionApplyer) *uint32 {
@@ -73,11 +57,7 @@ func Uint32Arg(register Register, name string, options ...ArgOptionApplyer) *uin
 // uint64
 
 func Uint64ArgVar(register Register, p *uint64, name string, options ...ArgOptionApplyer) error {
-	var opts ArgOptions
-	opts.applyName(name)
-	opts.applyArgOptions(options)
-
-	return register.RegisterArg(newArg(newUint64Value(p), opts))
+	return ArgVar(register, newUint64Value(p), name, options...)
 }
 
 func Uint64Arg(register Register, name string, options ...ArgOptionApplyer) *uint64 {
@@ -89,11 +69,7 @@ func Uint64Arg(register Register, name string, options ...ArgOptionApplyer) *uin
 // int8
 
 func Int8ArgVar(register Register, p *int8, name string, options ...ArgOptionApplyer) error {
-	var opts ArgOptions
-	opts.applyName(name)
-	opts.applyArgOptions(options)
-
-	return register.RegisterArg(newArg(newInt8Value(p), opts))
+	return ArgVar(register, newInt8Value(p), name, options...)
 }
 
 func Int8Arg(register Register, name string, options ...ArgOptionApplyer) *int8 {
@@ -105,11 +81,7 @@ func Int8Arg(register Register, name string, options ...ArgOptionApplyer) *int8 
 // int16
 
 func Int16ArgVar(register Register, p *int16, name string, options ...ArgOptionApplyer) error {
-	var opts ArgOptions
-	opts.applyName(name)
-	opts.applyArgOptions(options)
-
-	return register.RegisterArg(newArg(newInt16Value(p), opts))
+	return ArgVar(register, newInt16Value(p), name, options...)
 }
 
 func Int16Arg(register Register, name string, options ...ArgOptionApplyer) *int16 {
@@ -121,11 +93,7 @@ func Int16Arg(register Register, name string, options ...ArgOptionApplyer) *int1
 // int32
 
 func Int32ArgVar(register Register, p *int32, name string, options ...ArgOptionApplyer) error {
-	var opts ArgOptions
-	opts.applyName(name)
-	opts.applyArgOptions(options)
-
-	return register.RegisterArg(newArg(newInt32Value(p), opts))
+	return ArgVar(register, newInt32Value(p), name, options...)
 }
 
 func Int32Arg(register Register, name string, options ...ArgOptionApplyer) *int32 {
@@ -137,11 +105,7 @@ func Int32Arg(register Register, name string, options ...ArgOptionApplyer) *int3
 // int64
 
 func Int64ArgVar(register Register, p *int64, name string, options ...ArgOptionApplyer) error {
-	var opts ArgOptions
-	opts.applyName(name)
-	opts.applyArgOptions(options)
-
-	return register.RegisterArg(newArg(newInt64Value(p), opts))
+	return ArgVar(register, newInt64Value(p), name, options...)
 }
 
 func Int64Arg(register Register, name string, options ...ArgOptionApplyer) *int64 {
@@ -153,11 +117,7 @@ func Int64Arg(register Register, name string, options ...ArgOptionApplyer) *int6
 // float32
 
 func Float32ArgVar(register Register, p *float32, name string, options ...ArgOptionApplyer) error {
-	var opts ArgOptions
-	opts.applyName(name)
-	opts.applyArgOptions(options)
-
-	return register.RegisterArg(newArg(newFloat32Value(p), opts))
+	return ArgVar(register, newFloat32Value(p), name, options...)
 }
 
 func Float32Arg(register Register, name string, options ...ArgOptionApplyer) *float32 {
@@ -169,11 +129,7 @@ func Float32Arg(register Register, name string, options ...ArgOptionApplyer) *fl
 // float64
 
 func Float64ArgVar(register Register, p *float64, name string, options ...ArgOptionApplyer) error {
-	var opts ArgOptions
-	opts.applyName(name)
-	opts.applyArgOptions(options)
-
-	return register.RegisterArg(newArg(newFloat64Value(p), opts))
+	return ArgVar(register, newFloat64Value(p), name, options...)
 }
 
 func Float64Arg(register Register, name string, options ...ArgOptionApplyer) *float64 {
@@ -185,11 +141,7 @@ func Float64Arg(register Register, name string, options ...ArgOptionApplyer) *fl
 // string
 
 func StringArgVar(register Register, p *string, name string, options ...ArgOptionApplyer) error {
-	var opts ArgOptions
-	opts.applyName(name)
-	opts.applyArgOptions(options)
-
-	return register.RegisterArg(newArg(newStringValue(p), opts))
+	return ArgVar(register, newStringValue(p), name, options...)
 }
 
 func StringArg(register Register, name string, options ...ArgOptionApplyer) *string {
@@ -201,11 +153,7 @@ func StringArg(register Register, name string, options ...ArgOptionApplyer) *str
 // int
 
 func IntArgVar(register Register, p *int, name string, options ...ArgOptionApplyer) error {
-	var opts ArgOptions
-	opts.applyName(name)
-	opts.applyArgOptions(options)
-
-	return register.RegisterArg(newArg(newIntValue(p), opts))
+	return ArgVar(register, newIntValue(p), name, options...)
 }
 
 func IntArg(register Register, name string, options ...ArgOptionApplyer) *int {
@@ -217,11 +165,7 @@ func IntArg(register Register, name string, options ...ArgOptionApplyer) *int {
 // uint
 
 func UintArgVar(register Register, p *uint, name string, options ...ArgOptionApplyer) error {
-	var opts ArgOptions
-	opts.applyName(name)
-	opts.applyArgOptions(options)
-
-	return register.RegisterArg(newArg(newUintValue(p), opts))
+	return ArgVar(register, newUintValue(p), name, options...)
 }
 
 func UintArg(register Register, name string, options ...ArgOptionApplyer) *uint {
@@ -233,11 +177,7 @@ func UintArg(register Register, name string, options ...ArgOptionApplyer) *uint 
 // time.Duration
 
 func DurationArgVar(register Register, p *time.Duration, name string, options ...ArgOptionApplyer) error {
-	var opts ArgOptions
-	opts.applyName(name)
-	opts.applyArgOptions(options)
-
-	return register.RegisterArg(newArg(newDurationValue(p), opts))
+	return ArgVar(register, newDurationValue(p), name, options...)
 }
 
 func DurationArg(register Register, name string, options ...ArgOptionApplyer) *time.Duration {

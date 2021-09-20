@@ -16,11 +16,7 @@ for (typ, name, _) in types:
     res += "// []%s\n" % typ
     res += "\n"
     res += "func Rest%ssVar(register Register, p *[]%s, name string, options ...RestOptionApplyer) error {\n" % (name, typ)
-    res += "\tvar opts RestOptions\n"
-    res += "\topts.applyName(name)\n"
-    res += "\topts.applyRestOptions(options)\n"
-    res += "\n"
-    res += "\treturn register.RegisterRestArgs(newRest(new%sValues(p), opts))\n" % name
+    res += "\treturn RestVar(register, new%sValues(p), name, options...)\n" % name
     res += "}\n"
     res += "\n"
     res += "func Rest%ss(register Register, name string, options ...RestOptionApplyer) *[]%s {\n" % (name, typ)

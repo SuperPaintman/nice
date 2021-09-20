@@ -9,11 +9,7 @@ import (
 // []bool
 
 func RestBoolsVar(register Register, p *[]bool, name string, options ...RestOptionApplyer) error {
-	var opts RestOptions
-	opts.applyName(name)
-	opts.applyRestOptions(options)
-
-	return register.RegisterRestArgs(newRest(newBoolValues(p), opts))
+	return RestVar(register, newBoolValues(p), name, options...)
 }
 
 func RestBools(register Register, name string, options ...RestOptionApplyer) *[]bool {
@@ -25,11 +21,7 @@ func RestBools(register Register, name string, options ...RestOptionApplyer) *[]
 // []uint8
 
 func RestUint8sVar(register Register, p *[]uint8, name string, options ...RestOptionApplyer) error {
-	var opts RestOptions
-	opts.applyName(name)
-	opts.applyRestOptions(options)
-
-	return register.RegisterRestArgs(newRest(newUint8Values(p), opts))
+	return RestVar(register, newUint8Values(p), name, options...)
 }
 
 func RestUint8s(register Register, name string, options ...RestOptionApplyer) *[]uint8 {
@@ -41,11 +33,7 @@ func RestUint8s(register Register, name string, options ...RestOptionApplyer) *[
 // []uint16
 
 func RestUint16sVar(register Register, p *[]uint16, name string, options ...RestOptionApplyer) error {
-	var opts RestOptions
-	opts.applyName(name)
-	opts.applyRestOptions(options)
-
-	return register.RegisterRestArgs(newRest(newUint16Values(p), opts))
+	return RestVar(register, newUint16Values(p), name, options...)
 }
 
 func RestUint16s(register Register, name string, options ...RestOptionApplyer) *[]uint16 {
@@ -57,11 +45,7 @@ func RestUint16s(register Register, name string, options ...RestOptionApplyer) *
 // []uint32
 
 func RestUint32sVar(register Register, p *[]uint32, name string, options ...RestOptionApplyer) error {
-	var opts RestOptions
-	opts.applyName(name)
-	opts.applyRestOptions(options)
-
-	return register.RegisterRestArgs(newRest(newUint32Values(p), opts))
+	return RestVar(register, newUint32Values(p), name, options...)
 }
 
 func RestUint32s(register Register, name string, options ...RestOptionApplyer) *[]uint32 {
@@ -73,11 +57,7 @@ func RestUint32s(register Register, name string, options ...RestOptionApplyer) *
 // []uint64
 
 func RestUint64sVar(register Register, p *[]uint64, name string, options ...RestOptionApplyer) error {
-	var opts RestOptions
-	opts.applyName(name)
-	opts.applyRestOptions(options)
-
-	return register.RegisterRestArgs(newRest(newUint64Values(p), opts))
+	return RestVar(register, newUint64Values(p), name, options...)
 }
 
 func RestUint64s(register Register, name string, options ...RestOptionApplyer) *[]uint64 {
@@ -89,11 +69,7 @@ func RestUint64s(register Register, name string, options ...RestOptionApplyer) *
 // []int8
 
 func RestInt8sVar(register Register, p *[]int8, name string, options ...RestOptionApplyer) error {
-	var opts RestOptions
-	opts.applyName(name)
-	opts.applyRestOptions(options)
-
-	return register.RegisterRestArgs(newRest(newInt8Values(p), opts))
+	return RestVar(register, newInt8Values(p), name, options...)
 }
 
 func RestInt8s(register Register, name string, options ...RestOptionApplyer) *[]int8 {
@@ -105,11 +81,7 @@ func RestInt8s(register Register, name string, options ...RestOptionApplyer) *[]
 // []int16
 
 func RestInt16sVar(register Register, p *[]int16, name string, options ...RestOptionApplyer) error {
-	var opts RestOptions
-	opts.applyName(name)
-	opts.applyRestOptions(options)
-
-	return register.RegisterRestArgs(newRest(newInt16Values(p), opts))
+	return RestVar(register, newInt16Values(p), name, options...)
 }
 
 func RestInt16s(register Register, name string, options ...RestOptionApplyer) *[]int16 {
@@ -121,11 +93,7 @@ func RestInt16s(register Register, name string, options ...RestOptionApplyer) *[
 // []int32
 
 func RestInt32sVar(register Register, p *[]int32, name string, options ...RestOptionApplyer) error {
-	var opts RestOptions
-	opts.applyName(name)
-	opts.applyRestOptions(options)
-
-	return register.RegisterRestArgs(newRest(newInt32Values(p), opts))
+	return RestVar(register, newInt32Values(p), name, options...)
 }
 
 func RestInt32s(register Register, name string, options ...RestOptionApplyer) *[]int32 {
@@ -137,11 +105,7 @@ func RestInt32s(register Register, name string, options ...RestOptionApplyer) *[
 // []int64
 
 func RestInt64sVar(register Register, p *[]int64, name string, options ...RestOptionApplyer) error {
-	var opts RestOptions
-	opts.applyName(name)
-	opts.applyRestOptions(options)
-
-	return register.RegisterRestArgs(newRest(newInt64Values(p), opts))
+	return RestVar(register, newInt64Values(p), name, options...)
 }
 
 func RestInt64s(register Register, name string, options ...RestOptionApplyer) *[]int64 {
@@ -153,11 +117,7 @@ func RestInt64s(register Register, name string, options ...RestOptionApplyer) *[
 // []float32
 
 func RestFloat32sVar(register Register, p *[]float32, name string, options ...RestOptionApplyer) error {
-	var opts RestOptions
-	opts.applyName(name)
-	opts.applyRestOptions(options)
-
-	return register.RegisterRestArgs(newRest(newFloat32Values(p), opts))
+	return RestVar(register, newFloat32Values(p), name, options...)
 }
 
 func RestFloat32s(register Register, name string, options ...RestOptionApplyer) *[]float32 {
@@ -169,11 +129,7 @@ func RestFloat32s(register Register, name string, options ...RestOptionApplyer) 
 // []float64
 
 func RestFloat64sVar(register Register, p *[]float64, name string, options ...RestOptionApplyer) error {
-	var opts RestOptions
-	opts.applyName(name)
-	opts.applyRestOptions(options)
-
-	return register.RegisterRestArgs(newRest(newFloat64Values(p), opts))
+	return RestVar(register, newFloat64Values(p), name, options...)
 }
 
 func RestFloat64s(register Register, name string, options ...RestOptionApplyer) *[]float64 {
@@ -185,11 +141,7 @@ func RestFloat64s(register Register, name string, options ...RestOptionApplyer) 
 // []string
 
 func RestStringsVar(register Register, p *[]string, name string, options ...RestOptionApplyer) error {
-	var opts RestOptions
-	opts.applyName(name)
-	opts.applyRestOptions(options)
-
-	return register.RegisterRestArgs(newRest(newStringValues(p), opts))
+	return RestVar(register, newStringValues(p), name, options...)
 }
 
 func RestStrings(register Register, name string, options ...RestOptionApplyer) *[]string {
@@ -201,11 +153,7 @@ func RestStrings(register Register, name string, options ...RestOptionApplyer) *
 // []int
 
 func RestIntsVar(register Register, p *[]int, name string, options ...RestOptionApplyer) error {
-	var opts RestOptions
-	opts.applyName(name)
-	opts.applyRestOptions(options)
-
-	return register.RegisterRestArgs(newRest(newIntValues(p), opts))
+	return RestVar(register, newIntValues(p), name, options...)
 }
 
 func RestInts(register Register, name string, options ...RestOptionApplyer) *[]int {
@@ -217,11 +165,7 @@ func RestInts(register Register, name string, options ...RestOptionApplyer) *[]i
 // []uint
 
 func RestUintsVar(register Register, p *[]uint, name string, options ...RestOptionApplyer) error {
-	var opts RestOptions
-	opts.applyName(name)
-	opts.applyRestOptions(options)
-
-	return register.RegisterRestArgs(newRest(newUintValues(p), opts))
+	return RestVar(register, newUintValues(p), name, options...)
 }
 
 func RestUints(register Register, name string, options ...RestOptionApplyer) *[]uint {
@@ -233,11 +177,7 @@ func RestUints(register Register, name string, options ...RestOptionApplyer) *[]
 // []time.Duration
 
 func RestDurationsVar(register Register, p *[]time.Duration, name string, options ...RestOptionApplyer) error {
-	var opts RestOptions
-	opts.applyName(name)
-	opts.applyRestOptions(options)
-
-	return register.RegisterRestArgs(newRest(newDurationValues(p), opts))
+	return RestVar(register, newDurationValues(p), name, options...)
 }
 
 func RestDurations(register Register, name string, options ...RestOptionApplyer) *[]time.Duration {

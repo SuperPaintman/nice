@@ -33,4 +33,12 @@ func (a *Arg) String() string {
 	return "Arg(" + a.Type() + "," + a.Name + ")"
 }
 
+func ArgVar(register Register, value Value, name string, options ...ArgOptionApplyer) error {
+	var opts ArgOptions
+	opts.applyName(name)
+	opts.applyArgOptions(options)
+
+	return register.RegisterArg(newArg(value, opts))
+}
+
 //go:generate python ./generate_args.py

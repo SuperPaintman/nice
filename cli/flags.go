@@ -61,6 +61,14 @@ func (f *Flag) String() string {
 	return v
 }
 
+func Var(register Register, value Value, name string, options ...FlagOptionApplyer) error {
+	var opts FlagOptions
+	opts.applyName(name)
+	opts.applyFlagOptions(options)
+
+	return register.RegisterFlag(newFlag(value, opts))
+}
+
 //go:generate python ./generate_flags.py
 
 //go:generate python ./generate_multi_flags.py

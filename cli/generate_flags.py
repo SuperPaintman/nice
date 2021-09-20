@@ -16,11 +16,7 @@ for (typ, name, _) in types:
     res += "// %s\n" % typ
     res += "\n"
     res += "func %sVar(register Register, p *%s, name string, options ...FlagOptionApplyer) error {\n" % (name, typ)
-    res += "\tvar opts FlagOptions\n"
-    res += "\topts.applyName(name)\n"
-    res += "\topts.applyFlagOptions(options)\n"
-    res += "\n"
-    res += "\treturn register.RegisterFlag(newFlag(new%sValue(p), opts))\n" % name
+    res += "\treturn Var(register, new%sValue(p), name, options...)\n" % name
     res += "}\n"
     res += "\n"
     res += "func %s(register Register, name string, options ...FlagOptionApplyer) *%s {\n" % (name, typ)

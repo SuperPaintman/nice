@@ -303,6 +303,6 @@ func newDurationValue(p *time.Duration) *timeDurationValue {
 
 func (v *timeDurationValue) Get() interface{} { return time.Duration(*v) }
 
-func (v *timeDurationValue) String() string { return strconv.FormatUint(uint64(*v), 10) }
+func (v *timeDurationValue) String() string { return (*time.Duration)(v).String() }
 
 func (*timeDurationValue) Type() string { return "time.Duration" }

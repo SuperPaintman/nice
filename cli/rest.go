@@ -20,10 +20,20 @@ func (ra *RestArgs) IsZero() bool {
 
 func (ra *RestArgs) Add(val string) error {
 	if ra.Values != nil {
-		ra.Values.Set(val)
+		if err := ra.Values.Set(val); err != nil {
+			return err
+		}
 	}
 
 	return nil
+}
+
+func RestVar(register Register, value Value, name string, options ...RestOptionApplyer) error {
+	var opts RestOptions
+	opts.applyName(name)
+	opts.applyRestOptions(options)
+
+	return register.RegisterRestArgs(newRest(value, opts))
 }
 
 //go:generate python ./generate_rest.py
