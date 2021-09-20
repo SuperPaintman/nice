@@ -2,28 +2,30 @@ package cli
 
 import (
 	"bytes"
+	"fmt"
 	"io"
+	"strings"
 
 	"github.com/SuperPaintman/nice/colors"
 )
 
 type Helper interface {
-	Help(ctx Context, w io.Writer) error
+	Help(ctx Context, path []string, w io.Writer) error
 }
 
 var _ Helper = (HelperFunc)(nil)
 
-type HelperFunc func(ctx Context, w io.Writer) error
+type HelperFunc func(ctx Context, path []string, w io.Writer) error
 
-func (fn HelperFunc) Help(ctx Context, w io.Writer) error {
-	return fn(ctx, w)
+func (fn HelperFunc) Help(ctx Context, path []string, w io.Writer) error {
+	return fn(ctx, path, w)
 }
 
 var _ Helper = noopHelper{}
 
 type noopHelper struct{}
 
-func (n noopHelper) Help(ctx Context, w io.Writer) error {
+func (n noopHelper) Help(ctx Context, path []string, w io.Writer) error {
 	return nil
 }
 
@@ -35,7 +37,7 @@ var _ Helper = DefaultHelper{}
 
 type DefaultHelper struct{}
 
-func (h DefaultHelper) Help(ctx Context, w io.Writer) error {
+func (h DefaultHelper) Help(ctx Context, path []string, w io.Writer) error {
 	const (
 		colorName     = colors.Blue
 		colorCommand  = colors.Magenta
@@ -49,7 +51,6 @@ func (h DefaultHelper) Help(ctx Context, w io.Writer) error {
 	args := ctx.Args()
 	flags := ctx.Flags()
 	cmd := ctx.App().Command()
-	path := ctx.Path()
 	for _, name := range path[1:] {
 		// Find a sub command.
 		var found bool
@@ -64,8 +65,7 @@ func (h DefaultHelper) Help(ctx Context, w io.Writer) error {
 		}
 
 		if !found {
-			// return fmt.Errorf("cli: command not found: %s", name)
-			break
+			return fmt.Errorf("cli: command not found: %s", strings.Join(path, " "))
 		}
 	}
 

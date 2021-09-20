@@ -518,9 +518,10 @@ func (p *DefaultParser) Parse(commander Commander, arguments []string) error {
 	}
 
 	var (
-		argMode         bool
-		argIdx          int
-		flagsTerminated bool
+		argMode          bool
+		argIdx           int
+		flagsTerminated  bool
+		foundCommandFlag bool
 	)
 	for {
 		if len(arguments) == 0 {
@@ -720,9 +721,18 @@ func (p *DefaultParser) Parse(commander Commander, arguments []string) error {
 				return err
 			}
 
+			if flag.commandFlag {
+				foundCommandFlag = true
+			}
+
 			// Mark the flag as set.
 			p.flags.set[idx] = true
 		}
+	}
+
+	// Don't chec required flags and args if we in "command flag" mode.
+	if foundCommandFlag {
+		return nil
 	}
 
 	// Check required flags.

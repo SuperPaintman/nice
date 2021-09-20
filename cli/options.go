@@ -173,7 +173,10 @@ type FlagOptions struct {
 	Long      string
 	Usage     Usager
 	Necessary Necessary // Optional if unset
-	Global    bool      // TODO
+
+	commandFlag bool
+
+	// Global bool // TODO
 }
 
 func (o FlagOptions) FlagOptionApply(opts *FlagOptions) {
@@ -189,7 +192,13 @@ func (o FlagOptions) FlagOptionApply(opts *FlagOptions) {
 		opts.Usage = o.Usage
 	}
 
+	if o.Usage != nil {
+		opts.Usage = o.Usage
+	}
+
 	opts.Necessary = o.Necessary
+
+	opts.commandFlag = o.commandFlag
 }
 
 func (o *FlagOptions) applyName(name string) {
@@ -221,12 +230,18 @@ func WithLong(name string) FlagOptionFunc {
 	}
 }
 
-var _ FlagOptionApplyer = Global(false)
+// var _ FlagOptionApplyer = Global(false)
+//
+// type Global bool
+//
+// func (g Global) FlagOptionApply(o *FlagOptions) {
+// 	o.Global = bool(g)
+// }
 
-type Global bool
+type commandFlag bool
 
-func (g Global) FlagOptionApply(o *FlagOptions) {
-	o.Global = bool(g)
+func (cf commandFlag) FlagOptionApply(o *FlagOptions) {
+	o.commandFlag = bool(cf)
 }
 
 // Arg options.

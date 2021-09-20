@@ -129,6 +129,7 @@ func (app *App) RunContext(ctx context.Context) error {
 			err := BoolVar(cmdCtx, &f.value, f.Long,
 				WithShort(f.Short),
 				WithUsage(f.Usage),
+				commandFlag(true), // Mark this flag as "magic" command flag.
 			)
 			if err != nil {
 				return err
@@ -186,8 +187,14 @@ func (app *App) RunContext(ctx context.Context) error {
 			continue
 		}
 
-		if err := f.Action(cmdCtx); err != nil {
-			return err
+		if cmd.Action != nil {
+			if err := f.Action.Setup(cmdCtx); err != nil {
+				return err
+			}
+
+			if err := f.Action.Run(cmdCtx); err != nil {
+				return err
+			}
 		}
 
 		return nil
@@ -270,12 +277,12 @@ func (app *App) parser() Parser {
 // 	return !disabled
 // }
 
-func (app *App) help(ctx Context, w io.Writer) error {
+func (app *App) help(ctx Context, path []string, w io.Writer) error {
 	if app.Helper != nil {
-		return app.Helper.Help(ctx, w)
+		return app.Helper.Help(ctx, path, w)
 	}
 
-	return (DefaultHelper{}).Help(ctx, w)
+	return (DefaultHelper{}).Help(ctx, path, w)
 }
 
 type Command struct {
@@ -298,13 +305,11 @@ type ActionRunner func(ctx Context) error
 
 type ActionBuilder func(ctx Context) ActionRunner
 
-var _ Action = (SimpleActionFunc)(nil)
+var _ Action = (ActionRunner)(nil)
 
-type SimpleActionFunc ActionRunner
+func (fn ActionRunner) Setup(ctx Context) error { return nil }
 
-func (fn SimpleActionFunc) Setup(ctx Context) error { return nil }
-
-func (fn SimpleActionFunc) Run(ctx Context) error { return fn(ctx) }
+func (fn ActionRunner) Run(ctx Context) error { return fn(ctx) }
 
 var _ Action = (*actionFunc)(nil)
 
@@ -337,7 +342,7 @@ type CommandFlag struct {
 	Short  string
 	Long   string
 	Usage  Usager
-	Action ActionRunner
+	Action Action
 
 	value bool
 }

@@ -7,6 +7,8 @@ type Flag struct {
 	Usage     Usager
 	Necessary Necessary
 
+	commandFlag bool
+
 	// NOTE(SuperPaintman):
 	//     The first version had "Aliases" for flags. It's quite handy to have
 	//     (e.g. --dry and --dry-run) but at the same time makes API a bit
@@ -23,6 +25,8 @@ func newFlag(value Value, opts FlagOptions) Flag {
 		Long:      opts.Long,
 		Usage:     opts.Usage,
 		Necessary: opts.Necessary,
+
+		commandFlag: opts.commandFlag,
 	}
 }
 
