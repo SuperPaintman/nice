@@ -320,6 +320,7 @@ type DefaultParser struct {
 	OverrideFlags      bool
 	OverrideArgs       bool
 	IgnoreUnknownFlags bool
+	IgnoreUnknownArgs  bool
 	// TODO(SuperPaintman): disable POSIX-style short flag combining (-a -b -> -ab).
 	// TODO(SuperPaintman): disable Short-flag+parameter combining (-a parm -> -aparm).
 
@@ -589,6 +590,11 @@ func (p *DefaultParser) Parse(commander Commander, arguments []string) error {
 				p.args.set[argIdx] = true
 			} else {
 				if p.rest.IsZero() {
+					if p.IgnoreUnknownArgs {
+						argIdx++
+						continue
+					}
+
 					return &ParseArgError{
 						Arg: arg,
 						Err: ErrUnknown,

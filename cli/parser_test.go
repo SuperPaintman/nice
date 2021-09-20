@@ -1322,6 +1322,71 @@ func TestParser_Parse_unknown_rest(t *testing.T) {
 	}
 }
 
+func TestParser_Parse_ignore_unknown_rest(t *testing.T) {
+	parser := DefaultParser{
+		IgnoreUnknownArgs: true,
+	}
+
+	a := BoolArg(&parser, "a")
+	b := BoolArg(&parser, "b")
+
+	args := []string{"true", "false", "c", "d", "1337", "false", "e"}
+
+	if err := parser.Parse(nil, args); err != nil {
+		t.Fatalf("Parse(): failed to parse args: %s", err)
+	}
+
+	const (
+		wantA = true
+		wantB = false
+	)
+
+	if *a != wantA {
+		t.Errorf("Parse(): a: got = %v, want = %v", *a, wantA)
+	}
+
+	if *b != wantB {
+		t.Errorf("Parse(): b: got = %v, want = %v", *b, wantB)
+	}
+}
+
+func TestParser_Parse_rest_with_ignore_unknown_rest(t *testing.T) {
+	parser := DefaultParser{
+		IgnoreUnknownArgs: true,
+	}
+
+	a := BoolArg(&parser, "a")
+	b := BoolArg(&parser, "b")
+
+	var rest []string
+	_ = RestStringsVar(&parser, &rest, "rest")
+
+	args := []string{"true", "false", "c", "d", "1337", "false", "e"}
+
+	if err := parser.Parse(nil, args); err != nil {
+		t.Fatalf("Parse(): failed to parse args: %s", err)
+	}
+
+	const (
+		wantA = true
+		wantB = false
+	)
+
+	wantRest := []string{"c", "d", "1337", "false", "e"}
+
+	if *a != wantA {
+		t.Errorf("Parse(): a: got = %v, want = %v", *a, wantA)
+	}
+
+	if *b != wantB {
+		t.Errorf("Parse(): b: got = %v, want = %v", *b, wantB)
+	}
+
+	if !reflect.DeepEqual(rest, wantRest) {
+		t.Errorf("Parse(): rest: got = %#v, want = %#v", rest, wantRest)
+	}
+}
+
 type testCommander struct {
 	commands []string
 	use      func() error
