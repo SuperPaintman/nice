@@ -154,6 +154,13 @@ func (h DefaultHelper) Help(ctx Context, path []string, w io.Writer) error {
 		ew.Writef("\n")
 		ew.Writef("Commands:\n")
 
+		var maxLen int
+		for _, cmd := range cmd.Commands {
+			if len(cmd.Name) > maxLen {
+				maxLen = len(cmd.Name)
+			}
+		}
+
 		for _, cmd := range cmd.Commands {
 			// Name.
 			ew.Writef("  %s%s%s", colorCommand, cmd.Name, colorCommand.Reset())
@@ -168,7 +175,12 @@ func (h DefaultHelper) Help(ctx Context, path []string, w io.Writer) error {
 				usage := string(buf.Bytes())
 
 				if usage != "" {
-					ew.Writef("\t\t%s", usage)
+					indent := 4 + maxLen - len(cmd.Name)
+					for i := 0; i < indent; i++ {
+						ew.WriteString(" ")
+					}
+
+					ew.Writef("%s", usage)
 				}
 			}
 
@@ -184,6 +196,13 @@ func (h DefaultHelper) Help(ctx Context, path []string, w io.Writer) error {
 	if len(args) > 0 {
 		ew.Writef("\n")
 		ew.Writef("Arguments:\n")
+
+		var maxLen int
+		for _, arg := range args {
+			if l := len(arg.Name) + 2 + len(arg.Type()); l > maxLen {
+				maxLen = l
+			}
+		}
 
 		for _, arg := range args {
 			// Name.
@@ -212,7 +231,12 @@ func (h DefaultHelper) Help(ctx Context, path []string, w io.Writer) error {
 				usage := string(buf.Bytes())
 
 				if usage != "" {
-					ew.Writef("\t\t%s", usage)
+					indent := 4 + maxLen - (len(arg.Name) + 2 + len(arg.Type()))
+					for i := 0; i < indent; i++ {
+						ew.WriteString(" ")
+					}
+
+					ew.Writef("%s", usage)
 				}
 			}
 
@@ -228,6 +252,31 @@ func (h DefaultHelper) Help(ctx Context, path []string, w io.Writer) error {
 	if len(flags) > 0 {
 		ew.Writef("\n")
 		ew.Writef("Options:\n")
+
+		var maxLen int
+		for _, flag := range flags {
+			l := len(ctx.Parser().FormatShortFlag(flag.Short))
+
+			if flag.Long != "" {
+				if l != 0 {
+					l += 2
+				}
+
+				l += len(ctx.Parser().FormatLongFlag(flag.Long))
+			}
+
+			if t := flag.Type(); t != "bool" {
+				if t == "" {
+					l += len("(unknown)") + 1
+				} else {
+					l += len(t) + 1
+				}
+			}
+
+			if l > maxLen {
+				maxLen = l
+			}
+		}
 
 		for _, flag := range flags {
 			ew.Writef("  ")
@@ -274,7 +323,30 @@ func (h DefaultHelper) Help(ctx Context, path []string, w io.Writer) error {
 				usage := string(buf.Bytes())
 
 				if usage != "" {
-					ew.Writef("\t\t%s", usage)
+					l := len(ctx.Parser().FormatShortFlag(flag.Short))
+
+					if flag.Long != "" {
+						if l != 0 {
+							l += 2
+						}
+
+						l += len(ctx.Parser().FormatLongFlag(flag.Long))
+					}
+
+					if t := flag.Type(); t != "bool" {
+						if t == "" {
+							l += len("(unknown)") + 1
+						} else {
+							l += len(t) + 1
+						}
+					}
+
+					indent := 4 + maxLen - l
+					for i := 0; i < indent; i++ {
+						ew.WriteString(" ")
+					}
+
+					ew.Writef("%s", usage)
 				}
 			}
 
