@@ -1121,6 +1121,52 @@ func TestParse_Parse_invalid_flags_syntax(t *testing.T) {
 	}
 }
 
+func TestParse_Parse_universal(t *testing.T) {
+	parser := DefaultParser{
+		Universal: true,
+	}
+
+	show := Bool(&parser, "show")
+	help := Bool(&parser, "help", WithShort("h"))
+	c := Int(&parser, "c")
+	unused := Bool(&parser, "unused", WithShort("u"))
+	userID := Int(&parser, "user-id")
+	delay := Duration(&parser, "delay")
+
+	args := []string{"-show", "-h", "--c", "100", "-user-id", "200", "--delay=2s"}
+
+	if err := parser.Parse(nil, args); err != nil {
+		t.Fatalf("Parse(): failed to parse args: %s", err)
+	}
+
+	// Check flags.
+	const (
+		wantShow   = true
+		wantHelp   = true
+		wantC      = 100
+		wantUnused = false
+		wantUserID = 200
+		wantDelay  = 2 * time.Second
+	)
+
+	assertParseBoolFlags(t, "show", *show, wantShow)
+	assertParseBoolFlags(t, "help", *help, wantHelp)
+
+	if *c != wantC {
+		t.Errorf("Parse(): c: got = %v, want = %v", *c, wantC)
+	}
+
+	assertParseBoolFlags(t, "unused", *unused, wantUnused)
+
+	if *userID != wantUserID {
+		t.Errorf("Parse(): userID: got = %v, want = %v", *userID, wantUserID)
+	}
+
+	if *delay != wantDelay {
+		t.Errorf("Parse(): delay: got = %v, want = %v", *delay, wantDelay)
+	}
+}
+
 func TestParse_Parse_posix_style_short_flags(t *testing.T) {
 	var parser DefaultParser
 
