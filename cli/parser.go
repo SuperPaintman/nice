@@ -321,8 +321,8 @@ type DefaultParser struct {
 	OverrideArgs       bool
 	IgnoreUnknownFlags bool
 	IgnoreUnknownArgs  bool
-	// TODO(SuperPaintman): disable POSIX-style short flag combining (-a -b -> -ab).
-	// TODO(SuperPaintman): disable Short-flag+parameter combining (-a parm -> -aparm).
+	DisablePosixStyle  bool
+	DisableInlineValue bool
 
 	flags               flags
 	args                args
@@ -648,10 +648,9 @@ func (p *DefaultParser) Parse(commander Commander, arguments []string) error {
 
 		// Find a known flag.
 		restName := name
-		lastHasValue := hasValue
-		lastValue := value
+		prevHasValue := hasValue
+		prevValue := value
 		for len(restName) > 0 {
-			// Parse POSIX-style short flag combining (-a -b -> -ab).
 			var (
 				idx           int
 				flag          *Flag
@@ -659,12 +658,13 @@ func (p *DefaultParser) Parse(commander Commander, arguments []string) error {
 				lastShortFlag bool
 			)
 			if shortFlag {
+				originalName := name
 				name = restName[:1]
 				restName = restName[1:]
 
 				if len(restName) == 0 {
-					hasValue = lastHasValue
-					value = lastValue
+					hasValue = prevHasValue
+					value = prevValue
 					lastShortFlag = true
 				} else {
 					hasValue = false
@@ -672,45 +672,32 @@ func (p *DefaultParser) Parse(commander Commander, arguments []string) error {
 				}
 
 				idx, flag, knownflag = p.flags.GetShort(name)
+
 				if knownflag {
-					if fv, ok := flag.Value.(boolFlag); ok && fv.IsBoolFlag() {
+					// Parse Short-flag+parameter combining (-a parm -> -aparm).
+					if _, ok := flag.Value.(boolFlag); !ok && !p.DisableInlineValue && len(restName) > 0 {
+						hasValue = true
+						value = restName
+						restName = ""
+
+						// Flag had value after "=".
+						if prevHasValue {
+							value += "=" + prevValue
+						}
+					}
+
+					// Parse POSIX-style short flag combining (-a -b -> -ab).
+					if p.DisablePosixStyle && len(restName) != 0 {
+						knownflag = false
+						name = originalName
 					}
 				}
-
-				// TODO(SuperPaintman): add Short-flag+parameter combining (-a parm -> -aparm).
 			} else {
 				restName = ""
 
 				idx, flag, knownflag = p.flags.GetLong(name)
-			}
-
-			if (!shortFlag || lastShortFlag) && !hasValue && len(arguments) > 0 {
-				next := arguments[0]
-
-				var setValue bool
-				if len(next) == 0 {
-					if knownflag {
-						// Special case for empty string flags.
-						if fv, ok := flag.Value.(stringFlag); ok && fv.IsStringFlag() {
-							setValue = true
-						}
-					}
-				} else if len(next) > 0 && (next[0] != '-' || next == "-" || isNumber(next) || isDuration(next)) {
-					// Set value if this is a known flag (if it is a bool we also check the value).
-					setValue = knownflag
-
-					if knownflag {
-						// Special case for bool flags. Allow only bool-like values.
-						if fv, ok := flag.Value.(boolFlag); ok && fv.IsBoolFlag() {
-							setValue = isBoolValue(next)
-						}
-					}
-				}
-
-				if setValue {
-					value = next
-					hasValue = true
-					arguments = arguments[1:]
+				if !knownflag && p.Universal {
+					idx, flag, knownflag = p.flags.GetShort(name)
 				}
 			}
 
@@ -722,6 +709,31 @@ func (p *DefaultParser) Parse(commander Commander, arguments []string) error {
 				return &ParseFlagError{
 					Name: name,
 					Err:  ErrUnknown,
+				}
+			}
+
+			if (!shortFlag || lastShortFlag) && !hasValue && len(arguments) > 0 {
+				next := arguments[0]
+
+				var setValue bool
+				if len(next) == 0 {
+					// Special case for empty string flags.
+					if fv, ok := flag.Value.(stringFlag); ok && fv.IsStringFlag() {
+						setValue = true
+					}
+				} else if len(next) > 0 && (next[0] != '-' || next == "-" || isNumber(next) || isDuration(next)) {
+					// Special case for bool flags. Allow only bool-like values.
+					if fv, ok := flag.Value.(boolFlag); ok && fv.IsBoolFlag() {
+						setValue = isBoolValue(next)
+					} else {
+						setValue = true
+					}
+				}
+
+				if setValue {
+					value = next
+					hasValue = true
+					arguments = arguments[1:]
 				}
 			}
 

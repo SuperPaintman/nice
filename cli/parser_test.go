@@ -1129,10 +1129,10 @@ func TestParse_Parse_posix_style_short_flags(t *testing.T) {
 	c := Bool(&parser, "c")
 	d := Bool(&parser, "d")
 	e := Bool(&parser, "e")
-	f := Bool(&parser, "f")
+	f := Int(&parser, "f")
 	g := Bool(&parser, "g")
 
-	args := []string{"-ab", "-def", "-g"}
+	args := []string{"-ab", "-def", "100", "-g"}
 
 	if err := parser.Parse(nil, args); err != nil {
 		t.Fatalf("Parse(): failed to parse args: %s", err)
@@ -1145,7 +1145,7 @@ func TestParse_Parse_posix_style_short_flags(t *testing.T) {
 		wantC = false
 		wantD = true
 		wantE = true
-		wantF = true
+		wantF = 100
 		wantG = true
 	)
 
@@ -1154,8 +1154,316 @@ func TestParse_Parse_posix_style_short_flags(t *testing.T) {
 	assertParseBoolFlags(t, "c", *c, wantC)
 	assertParseBoolFlags(t, "d", *d, wantD)
 	assertParseBoolFlags(t, "e", *e, wantE)
+
+	if *f != wantF {
+		t.Errorf("Parse(): f: got = %v, want = %v", *f, wantF)
+	}
+
+	assertParseBoolFlags(t, "g", *g, wantG)
+}
+
+func TestParse_Parse_posix_style_short_flags_unknown(t *testing.T) {
+	var parser DefaultParser
+
+	_ = Bool(&parser, "a")
+	_ = Bool(&parser, "b")
+	_ = Bool(&parser, "c")
+	_ = Bool(&parser, "d")
+
+	args := []string{"-a", "-deb", "-g"}
+
+	got := parser.Parse(nil, args)
+	want := &ParseFlagError{Name: "e", Err: ErrUnknown}
+	if !errors.Is(got, want) {
+		t.Fatalf("Parse(): got error = %q, want error = %q", got, want)
+	}
+}
+
+func TestParse_Parse_posix_style_short_flags_ignore_unknown(t *testing.T) {
+	parser := DefaultParser{
+		IgnoreUnknownFlags: true,
+	}
+
+	a := Bool(&parser, "a")
+	b := Bool(&parser, "b")
+	c := Bool(&parser, "c")
+	d := Bool(&parser, "d")
+
+	args := []string{"-a", "-deb", "-g"}
+
+	if err := parser.Parse(nil, args); err != nil {
+		t.Fatalf("Parse(): failed to parse args: %s", err)
+	}
+
+	// Check flags.
+	const (
+		wantA = true
+		wantB = true
+		wantC = false
+		wantD = true
+	)
+
+	assertParseBoolFlags(t, "a", *a, wantA)
+	assertParseBoolFlags(t, "b", *b, wantB)
+	assertParseBoolFlags(t, "c", *c, wantC)
+	assertParseBoolFlags(t, "d", *d, wantD)
+}
+
+func TestParse_Parse_disable_posix_style_short_flags(t *testing.T) {
+	parser := DefaultParser{
+		DisablePosixStyle: true,
+	}
+
+	_ = Bool(&parser, "a")
+	_ = Bool(&parser, "b")
+	_ = Bool(&parser, "c")
+	_ = Bool(&parser, "d")
+	_ = Bool(&parser, "e")
+	_ = Bool(&parser, "f")
+	_ = Bool(&parser, "g")
+
+	args := []string{"-ab", "-def", "-g"}
+
+	got := parser.Parse(nil, args)
+	want := &ParseFlagError{Name: "ab", Err: ErrUnknown}
+	if !errors.Is(got, want) {
+		t.Fatalf("Parse(): got error = %q, want error = %q", got, want)
+	}
+}
+
+func TestParse_Parse_universal_and_posix_style_short_flags(t *testing.T) {
+	parser := DefaultParser{
+		Universal: true,
+	}
+
+	_ = Bool(&parser, "a")
+	_ = Bool(&parser, "b")
+	_ = Bool(&parser, "c")
+	_ = Bool(&parser, "d")
+	_ = Bool(&parser, "e")
+	_ = Bool(&parser, "f")
+	_ = Bool(&parser, "g")
+
+	args := []string{"-ab", "-def", "-g"}
+
+	got := parser.Parse(nil, args)
+	want := &ParseFlagError{Name: "ab", Err: ErrUnknown}
+	if !errors.Is(got, want) {
+		t.Fatalf("Parse(): got error = %q, want error = %q", got, want)
+	}
+}
+
+func TestParse_Parse_short_flag_inline_value(t *testing.T) {
+	var parser DefaultParser
+
+	a := String(&parser, "a")
+	b := Bool(&parser, "b")
+	c := Bool(&parser, "c")
+	d := Bool(&parser, "d")
+	e := Bool(&parser, "e")
+
+	args := []string{"-c", "-aboot", "-d"}
+
+	if err := parser.Parse(nil, args); err != nil {
+		t.Fatalf("Parse(): failed to parse args: %s", err)
+	}
+
+	// Check flags.
+	const (
+		wantA = "boot"
+		wantB = false
+		wantC = true
+		wantD = true
+		wantE = false
+	)
+
+	if *a != wantA {
+		t.Errorf("Parse(): a: got = %v, want = %v", *a, wantA)
+	}
+
+	assertParseBoolFlags(t, "b", *b, wantB)
+	assertParseBoolFlags(t, "c", *c, wantC)
+	assertParseBoolFlags(t, "d", *d, wantD)
+	assertParseBoolFlags(t, "e", *e, wantE)
+}
+
+func TestParse_Parse_short_flag_inline_value_with_equals(t *testing.T) {
+	var parser DefaultParser
+
+	a := String(&parser, "a")
+	b := Bool(&parser, "b")
+	c := Bool(&parser, "c")
+	d := Bool(&parser, "d")
+	e := Bool(&parser, "e")
+
+	args := []string{"-c", "-aboot=now", "-d"}
+
+	if err := parser.Parse(nil, args); err != nil {
+		t.Fatalf("Parse(): failed to parse args: %s", err)
+	}
+
+	// Check flags.
+	const (
+		wantA = "boot=now"
+		wantB = false
+		wantC = true
+		wantD = true
+		wantE = false
+	)
+
+	if *a != wantA {
+		t.Errorf("Parse(): a: got = %v, want = %v", *a, wantA)
+	}
+
+	assertParseBoolFlags(t, "b", *b, wantB)
+	assertParseBoolFlags(t, "c", *c, wantC)
+	assertParseBoolFlags(t, "d", *d, wantD)
+	assertParseBoolFlags(t, "e", *e, wantE)
+}
+
+func TestParse_Parse_short_flag_inline_value_with_invalid_value(t *testing.T) {
+	parser := DefaultParser{
+		DisableInlineValue: true,
+	}
+
+	_ = Int(&parser, "a")
+	_ = Bool(&parser, "b")
+	_ = Bool(&parser, "c")
+	_ = Bool(&parser, "d")
+	_ = Bool(&parser, "e")
+
+	args := []string{"-c", "-aboot", "-d"}
+
+	got := parser.Parse(nil, args)
+	want := &ParseValueError{Type: "int", Err: ErrSyntax}
+	if !errors.Is(got, want) {
+		t.Fatalf("Parse(): got error = %q, want error = %q", got, want)
+	}
+}
+
+func TestParse_Parse_disable_short_flag_inline_value(t *testing.T) {
+	parser := DefaultParser{
+		DisableInlineValue: true,
+	}
+
+	_ = String(&parser, "a")
+	_ = Bool(&parser, "b")
+	_ = Bool(&parser, "c")
+	_ = Bool(&parser, "d")
+	_ = Bool(&parser, "e")
+
+	args := []string{"-c", "-aboot", "-d"}
+
+	got := parser.Parse(nil, args)
+	want := &ParseFlagError{Name: "o", Err: ErrUnknown}
+	if !errors.Is(got, want) {
+		t.Fatalf("Parse(): got error = %q, want error = %q", got, want)
+	}
+}
+
+func TestParse_Parse_universal_and_short_flag_inline_value(t *testing.T) {
+	parser := DefaultParser{
+		Universal: true,
+	}
+
+	_ = String(&parser, "a")
+	_ = Bool(&parser, "b")
+	_ = Bool(&parser, "c")
+	_ = Bool(&parser, "d")
+	_ = Bool(&parser, "e")
+
+	args := []string{"-c", "-aboot", "-d"}
+
+	got := parser.Parse(nil, args)
+	want := &ParseFlagError{Name: "aboot", Err: ErrUnknown}
+	if !errors.Is(got, want) {
+		t.Fatalf("Parse(): got error = %q, want error = %q", got, want)
+	}
+}
+
+func TestParse_Parse_posix_style_and_short_flag_inline_value(t *testing.T) {
+	var parser DefaultParser
+
+	a := String(&parser, "a")
+	b := Bool(&parser, "b")
+	c := Bool(&parser, "c")
+	d := Bool(&parser, "d")
+	e := String(&parser, "e")
+	f := Bool(&parser, "f")
+	g := Bool(&parser, "g")
+
+	args := []string{"-c", "-aboot", "-degif"}
+
+	if err := parser.Parse(nil, args); err != nil {
+		t.Fatalf("Parse(): failed to parse args: %s", err)
+	}
+
+	// Check flags.
+	const (
+		wantA = "boot"
+		wantB = false
+		wantC = true
+		wantD = true
+		wantE = "gif"
+		wantF = false
+		wantG = false
+	)
+
+	if *a != wantA {
+		t.Errorf("Parse(): a: got = %v, want = %v", *a, wantA)
+	}
+
+	assertParseBoolFlags(t, "b", *b, wantB)
+	assertParseBoolFlags(t, "c", *c, wantC)
+	assertParseBoolFlags(t, "d", *d, wantD)
+
+	if *e != wantE {
+		t.Errorf("Parse(): e: got = %v, want = %v", *e, wantE)
+	}
+
 	assertParseBoolFlags(t, "f", *f, wantF)
 	assertParseBoolFlags(t, "g", *g, wantG)
+}
+
+func TestParse_Parse_disable_posix_style_and_short_flag_inline_value(t *testing.T) {
+	parser := DefaultParser{
+		DisablePosixStyle: true,
+	}
+
+	a := String(&parser, "a")
+	b := Bool(&parser, "b")
+	c := Bool(&parser, "c")
+	d := Bool(&parser, "d")
+	e := Bool(&parser, "e")
+	f := Bool(&parser, "f")
+
+	args := []string{"-c", "-aboot", "-def"}
+
+	got := parser.Parse(nil, args)
+	want := &ParseFlagError{Name: "def", Err: ErrUnknown}
+	if !errors.Is(got, want) {
+		t.Fatalf("Parse(): got error = %q, want error = %q", got, want)
+	}
+
+	// Check flags.
+	const (
+		wantA = "boot"
+		wantB = false
+		wantC = true
+		wantD = false
+		wantE = false
+		wantF = false
+	)
+
+	if *a != wantA {
+		t.Errorf("Parse(): a: got = %v, want = %v", *a, wantA)
+	}
+
+	assertParseBoolFlags(t, "b", *b, wantB)
+	assertParseBoolFlags(t, "c", *c, wantC)
+	assertParseBoolFlags(t, "d", *d, wantD)
+	assertParseBoolFlags(t, "e", *e, wantE)
+	assertParseBoolFlags(t, "f", *f, wantF)
 }
 
 func TestParser_Parse(t *testing.T) {
