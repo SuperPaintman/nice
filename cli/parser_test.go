@@ -962,28 +962,6 @@ func TestRegisterDuplicatedFlag(t *testing.T) {
 	}
 }
 
-func TestRegisterOverrideFlag(t *testing.T) {
-	parser := DefaultParser{OverrideFlags: true}
-
-	oldA := Bool(&parser, "a")
-	a := Int(&parser, "a")
-
-	args := []string{"-a", "100"}
-	if err := parser.Parse(nil, args); err != nil {
-		t.Fatalf("Parse(): failed to parse args: %s", err)
-	}
-
-	const wantOldA = false
-	if *oldA != wantOldA {
-		t.Errorf("Parse(): oldA: got = %v, want = %v", *oldA, wantOldA)
-	}
-
-	const wantA = 100
-	if *a != wantA {
-		t.Errorf("Parse(): a: got = %v, want = %v", *a, wantA)
-	}
-}
-
 func TestRegisterInvalidNameArg(t *testing.T) {
 	tt := []struct {
 		name string
@@ -1054,28 +1032,6 @@ func TestRegisterDuplicatedArg(t *testing.T) {
 	}
 	if !errors.Is(got, want) {
 		t.Fatalf("Parse(): got error = %q, want error = %q", got, want)
-	}
-}
-
-func TestRegisterOverrideArg(t *testing.T) {
-	parser := DefaultParser{OverrideArgs: true}
-
-	oldA := StringArg(&parser, "a")
-	a := IntArg(&parser, "a")
-
-	args := []string{"100"}
-	if err := parser.Parse(nil, args); err != nil {
-		t.Fatalf("Parse(): failed to parse args: %s", err)
-	}
-
-	const wantOldA = ""
-	if *oldA != wantOldA {
-		t.Errorf("Parse(): oldA: got = %v, want = %v", *oldA, wantOldA)
-	}
-
-	const wantA = 100
-	if *a != wantA {
-		t.Errorf("Parse(): a: got = %v, want = %v", *a, wantA)
 	}
 }
 

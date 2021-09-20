@@ -208,37 +208,18 @@ func (f *flags) Find(long, short string) (idx int, flag *Flag, ok bool) {
 }
 
 func (f *flags) Add(flag Flag) {
-	// Find already added flag.
-	var (
-		idx   int
-		found bool
-	)
-	if flag.Long != "" {
-		idx, found = f.long[flag.Long]
-		if found {
-			f.data[idx] = flag
-			f.set[idx] = false
-		}
-	}
-
-	if !found {
-		if flag.Short != "" {
-			idx, found = f.short[flag.Short]
-			if found {
-				f.data[idx] = flag
-				f.set[idx] = false
-			}
-		}
-	}
-
-	if found {
-		return
-	}
+	// NOTE(SuperPaintman):
+	//     The first version of "Add" could override the previous flags
+	//     but it makes API more complex and confusing when we override only
+	//     short or long form.
+	//
+	//     Especially when we override short form of one flag and long form of
+	//     another.
 
 	// Append a new flag.
 	f.data = append(f.data, flag)
 	f.set = append(f.set, false)
-	idx = len(f.data) - 1
+	idx := len(f.data) - 1
 
 	if flag.Long != "" {
 		if f.long == nil {
@@ -287,18 +268,12 @@ func (a *args) Nth(i int) (arg *Arg, ok bool) {
 }
 
 func (a *args) Add(arg Arg) {
-	// Find already added arg.
-	idx, found := a.index[arg.Name]
-	if found {
-		a.data[idx] = arg
-		a.set[idx] = false
-		return
-	}
+	// NOTE(SuperPaintman): see flags.Add for information about overriding.
 
 	// Append a new arg.
 	a.data = append(a.data, arg)
 	a.set = append(a.set, false)
-	idx = len(a.data) - 1
+	idx := len(a.data) - 1
 
 	if a.index == nil {
 		a.index = make(map[string]int)
@@ -317,8 +292,6 @@ var _ Parser = (*DefaultParser)(nil)
 
 type DefaultParser struct {
 	Universal          bool
-	OverrideFlags      bool
-	OverrideArgs       bool
 	IgnoreUnknownFlags bool
 	IgnoreUnknownArgs  bool
 	DisablePosixStyle  bool
@@ -370,13 +343,11 @@ func (p *DefaultParser) RegisterFlag(flag Flag) (err error) {
 		}
 	}
 
-	if !p.OverrideFlags {
-		if _, f, ok := p.flags.Find(flag.Long, flag.Short); ok {
-			return &FlagError{
-				Long:  f.Long,
-				Short: f.Short,
-				Err:   ErrDuplicate,
-			}
+	if _, f, ok := p.flags.Find(flag.Long, flag.Short); ok {
+		return &FlagError{
+			Long:  f.Long,
+			Short: f.Short,
+			Err:   ErrDuplicate,
 		}
 	}
 
@@ -461,12 +432,10 @@ func (p *DefaultParser) RegisterArg(arg Arg) (err error) {
 		}
 	}
 
-	if !p.OverrideArgs {
-		if _, _, ok := p.args.Get(arg.Name); ok {
-			return &ArgError{
-				Name: arg.Name,
-				Err:  ErrDuplicate,
-			}
+	if _, _, ok := p.args.Get(arg.Name); ok {
+		return &ArgError{
+			Name: arg.Name,
+			Err:  ErrDuplicate,
 		}
 	}
 

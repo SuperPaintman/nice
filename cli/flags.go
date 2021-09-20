@@ -12,9 +12,6 @@ type Flag struct {
 	//     (e.g. --dry and --dry-run) but at the same time makes API a bit
 	//     confusing because of duplication logic.
 	//
-	//     We can override flags on aliases collision or remove the alias from the
-	//     original list but it makes API quite unpredictable for developers.
-	//
 	//     I decided to remove aliases. It's not so commonly used feature and
 	//     developers can easely make a workaround if they need it.
 }
