@@ -1,21 +1,5 @@
 package cli
 
-func HelpCommand() Command {
-	return Command{
-		Name:  "help",
-		Usage: Usage("Show information about a command"),
-		Action: ActionFunc(func(ctx Context) ActionRunner {
-			path := ctx.Path()
-			path = path[:len(path)-1]
-			_ = RestStringsVar(ctx, &path, "command")
-
-			return func(ctx Context) error {
-				return ctx.Help(ctx, path, ctx.Stdout())
-			}
-		}),
-	}
-}
-
 func HelpCommandFlag() CommandFlag {
 	return CommandFlag{
 		Long:  "help",
