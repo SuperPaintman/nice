@@ -1439,7 +1439,7 @@ func TestParser_Parse_with_commands(t *testing.T) {
 	rest := new([]string)
 
 	commander := testCommander{
-		commands: []string{"first", "second", "third"},
+		commands: []string{"first", "second", "third", "fourth"},
 		use: func() error {
 			show = Bool(&parser, "show",
 				WithShort("s"),
@@ -1448,6 +1448,7 @@ func TestParser_Parse_with_commands(t *testing.T) {
 
 			recreate = Bool(&parser, "recreate",
 				Usage("Re-create the current user"),
+				Required,
 			)
 
 			update = Bool(&parser, "update",
@@ -1471,7 +1472,7 @@ func TestParser_Parse_with_commands(t *testing.T) {
 	}
 
 	args := []string{
-		"first", "second",
+		"first", "second", "third",
 		"1337", "--show", "--recreate=false", "-c", "100500",
 		"other", "vals", "--update", "true", "in", "args",
 	}
@@ -1481,7 +1482,7 @@ func TestParser_Parse_with_commands(t *testing.T) {
 	}
 
 	// Chack path.
-	wantPath := []string{"first", "second"}
+	wantPath := []string{"first", "second", "third"}
 	if !reflect.DeepEqual(commander.path, wantPath) {
 		t.Fatalf("Parse(): path: got = %v, want = %v", commander.path, wantPath)
 	}
