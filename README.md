@@ -11,6 +11,8 @@ packages as stand-alone libraries.
 
 I hope you'll enjoy your nice CLI app!
 
+![Banner](./assets/banner.png)
+
 ---
 
 ## Hello, Nice!
