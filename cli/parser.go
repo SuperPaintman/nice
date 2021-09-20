@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -21,7 +20,7 @@ var (
 
 	ErrArgAfterRest = errors.New("arg after rest")
 
-	ErrUnknownArg = errors.New("unknown arg")
+	ErrUnknown = errors.New("unknown")
 )
 
 type ParseArgError struct {
@@ -317,20 +316,23 @@ func (a *args) Reset() {
 var _ Parser = (*DefaultParser)(nil)
 
 type DefaultParser struct {
-	Universal     bool
-	OverrideFlags bool
-	OverrideArgs  bool
+	Universal          bool
+	OverrideFlags      bool
+	OverrideArgs       bool
+	IgnoreUnknownFlags bool
 	// TODO(SuperPaintman): disable POSIX-style short flag combining (-a -b -> -ab).
 	// TODO(SuperPaintman): disable Short-flag+parameter combining (-a parm -> -aparm).
 
 	flags               flags
 	args                args
 	rest                RestArgs // Other arguments (without named args).
-	unknown             []string // Unknown flags (without named flags).
 	lastArgOptional     bool     // Is last arg optional.
 	registerFlagErr     error    // RegisterFlag first error.
 	registerArgErr      error    // RegisterArg first error.
 	registerRestArgsErr error    // RegisterRestArgs first error.
+
+	// TODO(SuperPaitnamn): allow access to the unknown flags.
+	// unknown []string // Unknown flags (without named flags).
 }
 
 func (p *DefaultParser) RegisterFlag(flag Flag) (err error) {
@@ -589,7 +591,7 @@ func (p *DefaultParser) Parse(commander Commander, arguments []string) error {
 				if p.rest.IsZero() {
 					return &ParseArgError{
 						Arg: arg,
-						Err: ErrUnknownArg,
+						Err: ErrUnknown,
 					}
 				}
 
@@ -707,9 +709,14 @@ func (p *DefaultParser) Parse(commander Commander, arguments []string) error {
 			}
 
 			if !knownflag {
-				prefix := strings.Repeat("-", numMinuses)
-				p.unknown = append(p.unknown, prefix+name)
-				continue
+				if p.IgnoreUnknownFlags {
+					continue
+				}
+
+				return &ParseFlagError{
+					Name: name,
+					Err:  ErrUnknown,
+				}
 			}
 
 			// Set Value.

@@ -239,8 +239,7 @@ func TestParseFlags(t *testing.T) {
 						want: false,
 					},
 					{
-						name: "skip not bool-like next arg",
-						// Add extra arg.
+						name:       "skip not bool-like next arg",
 						extraSetup: func(r Register) interface{} { return StringArg(r, "extra") },
 						extraCheck: func(t *testing.T, got interface{}) {
 							t.Helper()
@@ -318,7 +317,16 @@ func TestParseFlags(t *testing.T) {
 					want: "",
 				},
 				{
-					name: "next flag",
+					name:       "next flag",
+					extraSetup: func(r Register) interface{} { return Bool(r, "b") },
+					extraCheck: func(t *testing.T, got interface{}) {
+						t.Helper()
+
+						const want = true
+						if !reflect.DeepEqual(got, want) {
+							t.Errorf("Parse(): b: got = %#v, want = %#v", got, want)
+						}
+					},
 					args: []string{"-t", "-b"},
 					want: "",
 				},
@@ -1179,8 +1187,8 @@ func TestParser_Parse(t *testing.T) {
 	rest := RestStrings(&parser, "rest")
 
 	args := []string{
-		"--show", "--recreate=false", "-c", "100500", "1337", "--update", "true",
-		"--first-unknown", "other", "vals", "--second-unknown", "in", "args",
+		"--show", "--recreate=false", "-c", "100500", "1337",
+		"other", "vals", "--update", "true", "in", "args",
 	}
 
 	if err := parser.Parse(nil, args); err != nil {
@@ -1226,19 +1234,80 @@ func TestParser_Parse(t *testing.T) {
 	}
 
 	// Check unknown.
-	wantUnknown := []string{"--first-unknown", "--second-unknown"}
-	if !reflect.DeepEqual(parser.unknown, wantUnknown) {
-		t.Errorf("Parse(): unknown: got = %#v, want = %#v", parser.unknown, wantUnknown)
-	}
-
-	// Check unknown.
 	wantRest := []string{"other", "vals", "in", "args"}
 	if !reflect.DeepEqual(*rest, wantRest) {
 		t.Errorf("Parse(): rest: got = %#v, want = %#v", *rest, wantRest)
 	}
 }
 
-func TestParser_Parse_unexpected_rest(t *testing.T) {
+func TestParser_Parse_unknown_flags(t *testing.T) {
+	var parser DefaultParser
+
+	a := Bool(&parser, "a")
+	b := Bool(&parser, "b")
+
+	args := []string{"-a", "-c", "false", "-d", "-b"}
+
+	got := parser.Parse(nil, args)
+	want := &ParseFlagError{Name: "c", Err: ErrUnknown}
+	if !errors.Is(got, want) {
+		t.Fatalf("Parse(): got error = %q, want error = %q", got, want)
+	}
+
+	const (
+		wantA = true
+		wantB = false
+	)
+
+	assertParseBoolFlags(t, "a", *a, wantA)
+	assertParseBoolFlags(t, "b", *b, wantB)
+}
+
+func TestParser_Parse_unknown_flags_with_value(t *testing.T) {
+	var parser DefaultParser
+
+	_ = Bool(&parser, "a")
+	_ = Bool(&parser, "b")
+
+	args := []string{"-a", "-c=100", "-d", "-b"}
+
+	got := parser.Parse(nil, args)
+	want := &ParseFlagError{Name: "c", Err: ErrUnknown}
+	if !errors.Is(got, want) {
+		t.Fatalf("Parse(): got error = %q, want error = %q", got, want)
+	}
+}
+
+func TestParser_Parse_ignore_unknown_flags(t *testing.T) {
+	parser := DefaultParser{
+		IgnoreUnknownFlags: true,
+	}
+
+	a := Bool(&parser, "a")
+	b := Bool(&parser, "b")
+	v := BoolArg(&parser, "v")
+
+	args := []string{"-a", "-c=200", "false", "-d", "-e", "-b"}
+
+	if err := parser.Parse(nil, args); err != nil {
+		t.Fatalf("Parse(): failed to parse args: %s", err)
+	}
+
+	const (
+		wantA = true
+		wantB = true
+		wantV = false
+	)
+
+	assertParseBoolFlags(t, "a", *a, wantA)
+	assertParseBoolFlags(t, "b", *b, wantB)
+
+	if *v != wantV {
+		t.Errorf("Parse(): v: got = %v, want = %v", *v, wantV)
+	}
+}
+
+func TestParser_Parse_unknown_rest(t *testing.T) {
 	var parser DefaultParser
 
 	_ = BoolArg(&parser, "a")
@@ -1247,7 +1316,7 @@ func TestParser_Parse_unexpected_rest(t *testing.T) {
 	args := []string{"true", "false", "c", "d", "1337", "false", "e"}
 
 	got := parser.Parse(nil, args)
-	want := &ParseArgError{Arg: "c", Err: ErrUnknownArg}
+	want := &ParseArgError{Arg: "c", Err: ErrUnknown}
 	if !errors.Is(got, want) {
 		t.Fatalf("Parse(): got error = %q, want error = %q", got, want)
 	}
@@ -1338,8 +1407,8 @@ func TestParser_Parse_with_commands(t *testing.T) {
 
 	args := []string{
 		"first", "second",
-		"1337", "--show", "--recreate=false", "-c", "100500", "--update", "true",
-		"--first-unknown", "other", "vals", "--second-unknown", "in", "args",
+		"1337", "--show", "--recreate=false", "-c", "100500",
+		"other", "vals", "--update", "true", "in", "args",
 	}
 
 	if err := parser.Parse(&commander, args); err != nil {
@@ -1388,12 +1457,6 @@ func TestParser_Parse_with_commands(t *testing.T) {
 
 	if *userID != wantUserID {
 		t.Errorf("Parse(): userID: got = %v, want = %v", *userID, wantUserID)
-	}
-
-	// Check unknown.
-	wantUnknown := []string{"--first-unknown", "--second-unknown"}
-	if !reflect.DeepEqual(parser.unknown, wantUnknown) {
-		t.Errorf("Parse(): unknown: got = %#v, want = %#v", parser.unknown, wantUnknown)
 	}
 
 	// Check unknown.
