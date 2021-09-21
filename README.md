@@ -93,7 +93,7 @@ $ go test ./... -bench=. -benchmem -run='^Benckmark'
 
 ---
 
-## Simulator projects
+## Similar projects
 
 - [flag](https://pkg.go.dev/flag) <sup>Go</sup>
 - [github.com/spf13/cobra](https://github.com/spf13/cobra) <sup>Go</sup>
