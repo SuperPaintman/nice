@@ -11,7 +11,7 @@ func HelpCommandFlag() CommandFlag {
 	}
 }
 
-func VersionFlag(version string) CommandFlag {
+func VersionCommandFlag(version string) CommandFlag {
 	return CommandFlag{
 		Long:  "version",
 		Short: "v",
