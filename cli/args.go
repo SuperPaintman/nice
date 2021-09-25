@@ -5,6 +5,8 @@ type Arg struct {
 	Name      string
 	Usage     Usager
 	Necessary Necessary
+
+	set bool
 }
 
 func newArg(value Value, opts ArgOptions) Arg {
@@ -27,6 +29,14 @@ func (a *Arg) Type() string {
 func (a *Arg) Required() bool {
 	// By default args are required.
 	return a.Necessary != Optional
+}
+
+func (a *Arg) Set() bool {
+	return a.set
+}
+
+func (a *Arg) MarkSet() {
+	a.set = true
 }
 
 func (a *Arg) String() string {

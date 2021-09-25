@@ -2,30 +2,28 @@ package cli
 
 import (
 	"bytes"
-	"fmt"
 	"io"
-	"strings"
 
 	"github.com/SuperPaintman/nice/colors"
 )
 
 type Helper interface {
-	Help(ctx Context, path []string, w io.Writer) error
+	Help(app *App, cmd *Command, w io.Writer) error
 }
 
 var _ Helper = (HelperFunc)(nil)
 
-type HelperFunc func(ctx Context, path []string, w io.Writer) error
+type HelperFunc func(app *App, cmd *Command, w io.Writer) error
 
-func (fn HelperFunc) Help(ctx Context, path []string, w io.Writer) error {
-	return fn(ctx, path, w)
+func (fn HelperFunc) Help(app *App, cmd *Command, w io.Writer) error {
+	return fn(app, cmd, w)
 }
 
 var _ Helper = noopHelper{}
 
 type noopHelper struct{}
 
-func (n noopHelper) Help(ctx Context, path []string, w io.Writer) error {
+func (n noopHelper) Help(app *App, cmd *Command, w io.Writer) error {
 	return nil
 }
 
@@ -37,7 +35,7 @@ var _ Helper = DefaultHelper{}
 
 type DefaultHelper struct{}
 
-func (h DefaultHelper) Help(ctx Context, path []string, w io.Writer) error {
+func (h DefaultHelper) Help(app *App, cmd *Command, w io.Writer) error {
 	const (
 		colorName     = colors.Blue
 		colorCommand  = colors.Magenta
@@ -48,26 +46,9 @@ func (h DefaultHelper) Help(ctx Context, path []string, w io.Writer) error {
 
 	ew := easyWriter{w: w}
 
-	args := ctx.Args()
-	flags := ctx.Flags()
-	cmd := ctx.App().Command()
-	for _, name := range path[1:] {
-		// Find a sub command.
-		var found bool
-		for i := range cmd.Commands {
-			c := &cmd.Commands[i]
-
-			if c.Name == name {
-				found = true
-				cmd = c
-				break
-			}
-		}
-
-		if !found {
-			return fmt.Errorf("cli: command not found: %s", strings.Join(path, " "))
-		}
-	}
+	path := cmd.Path()
+	args := cmd.Args()
+	flags := cmd.Flags()
 
 	// Usage with a command.
 	if len(cmd.Commands) > 0 {
@@ -136,7 +117,7 @@ func (h DefaultHelper) Help(ctx Context, path []string, w io.Writer) error {
 	if cmd.Usage != nil {
 		// TODO(SuperPaintman): optimize it.
 		var buf bytes.Buffer
-		if err := cmd.Usage.Usage(ctx, &buf); err != nil {
+		if err := cmd.Usage.Usage(app, cmd, &buf); err != nil {
 			return err
 		}
 		usage := string(buf.Bytes())
@@ -169,7 +150,7 @@ func (h DefaultHelper) Help(ctx Context, path []string, w io.Writer) error {
 			if cmd.Usage != nil {
 				// TODO(SuperPaintman): optimize it.
 				var buf bytes.Buffer
-				if err := cmd.Usage.Usage(ctx, &buf); err != nil {
+				if err := cmd.Usage.Usage(app, &cmd, &buf); err != nil {
 					return err
 				}
 				usage := string(buf.Bytes())
@@ -225,7 +206,7 @@ func (h DefaultHelper) Help(ctx Context, path []string, w io.Writer) error {
 			if arg.Usage != nil {
 				// TODO(SuperPaintman): optimize it.
 				var buf bytes.Buffer
-				if err := arg.Usage.Usage(ctx, &buf); err != nil {
+				if err := arg.Usage.Usage(app, cmd, &buf); err != nil {
 					return err
 				}
 				usage := string(buf.Bytes())
@@ -255,14 +236,14 @@ func (h DefaultHelper) Help(ctx Context, path []string, w io.Writer) error {
 
 		var maxLen int
 		for _, flag := range flags {
-			l := len(ctx.Parser().FormatShortFlag(flag.Short))
+			l := len(app.parser().FormatShortFlag(flag.Short))
 
 			if flag.Long != "" {
 				if l != 0 {
 					l += 2
 				}
 
-				l += len(ctx.Parser().FormatLongFlag(flag.Long))
+				l += len(app.parser().FormatLongFlag(flag.Long))
 			}
 
 			if t := flag.Type(); t != "bool" {
@@ -285,7 +266,7 @@ func (h DefaultHelper) Help(ctx Context, path []string, w io.Writer) error {
 			if flag.Short != "" {
 				ew.Writef("%s%s%s",
 					colorOption,
-					ctx.Parser().FormatShortFlag(flag.Short),
+					app.parser().FormatShortFlag(flag.Short),
 					colorOption.Reset(),
 				)
 				ew.Writef(", ")
@@ -297,7 +278,7 @@ func (h DefaultHelper) Help(ctx Context, path []string, w io.Writer) error {
 			if flag.Long != "" {
 				ew.Writef("%s%s%s",
 					colorOption,
-					ctx.Parser().FormatLongFlag(flag.Long),
+					app.parser().FormatLongFlag(flag.Long),
 					colorOption.Reset(),
 				)
 			} else {
@@ -317,20 +298,20 @@ func (h DefaultHelper) Help(ctx Context, path []string, w io.Writer) error {
 			if flag.Usage != nil {
 				// TODO(SuperPaintman): optimize it.
 				var buf bytes.Buffer
-				if err := flag.Usage.Usage(ctx, &buf); err != nil {
+				if err := flag.Usage.Usage(app, cmd, &buf); err != nil {
 					return err
 				}
 				usage := string(buf.Bytes())
 
 				if usage != "" {
-					l := len(ctx.Parser().FormatShortFlag(flag.Short))
+					l := len(app.parser().FormatShortFlag(flag.Short))
 
 					if flag.Long != "" {
 						if l != 0 {
 							l += 2
 						}
 
-						l += len(ctx.Parser().FormatLongFlag(flag.Long))
+						l += len(app.parser().FormatLongFlag(flag.Long))
 					}
 
 					if t := flag.Type(); t != "bool" {

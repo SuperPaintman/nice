@@ -8,6 +8,10 @@ import (
 	"os"
 )
 
+var (
+	ErrCommandNotFound = fmt.Errorf("cli: command not found")
+)
+
 type InvalidCommandError struct {
 	Name string
 	Err  error
@@ -31,25 +35,11 @@ func (e *InvalidCommandError) Is(err error) bool {
 	return ok && pe.Name == e.Name && errors.Is(pe.Err, e.Err)
 }
 
-type App struct {
-	Name         string
-	Usage        Usager
-	Action       Action
-	CommandFlags []CommandFlag
-	Commands     []Command
-	Args         []string
-	Stdout       io.Writer
-	Stderr       io.Writer
-	Stdin        io.Reader
-	Parser       Parser
-	Helper       Helper
-
-	defaultParser *DefaultParser
-}
+var _ Commander = (*commander)(nil)
 
 type commander struct {
 	app *App
-	use func(*Command) error
+	use func(*Command) (Register, error)
 
 	command *Command
 	found   *Command
@@ -73,13 +63,13 @@ func (c *commander) IsCommand(name string) bool {
 	return false
 }
 
-func (c *commander) SetCommand(name string) error {
+func (c *commander) SetCommand(name string) (Register, error) {
 	if name == "" {
-		return &InvalidCommandError{Err: ErrMissingName}
+		return nil, &InvalidCommandError{Err: ErrMissingName}
 	}
 
 	if !validCommandName(name) {
-		return &InvalidCommandError{
+		return nil, &InvalidCommandError{
 			Name: name,
 			Err:  ErrInvalidName,
 		}
@@ -87,122 +77,111 @@ func (c *commander) SetCommand(name string) error {
 
 	if c.found.Name != name {
 		// Internal error. Something went wrong in IsCommand.
-		return fmt.Errorf("cli: command not found: %s", name)
+		return nil, ErrCommandNotFound
 	}
 
 	c.command = c.found
 	c.found = nil
 
-	if err := c.use(c.command); err != nil {
-		return err
+	register, err := c.use(c.command)
+	if err != nil {
+		return nil, err
 	}
 
-	return nil
+	return register, nil
 }
 
 func validCommandName(name string) bool {
 	return validArg(name)
 }
 
+type App struct {
+	Name         string
+	Usage        Usager
+	Action       Action
+	CommandFlags []CommandFlag
+	Commands     []Command
+	Args         []string
+	Stdout       io.Writer
+	Stderr       io.Writer
+	Stdin        io.Reader
+	Parser       Parser
+	NewRegister  func() Register
+	Helper       Helper
+
+	ctx           context.Context
+	rootCmd       *Command
+	defaultParser *DefaultParser
+}
+
 func (app *App) RunContext(ctx context.Context) error {
-	cmd := app.Command()
-	path := []string{cmd.Name}
+	// Inject context into the app.
+	app.ctx = ctx
 
-	// Run command.
-	cmdCtx := newCommandContext(ctx, app, cmd, path)
-
-	// Setup root command.
-	if cmd.Action != nil {
-		if err := cmd.Action.Setup(cmdCtx); err != nil {
-			return err
-		}
-	}
-
-	// Add command flags.
-	allCommandFlags := make([]*CommandFlag, 0, len(cmd.CommandFlags))
-	addCommandFlags := func(cmdCtx Context, af []CommandFlag) error {
-		for i := range af {
-			allCommandFlags = append(allCommandFlags, &af[i])
-		}
-
-		for _, f := range allCommandFlags {
-			err := BoolVar(cmdCtx, &f.value, f.Long,
-				WithShort(f.Short),
-				WithUsage(f.Usage),
-				commandFlag(true), // Mark this flag as "magic" command flag.
-			)
-			if err != nil {
-				return err
-			}
-		}
-
-		return nil
-	}
-
-	if err := addCommandFlags(cmdCtx, cmd.CommandFlags); err != nil {
+	// Build the root command.
+	cmd, err := app.command()
+	if err != nil {
 		return err
 	}
 
 	cmder := commander{
 		app: app,
-		use: func(c *Command) error {
-			cmd = c
+		use: func(c *Command) (Register, error) {
+			// Update path and init new command.
+			// Do not mutate the previous path.
+			path := cmd.Path()
 
-			// Update path and context.
-			// Do not mutate previous contextes.
 			newPath := make([]string, len(path)+1)
 			copy(newPath, path)
-			newPath[len(newPath)-1] = cmd.Name
+			newPath[len(newPath)-1] = c.Name
 			path = newPath
 
-			cmdCtx = newCommandContext(cmdCtx, app, cmd, path)
+			c.init(ctx, app, cmd, app.newRegister(), path)
 
 			// Setup a child command.
-			if cmd.Action != nil {
-				if err := cmd.Action.Setup(cmdCtx); err != nil {
+			if err := c.setup(); err != nil {
+				return nil, err
+			}
+
+			// Set new cmd.
+			cmd = c
+
+			return cmd.register, nil
+		},
+	}
+
+	if err := app.parser().Parse(&cmder, cmd.register, app.args()); err != nil {
+		return err
+	}
+
+	// Find and run command flag.
+	cmdWithCFS := cmd
+	for cmdWithCFS != nil {
+		for i := range cmdWithCFS.CommandFlags {
+			f := &cmdWithCFS.CommandFlags[i]
+			if !f.value {
+				continue
+			}
+
+			if f.Action != nil {
+				if err := f.Action.Setup(app, cmd); err != nil {
+					return err
+				}
+
+				if err := f.Action.Run(app, cmd); err != nil {
 					return err
 				}
 			}
 
-			// Add child command flags.
-			if err := addCommandFlags(cmdCtx, cmd.CommandFlags); err != nil {
-				return err
-			}
-
 			return nil
-		},
-	}
-
-	if err := app.parser().Parse(&cmder, app.args()); err != nil {
-		return err
-	}
-
-	// Run command flag.
-	for _, f := range allCommandFlags {
-		if f == nil {
-			continue
 		}
 
-		if !f.value {
-			continue
-		}
-
-		if cmd.Action != nil {
-			if err := f.Action.Setup(cmdCtx); err != nil {
-				return err
-			}
-
-			if err := f.Action.Run(cmdCtx); err != nil {
-				return err
-			}
-		}
-
-		return nil
+		cmdWithCFS = cmdWithCFS.parent
 	}
 
 	// Run action.
 	if cmd.Action != nil {
-		if err := cmd.Action.Run(cmdCtx); err != nil {
+		if err := cmd.Action.Run(app, cmd); err != nil {
 			return err
 		}
 	}
@@ -214,14 +193,95 @@ func (app *App) Run() error {
 	return app.RunContext(context.Background())
 }
 
-func (app *App) Command() *Command {
-	return &Command{
-		Name:         app.Name,
-		Usage:        app.Usage,
-		Action:       app.Action,
-		CommandFlags: app.CommandFlags,
-		Commands:     app.Commands,
+func (app *App) Command(path ...string) (*Command, error) {
+	if len(path) == 0 || path[0] != app.Name {
+		return nil, ErrCommandNotFound
 	}
+
+	cmd, err := app.command()
+	if err != nil {
+		return nil, err
+	}
+
+	for j, name := range path[1:] {
+		// Find a sub command.
+		var found bool
+		for i := range cmd.Commands {
+			c := &cmd.Commands[i]
+
+			if c.Name == name {
+				found = true
+				c.init(app.ctx, app, cmd, app.newRegister(), path[:j+2])
+
+				// Setup a command.
+				if err := c.setup(); err != nil {
+					return nil, err
+				}
+
+				cmd = c
+				break
+			}
+		}
+
+		if !found {
+			return nil, ErrCommandNotFound
+		}
+	}
+
+	return cmd, nil
+}
+
+func (app *App) Help(cmd *Command, w io.Writer) error {
+	if app.Helper != nil {
+		return app.Helper.Help(app, cmd, w)
+	}
+
+	return (DefaultHelper{}).Help(app, cmd, w)
+}
+
+func (app *App) Printf(format string, a ...interface{}) (n int, err error) {
+	return fmt.Fprintf(app.stdout(), format, a...)
+}
+
+func (app *App) Print(a ...interface{}) (n int, err error) {
+	return fmt.Fprint(app.stdout(), a...)
+}
+
+func (app *App) Println(a ...interface{}) (n int, err error) {
+	return fmt.Fprintln(app.stdout(), a...)
+}
+
+func (app *App) Warnf(format string, a ...interface{}) (n int, err error) {
+	return fmt.Fprintf(app.stderr(), format, a...)
+}
+
+func (app *App) Warn(a ...interface{}) (n int, err error) {
+	return fmt.Fprint(app.stderr(), a...)
+}
+
+func (app *App) Warnln(a ...interface{}) (n int, err error) {
+	return fmt.Fprintln(app.stderr(), a...)
+}
+
+func (app *App) command() (*Command, error) {
+	if app.rootCmd == nil {
+		app.rootCmd = &Command{
+			Name:         app.Name,
+			Usage:        app.Usage,
+			Action:       app.Action,
+			CommandFlags: app.CommandFlags,
+			Commands:     app.Commands,
+		}
+
+		path := []string{app.Name}
+		app.rootCmd.init(app.ctx, app, nil, app.newRegister(), path)
+
+		if err := app.rootCmd.setup(); err != nil {
+			return nil, err
+		}
+	}
+
+	return app.rootCmd, nil
 }
 
 func (app *App) args() []string {
@@ -268,22 +328,17 @@ func (app *App) parser() Parser {
 	return app.defaultParser
 }
 
-// func (app *App) helpEnabled() bool {
-// 	var disabled bool
-// 	if app.Helper != nil {
-// 		_, disabled = app.Helper.(noopHelper)
-// 	}
-
-// 	return !disabled
-// }
-
-func (app *App) help(ctx Context, path []string, w io.Writer) error {
-	if app.Helper != nil {
-		return app.Helper.Help(ctx, path, w)
+func (app *App) newRegister() Register {
+	if app.NewRegister != nil {
+		if register := app.NewRegister(); register != nil {
+			return register
+		}
 	}
 
-	return (DefaultHelper{}).Help(ctx, path, w)
+	return &DefaultRegister{}
 }
+
+var _ Register = (*Command)(nil)
 
 type Command struct {
 	Name         string
@@ -291,25 +346,135 @@ type Command struct {
 	Action       Action
 	CommandFlags []CommandFlag
 	Commands     []Command
+
+	ctx        context.Context
+	app        *App
+	parent     *Command
+	register   Register
+	path       []string
+	initilized bool
+	setuped    bool
+}
+
+func (c *Command) Path() []string { return c.path }
+
+func (c *Command) Context() context.Context {
+	if c.ctx == nil {
+		return context.Background()
+	}
+
+	return c.ctx
+}
+
+func (c *Command) RegisterFlag(flag Flag) error {
+	return c.register.RegisterFlag(flag)
+}
+
+func (c *Command) RegisterArg(arg Arg) error {
+	return c.register.RegisterArg(arg)
+}
+
+func (c *Command) RegisterRestArgs(rest RestArgs) error {
+	return c.register.RegisterRestArgs(rest)
+}
+
+func (c *Command) Arg(i int) (*Arg, bool) { return c.register.Arg(i) }
+
+func (c *Command) ShortFlag(name string) (*Flag, bool) { return c.register.ShortFlag(name) }
+
+func (c *Command) LongFlag(name string) (*Flag, bool) { return c.register.LongFlag(name) }
+
+func (c *Command) Args() []Arg { return c.register.Args() }
+
+func (c *Command) Rest() *RestArgs { return c.register.Rest() }
+
+func (c *Command) Flags() []Flag { return c.register.Flags() }
+
+func (c *Command) Err() error { return c.register.Err() }
+
+func (c *Command) init(ctx context.Context, app *App, parent *Command, register Register, path []string) {
+	if c.initilized {
+		return
+	}
+
+	c.ctx = ctx
+	c.app = app
+	c.parent = parent
+	c.register = register
+	c.path = path
+
+	c.initilized = true
+}
+
+func (c *Command) setup() error {
+	if c.setuped {
+		return nil
+	}
+
+	if c.Action != nil {
+		if err := c.Action.Setup(c.app, c); err != nil {
+			return err
+		}
+	}
+
+	// Add command flags.
+	var parents []*Command
+
+	cmdParent := c.parent
+	for cmdParent != nil {
+		parents = append(parents, cmdParent)
+		cmdParent = cmdParent.parent
+	}
+
+	addCommandFlags := func(cfs []CommandFlag) error {
+		for i := range cfs {
+			f := &cfs[i]
+
+			err := BoolVar(c, &f.value, f.Long,
+				WithShort(f.Short),
+				WithUsage(f.Usage),
+				commandFlag(true), // Mark this flag as "magic" command flag.
+			)
+			if err != nil {
+				return err
+			}
+		}
+
+		return nil
+	}
+
+	for i := len(parents) - 1; i >= 0; i-- {
+		if err := addCommandFlags(parents[i].CommandFlags); err != nil {
+			return err
+		}
+	}
+
+	if err := addCommandFlags(c.CommandFlags); err != nil {
+		return err
+	}
+
+	c.setuped = true
+
+	return nil
 }
 
 type Action interface {
-	Setup(ctx Context) error
-	Run(ctx Context) error
+	Setup(app *App, cmd *Command) error
+	Run(app *App, cmd *Command) error
 }
 
 // TODO(SuperPaintman): add Before.
 // TODO(SuperPaintman): add After.
 
-type ActionRunner func(ctx Context) error
+type ActionRunner func(app *App, cmd *Command) error
 
-type ActionBuilder func(ctx Context) ActionRunner
+type ActionBuilder func(app *App, cmd *Command) ActionRunner
 
 var _ Action = (ActionRunner)(nil)
 
-func (fn ActionRunner) Setup(ctx Context) error { return nil }
+func (fn ActionRunner) Setup(app *App, cmd *Command) error { return nil }
 
-func (fn ActionRunner) Run(ctx Context) error { return fn(ctx) }
+func (fn ActionRunner) Run(app *App, cmd *Command) error { return fn(app, cmd) }
 
 var _ Action = (*actionFunc)(nil)
 
@@ -324,18 +489,18 @@ func ActionFunc(fn ActionBuilder) Action {
 	}
 }
 
-func (a *actionFunc) Setup(ctx Context) error {
-	a.runner = a.builder(ctx)
+func (a *actionFunc) Setup(app *App, cmd *Command) error {
+	a.runner = a.builder(app, cmd)
 
 	return nil
 }
 
-func (a *actionFunc) Run(ctx Context) error {
+func (a *actionFunc) Run(app *App, cmd *Command) error {
 	if a.runner == nil {
 		return nil
 	}
 
-	return a.runner(ctx)
+	return a.runner(app, cmd)
 }
 
 type CommandFlag struct {

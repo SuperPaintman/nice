@@ -380,20 +380,23 @@ func TestParseFlags(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			for _, tvc := range tc.tests {
 				t.Run(tvc.name, func(t *testing.T) {
-					var parser DefaultParser
+					var (
+						register DefaultRegister
+						parser   DefaultParser
+					)
 
 					if len(tvc.args) > 1 && tvc.args[1] == "-5s" {
 						t.Log("g")
 					}
 
-					f := tc.setup(&parser)
+					f := tc.setup(&register)
 
 					var extra interface{}
 					if tvc.extraSetup != nil {
-						extra = tvc.extraSetup(&parser)
+						extra = tvc.extraSetup(&register)
 					}
 
-					if err := parser.Parse(nil, tvc.args); err != nil {
+					if err := parser.Parse(nil, &register, tvc.args); err != nil {
 						t.Fatalf("Parse(%v): failed to parse flags: %s", tvc.args, err)
 					}
 
@@ -562,11 +565,14 @@ func TestParseFlags_broken_value(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			for _, tvc := range tc.tests {
 				t.Run(tvc.name, func(t *testing.T) {
-					var parser DefaultParser
+					var (
+						register DefaultRegister
+						parser   DefaultParser
+					)
 
-					_ = tc.setup(&parser)
+					_ = tc.setup(&register)
 
-					err := parser.Parse(nil, tvc.args)
+					err := parser.Parse(nil, &register, tvc.args)
 					if !errors.Is(err, tvc.want) {
 						t.Fatalf("Parse(%v): got error = %q, want error = %q", tvc.args, err, tvc.want)
 					}
@@ -577,19 +583,22 @@ func TestParseFlags_broken_value(t *testing.T) {
 }
 
 func TestParseMultiFlags(t *testing.T) {
-	var parser DefaultParser
+	var (
+		register DefaultRegister
+		parser   DefaultParser
+	)
 
-	a := Bool(&parser, "a")
-	b := Ints(&parser, "b")
-	c := String(&parser, "c")
-	d := Int(&parser, "d")
+	a := Bool(&register, "a")
+	b := Ints(&register, "b")
+	c := String(&register, "c")
+	d := Int(&register, "d")
 
 	args := []string{
 		"-a", "-b", "1", "-d=99", "-b=2,-3,4", "-c", "test", "-b", "5,6", "-b", "7",
 		"-d", "8", "-b=9",
 	}
 
-	if err := parser.Parse(nil, args); err != nil {
+	if err := parser.Parse(nil, &register, args); err != nil {
 		t.Fatalf("Parse(): failed to parse args: %s", err)
 	}
 
@@ -720,11 +729,14 @@ func TestParseArgs(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			for _, tvc := range tc.tests {
 				t.Run(tvc.name, func(t *testing.T) {
-					var parser DefaultParser
+					var (
+						register DefaultRegister
+						parser   DefaultParser
+					)
 
-					f := tc.setup(&parser)
+					f := tc.setup(&register)
 
-					if err := parser.Parse(nil, tvc.args); err != nil {
+					if err := parser.Parse(nil, &register, tvc.args); err != nil {
 						t.Fatalf("Parse(%v): failed to parse args: %s", tvc.args, err)
 					}
 
@@ -846,11 +858,14 @@ func TestParseArgs_broken_value(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			for _, tvc := range tc.tests {
 				t.Run(tvc.name, func(t *testing.T) {
-					var parser DefaultParser
+					var (
+						register DefaultRegister
+						parser   DefaultParser
+					)
 
-					_ = tc.setup(&parser)
+					_ = tc.setup(&register)
 
-					err := parser.Parse(nil, tvc.args)
+					err := parser.Parse(nil, &register, tvc.args)
 					if !errors.Is(err, tvc.want) {
 						t.Fatalf("Parse(%v): got error = %q, want error = %q", tvc.args, err, tvc.want)
 					}
@@ -931,14 +946,14 @@ func TestRegisterInvalidNameFlag(t *testing.T) {
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			var parser DefaultParser
+			var register DefaultRegister
 
-			_ = Bool(&parser, "", FlagOptions{
+			_ = Bool(&register, "", FlagOptions{
 				Short: tc.short,
 				Long:  tc.long,
 			})
 
-			got := parser.Parse(nil, nil)
+			got := register.Err()
 			if !errors.Is(got, tc.want) {
 				t.Fatalf("Parse(): got error = %q, want error = %q", got, tc.want)
 			}
@@ -947,12 +962,12 @@ func TestRegisterInvalidNameFlag(t *testing.T) {
 }
 
 func TestRegisterDuplicatedFlag(t *testing.T) {
-	var parser DefaultParser
+	var register DefaultRegister
 
-	_ = Bool(&parser, "a")
-	_ = Int(&parser, "a")
+	_ = Bool(&register, "a")
+	_ = Int(&register, "a")
 
-	got := parser.Parse(nil, nil)
+	got := register.Err()
 	want := &FlagError{
 		Short: "a",
 		Err:   ErrDuplicate,
@@ -1006,12 +1021,11 @@ func TestRegisterInvalidNameArg(t *testing.T) {
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			var parser DefaultParser
+			var register DefaultRegister
 
-			_ = BoolArg(&parser, tc.arg)
+			_ = BoolArg(&register, tc.arg)
 
-			args := []string{"true"}
-			got := parser.Parse(nil, args)
+			got := register.Err()
 			if !errors.Is(got, tc.want) {
 				t.Fatalf("Parse(): got error = %q, want error = %q", got, tc.want)
 			}
@@ -1020,12 +1034,12 @@ func TestRegisterInvalidNameArg(t *testing.T) {
 }
 
 func TestRegisterDuplicatedArg(t *testing.T) {
-	var parser DefaultParser
+	var register DefaultRegister
 
-	_ = StringArg(&parser, "a")
-	_ = IntArg(&parser, "a")
+	_ = StringArg(&register, "a")
+	_ = IntArg(&register, "a")
 
-	got := parser.Parse(nil, nil)
+	got := register.Err()
 	want := &ArgError{
 		Name: "a",
 		Err:  ErrDuplicate,
@@ -1065,11 +1079,14 @@ func TestParse_Parse_invalid_flags_syntax(t *testing.T) {
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			var parser DefaultParser
+			var (
+				register DefaultRegister
+				parser   DefaultParser
+			)
 
 			args := []string{tc.arg}
 
-			err := parser.Parse(nil, args)
+			err := parser.Parse(nil, &register, args)
 			if !errors.Is(err, tc.want) {
 				t.Fatalf("Parse(%v): got error = %q, want error = %q", args, err, tc.want)
 			}
@@ -1078,20 +1095,21 @@ func TestParse_Parse_invalid_flags_syntax(t *testing.T) {
 }
 
 func TestParse_Parse_universal(t *testing.T) {
+	var register DefaultRegister
 	parser := DefaultParser{
 		Universal: true,
 	}
 
-	show := Bool(&parser, "show")
-	help := Bool(&parser, "help", WithShort("h"))
-	c := Int(&parser, "c")
-	unused := Bool(&parser, "unused", WithShort("u"))
-	userID := Int(&parser, "user-id")
-	delay := Duration(&parser, "delay")
+	show := Bool(&register, "show")
+	help := Bool(&register, "help", WithShort("h"))
+	c := Int(&register, "c")
+	unused := Bool(&register, "unused", WithShort("u"))
+	userID := Int(&register, "user-id")
+	delay := Duration(&register, "delay")
 
 	args := []string{"-show", "-h", "--c", "100", "-user-id", "200", "--delay=2s"}
 
-	if err := parser.Parse(nil, args); err != nil {
+	if err := parser.Parse(nil, &register, args); err != nil {
 		t.Fatalf("Parse(): failed to parse args: %s", err)
 	}
 
@@ -1124,19 +1142,22 @@ func TestParse_Parse_universal(t *testing.T) {
 }
 
 func TestParse_Parse_posix_style_short_flags(t *testing.T) {
-	var parser DefaultParser
+	var (
+		register DefaultRegister
+		parser   DefaultParser
+	)
 
-	a := Bool(&parser, "a")
-	b := Bool(&parser, "b")
-	c := Bool(&parser, "c")
-	d := Bool(&parser, "d")
-	e := Bool(&parser, "e")
-	f := Int(&parser, "f")
-	g := Bool(&parser, "g")
+	a := Bool(&register, "a")
+	b := Bool(&register, "b")
+	c := Bool(&register, "c")
+	d := Bool(&register, "d")
+	e := Bool(&register, "e")
+	f := Int(&register, "f")
+	g := Bool(&register, "g")
 
 	args := []string{"-ab", "-def", "100", "-g"}
 
-	if err := parser.Parse(nil, args); err != nil {
+	if err := parser.Parse(nil, &register, args); err != nil {
 		t.Fatalf("Parse(): failed to parse args: %s", err)
 	}
 
@@ -1165,16 +1186,19 @@ func TestParse_Parse_posix_style_short_flags(t *testing.T) {
 }
 
 func TestParse_Parse_posix_style_short_flags_unknown(t *testing.T) {
-	var parser DefaultParser
+	var (
+		register DefaultRegister
+		parser   DefaultParser
+	)
 
-	_ = Bool(&parser, "a")
-	_ = Bool(&parser, "b")
-	_ = Bool(&parser, "c")
-	_ = Bool(&parser, "d")
+	_ = Bool(&register, "a")
+	_ = Bool(&register, "b")
+	_ = Bool(&register, "c")
+	_ = Bool(&register, "d")
 
 	args := []string{"-a", "-deb", "-g"}
 
-	got := parser.Parse(nil, args)
+	got := parser.Parse(nil, &register, args)
 	want := &ParseFlagError{Name: "e", Err: ErrUnknown}
 	if !errors.Is(got, want) {
 		t.Fatalf("Parse(): got error = %q, want error = %q", got, want)
@@ -1182,18 +1206,19 @@ func TestParse_Parse_posix_style_short_flags_unknown(t *testing.T) {
 }
 
 func TestParse_Parse_posix_style_short_flags_ignore_unknown(t *testing.T) {
+	var register DefaultRegister
 	parser := DefaultParser{
 		IgnoreUnknownFlags: true,
 	}
 
-	a := Bool(&parser, "a")
-	b := Bool(&parser, "b")
-	c := Bool(&parser, "c")
-	d := Bool(&parser, "d")
+	a := Bool(&register, "a")
+	b := Bool(&register, "b")
+	c := Bool(&register, "c")
+	d := Bool(&register, "d")
 
 	args := []string{"-a", "-deb", "-g"}
 
-	if err := parser.Parse(nil, args); err != nil {
+	if err := parser.Parse(nil, &register, args); err != nil {
 		t.Fatalf("Parse(): failed to parse args: %s", err)
 	}
 
@@ -1212,21 +1237,22 @@ func TestParse_Parse_posix_style_short_flags_ignore_unknown(t *testing.T) {
 }
 
 func TestParse_Parse_disable_posix_style_short_flags(t *testing.T) {
+	var register DefaultRegister
 	parser := DefaultParser{
 		DisablePosixStyle: true,
 	}
 
-	_ = Bool(&parser, "a")
-	_ = Bool(&parser, "b")
-	_ = Bool(&parser, "c")
-	_ = Bool(&parser, "d")
-	_ = Bool(&parser, "e")
-	_ = Bool(&parser, "f")
-	_ = Bool(&parser, "g")
+	_ = Bool(&register, "a")
+	_ = Bool(&register, "b")
+	_ = Bool(&register, "c")
+	_ = Bool(&register, "d")
+	_ = Bool(&register, "e")
+	_ = Bool(&register, "f")
+	_ = Bool(&register, "g")
 
 	args := []string{"-ab", "-def", "-g"}
 
-	got := parser.Parse(nil, args)
+	got := parser.Parse(nil, &register, args)
 	want := &ParseFlagError{Name: "ab", Err: ErrUnknown}
 	if !errors.Is(got, want) {
 		t.Fatalf("Parse(): got error = %q, want error = %q", got, want)
@@ -1234,21 +1260,22 @@ func TestParse_Parse_disable_posix_style_short_flags(t *testing.T) {
 }
 
 func TestParse_Parse_universal_and_posix_style_short_flags(t *testing.T) {
+	var register DefaultRegister
 	parser := DefaultParser{
 		Universal: true,
 	}
 
-	_ = Bool(&parser, "a")
-	_ = Bool(&parser, "b")
-	_ = Bool(&parser, "c")
-	_ = Bool(&parser, "d")
-	_ = Bool(&parser, "e")
-	_ = Bool(&parser, "f")
-	_ = Bool(&parser, "g")
+	_ = Bool(&register, "a")
+	_ = Bool(&register, "b")
+	_ = Bool(&register, "c")
+	_ = Bool(&register, "d")
+	_ = Bool(&register, "e")
+	_ = Bool(&register, "f")
+	_ = Bool(&register, "g")
 
 	args := []string{"-ab", "-def", "-g"}
 
-	got := parser.Parse(nil, args)
+	got := parser.Parse(nil, &register, args)
 	want := &ParseFlagError{Name: "ab", Err: ErrUnknown}
 	if !errors.Is(got, want) {
 		t.Fatalf("Parse(): got error = %q, want error = %q", got, want)
@@ -1256,17 +1283,20 @@ func TestParse_Parse_universal_and_posix_style_short_flags(t *testing.T) {
 }
 
 func TestParse_Parse_short_flag_inline_value(t *testing.T) {
-	var parser DefaultParser
+	var (
+		register DefaultRegister
+		parser   DefaultParser
+	)
 
-	a := String(&parser, "a")
-	b := Bool(&parser, "b")
-	c := Bool(&parser, "c")
-	d := Bool(&parser, "d")
-	e := Bool(&parser, "e")
+	a := String(&register, "a")
+	b := Bool(&register, "b")
+	c := Bool(&register, "c")
+	d := Bool(&register, "d")
+	e := Bool(&register, "e")
 
 	args := []string{"-c", "-aboot", "-d"}
 
-	if err := parser.Parse(nil, args); err != nil {
+	if err := parser.Parse(nil, &register, args); err != nil {
 		t.Fatalf("Parse(): failed to parse args: %s", err)
 	}
 
@@ -1290,17 +1320,20 @@ func TestParse_Parse_short_flag_inline_value(t *testing.T) {
 }
 
 func TestParse_Parse_short_flag_inline_value_with_equals(t *testing.T) {
-	var parser DefaultParser
+	var (
+		register DefaultRegister
+		parser   DefaultParser
+	)
 
-	a := String(&parser, "a")
-	b := Bool(&parser, "b")
-	c := Bool(&parser, "c")
-	d := Bool(&parser, "d")
-	e := Bool(&parser, "e")
+	a := String(&register, "a")
+	b := Bool(&register, "b")
+	c := Bool(&register, "c")
+	d := Bool(&register, "d")
+	e := Bool(&register, "e")
 
 	args := []string{"-c", "-aboot=now", "-d"}
 
-	if err := parser.Parse(nil, args); err != nil {
+	if err := parser.Parse(nil, &register, args); err != nil {
 		t.Fatalf("Parse(): failed to parse args: %s", err)
 	}
 
@@ -1324,19 +1357,20 @@ func TestParse_Parse_short_flag_inline_value_with_equals(t *testing.T) {
 }
 
 func TestParse_Parse_short_flag_inline_value_with_invalid_value(t *testing.T) {
+	var register DefaultRegister
 	parser := DefaultParser{
 		DisableInlineValue: true,
 	}
 
-	_ = Int(&parser, "a")
-	_ = Bool(&parser, "b")
-	_ = Bool(&parser, "c")
-	_ = Bool(&parser, "d")
-	_ = Bool(&parser, "e")
+	_ = Int(&register, "a")
+	_ = Bool(&register, "b")
+	_ = Bool(&register, "c")
+	_ = Bool(&register, "d")
+	_ = Bool(&register, "e")
 
 	args := []string{"-c", "-aboot", "-d"}
 
-	got := parser.Parse(nil, args)
+	got := parser.Parse(nil, &register, args)
 	want := &ParseValueError{Type: "int", Err: ErrSyntax}
 	if !errors.Is(got, want) {
 		t.Fatalf("Parse(): got error = %q, want error = %q", got, want)
@@ -1344,19 +1378,20 @@ func TestParse_Parse_short_flag_inline_value_with_invalid_value(t *testing.T) {
 }
 
 func TestParse_Parse_disable_short_flag_inline_value(t *testing.T) {
+	var register DefaultRegister
 	parser := DefaultParser{
 		DisableInlineValue: true,
 	}
 
-	_ = String(&parser, "a")
-	_ = Bool(&parser, "b")
-	_ = Bool(&parser, "c")
-	_ = Bool(&parser, "d")
-	_ = Bool(&parser, "e")
+	_ = String(&register, "a")
+	_ = Bool(&register, "b")
+	_ = Bool(&register, "c")
+	_ = Bool(&register, "d")
+	_ = Bool(&register, "e")
 
 	args := []string{"-c", "-aboot", "-d"}
 
-	got := parser.Parse(nil, args)
+	got := parser.Parse(nil, &register, args)
 	want := &ParseFlagError{Name: "o", Err: ErrUnknown}
 	if !errors.Is(got, want) {
 		t.Fatalf("Parse(): got error = %q, want error = %q", got, want)
@@ -1364,19 +1399,20 @@ func TestParse_Parse_disable_short_flag_inline_value(t *testing.T) {
 }
 
 func TestParse_Parse_universal_and_short_flag_inline_value(t *testing.T) {
+	var register DefaultRegister
 	parser := DefaultParser{
 		Universal: true,
 	}
 
-	_ = String(&parser, "a")
-	_ = Bool(&parser, "b")
-	_ = Bool(&parser, "c")
-	_ = Bool(&parser, "d")
-	_ = Bool(&parser, "e")
+	_ = String(&register, "a")
+	_ = Bool(&register, "b")
+	_ = Bool(&register, "c")
+	_ = Bool(&register, "d")
+	_ = Bool(&register, "e")
 
 	args := []string{"-c", "-aboot", "-d"}
 
-	got := parser.Parse(nil, args)
+	got := parser.Parse(nil, &register, args)
 	want := &ParseFlagError{Name: "aboot", Err: ErrUnknown}
 	if !errors.Is(got, want) {
 		t.Fatalf("Parse(): got error = %q, want error = %q", got, want)
@@ -1384,19 +1420,22 @@ func TestParse_Parse_universal_and_short_flag_inline_value(t *testing.T) {
 }
 
 func TestParse_Parse_posix_style_and_short_flag_inline_value(t *testing.T) {
-	var parser DefaultParser
+	var (
+		register DefaultRegister
+		parser   DefaultParser
+	)
 
-	a := String(&parser, "a")
-	b := Bool(&parser, "b")
-	c := Bool(&parser, "c")
-	d := Bool(&parser, "d")
-	e := String(&parser, "e")
-	f := Bool(&parser, "f")
-	g := Bool(&parser, "g")
+	a := String(&register, "a")
+	b := Bool(&register, "b")
+	c := Bool(&register, "c")
+	d := Bool(&register, "d")
+	e := String(&register, "e")
+	f := Bool(&register, "f")
+	g := Bool(&register, "g")
 
 	args := []string{"-c", "-aboot", "-degif"}
 
-	if err := parser.Parse(nil, args); err != nil {
+	if err := parser.Parse(nil, &register, args); err != nil {
 		t.Fatalf("Parse(): failed to parse args: %s", err)
 	}
 
@@ -1428,20 +1467,21 @@ func TestParse_Parse_posix_style_and_short_flag_inline_value(t *testing.T) {
 }
 
 func TestParse_Parse_disable_posix_style_and_short_flag_inline_value(t *testing.T) {
+	var register DefaultRegister
 	parser := DefaultParser{
 		DisablePosixStyle: true,
 	}
 
-	a := String(&parser, "a")
-	b := Bool(&parser, "b")
-	c := Bool(&parser, "c")
-	d := Bool(&parser, "d")
-	e := Bool(&parser, "e")
-	f := Bool(&parser, "f")
+	a := String(&register, "a")
+	b := Bool(&register, "b")
+	c := Bool(&register, "c")
+	d := Bool(&register, "d")
+	e := Bool(&register, "e")
+	f := Bool(&register, "f")
 
 	args := []string{"-c", "-aboot", "-def"}
 
-	got := parser.Parse(nil, args)
+	got := parser.Parse(nil, &register, args)
 	want := &ParseFlagError{Name: "def", Err: ErrUnknown}
 	if !errors.Is(got, want) {
 		t.Fatalf("Parse(): got error = %q, want error = %q", got, want)
@@ -1469,39 +1509,42 @@ func TestParse_Parse_disable_posix_style_and_short_flag_inline_value(t *testing.
 }
 
 func TestParser_Parse(t *testing.T) {
-	var parser DefaultParser
+	var (
+		register DefaultRegister
+		parser   DefaultParser
+	)
 
-	show := Bool(&parser, "show",
+	show := Bool(&register, "show",
 		WithShort("s"),
 		Usage("Show the resuld of the function"),
 	)
 
-	recreate := Bool(&parser, "recreate",
+	recreate := Bool(&register, "recreate",
 		Usage("Re-create the current user"),
 	)
 
-	update := Bool(&parser, "update",
+	update := Bool(&register, "update",
 		Usage("Update the DB"),
 	)
 
-	unused := Bool(&parser, "unused")
+	unused := Bool(&register, "unused")
 
-	count := Int(&parser, "count",
+	count := Int(&register, "count",
 		WithShort("c"),
 	)
 
-	userID := IntArg(&parser, "user-id",
+	userID := IntArg(&register, "user-id",
 		Usage("Current User ID"),
 	)
 
-	rest := RestStrings(&parser, "rest")
+	rest := RestStrings(&register, "rest")
 
 	args := []string{
 		"--show", "--recreate=false", "-c", "100500", "1337",
 		"other", "vals", "--update", "true", "in", "args",
 	}
 
-	if err := parser.Parse(nil, args); err != nil {
+	if err := parser.Parse(nil, &register, args); err != nil {
 		t.Fatalf("Parse(): failed to parse args: %s", err)
 	}
 
@@ -1551,14 +1594,17 @@ func TestParser_Parse(t *testing.T) {
 }
 
 func TestParser_Parse_unknown_flags(t *testing.T) {
-	var parser DefaultParser
+	var (
+		register DefaultRegister
+		parser   DefaultParser
+	)
 
-	a := Bool(&parser, "a")
-	b := Bool(&parser, "b")
+	a := Bool(&register, "a")
+	b := Bool(&register, "b")
 
 	args := []string{"-a", "-c", "false", "-d", "-b"}
 
-	got := parser.Parse(nil, args)
+	got := parser.Parse(nil, &register, args)
 	want := &ParseFlagError{Name: "c", Err: ErrUnknown}
 	if !errors.Is(got, want) {
 		t.Fatalf("Parse(): got error = %q, want error = %q", got, want)
@@ -1574,14 +1620,17 @@ func TestParser_Parse_unknown_flags(t *testing.T) {
 }
 
 func TestParser_Parse_unknown_flags_with_value(t *testing.T) {
-	var parser DefaultParser
+	var (
+		register DefaultRegister
+		parser   DefaultParser
+	)
 
-	_ = Bool(&parser, "a")
-	_ = Bool(&parser, "b")
+	_ = Bool(&register, "a")
+	_ = Bool(&register, "b")
 
 	args := []string{"-a", "-c=100", "-d", "-b"}
 
-	got := parser.Parse(nil, args)
+	got := parser.Parse(nil, &register, args)
 	want := &ParseFlagError{Name: "c", Err: ErrUnknown}
 	if !errors.Is(got, want) {
 		t.Fatalf("Parse(): got error = %q, want error = %q", got, want)
@@ -1589,17 +1638,18 @@ func TestParser_Parse_unknown_flags_with_value(t *testing.T) {
 }
 
 func TestParser_Parse_ignore_unknown_flags(t *testing.T) {
+	var register DefaultRegister
 	parser := DefaultParser{
 		IgnoreUnknownFlags: true,
 	}
 
-	a := Bool(&parser, "a")
-	b := Bool(&parser, "b")
-	v := BoolArg(&parser, "v")
+	a := Bool(&register, "a")
+	b := Bool(&register, "b")
+	v := BoolArg(&register, "v")
 
 	args := []string{"-a", "-c=200", "false", "-d", "-e", "-b"}
 
-	if err := parser.Parse(nil, args); err != nil {
+	if err := parser.Parse(nil, &register, args); err != nil {
 		t.Fatalf("Parse(): failed to parse args: %s", err)
 	}
 
@@ -1618,14 +1668,17 @@ func TestParser_Parse_ignore_unknown_flags(t *testing.T) {
 }
 
 func TestParser_Parse_unknown_rest(t *testing.T) {
-	var parser DefaultParser
+	var (
+		register DefaultRegister
+		parser   DefaultParser
+	)
 
-	_ = BoolArg(&parser, "a")
-	_ = BoolArg(&parser, "b", Optional)
+	_ = BoolArg(&register, "a")
+	_ = BoolArg(&register, "b", Optional)
 
 	args := []string{"true", "false", "c", "d", "1337", "false", "e"}
 
-	got := parser.Parse(nil, args)
+	got := parser.Parse(nil, &register, args)
 	want := &ParseArgError{Arg: "c", Err: ErrUnknown}
 	if !errors.Is(got, want) {
 		t.Fatalf("Parse(): got error = %q, want error = %q", got, want)
@@ -1633,16 +1686,17 @@ func TestParser_Parse_unknown_rest(t *testing.T) {
 }
 
 func TestParser_Parse_ignore_unknown_rest(t *testing.T) {
+	var register DefaultRegister
 	parser := DefaultParser{
 		IgnoreUnknownArgs: true,
 	}
 
-	a := BoolArg(&parser, "a")
-	b := BoolArg(&parser, "b")
+	a := BoolArg(&register, "a")
+	b := BoolArg(&register, "b")
 
 	args := []string{"true", "false", "c", "d", "1337", "false", "e"}
 
-	if err := parser.Parse(nil, args); err != nil {
+	if err := parser.Parse(nil, &register, args); err != nil {
 		t.Fatalf("Parse(): failed to parse args: %s", err)
 	}
 
@@ -1661,19 +1715,20 @@ func TestParser_Parse_ignore_unknown_rest(t *testing.T) {
 }
 
 func TestParser_Parse_rest_with_ignore_unknown_rest(t *testing.T) {
+	var register DefaultRegister
 	parser := DefaultParser{
 		IgnoreUnknownArgs: true,
 	}
 
-	a := BoolArg(&parser, "a")
-	b := BoolArg(&parser, "b")
+	a := BoolArg(&register, "a")
+	b := BoolArg(&register, "b")
 
 	var rest []string
-	_ = RestStringsVar(&parser, &rest, "rest")
+	_ = RestStringsVar(&register, &rest, "rest")
 
 	args := []string{"true", "false", "c", "d", "1337", "false", "e"}
 
-	if err := parser.Parse(nil, args); err != nil {
+	if err := parser.Parse(nil, &register, args); err != nil {
 		t.Fatalf("Parse(): failed to parse args: %s", err)
 	}
 
@@ -1697,9 +1752,11 @@ func TestParser_Parse_rest_with_ignore_unknown_rest(t *testing.T) {
 	}
 }
 
+var _ Commander = (*testCommander)(nil)
+
 type testCommander struct {
 	commands []string
-	use      func() error
+	use      func() (Register, error)
 
 	path []string
 	i    int
@@ -1715,30 +1772,34 @@ func (c *testCommander) IsCommand(name string) bool {
 	return cmd == name
 }
 
-func (c *testCommander) SetCommand(name string) error {
+func (c *testCommander) SetCommand(name string) (Register, error) {
 	if c.i >= len(c.commands) {
-		return fmt.Errorf("command not found: %s", name)
+		return nil, fmt.Errorf("command not found: %s", name)
 	}
 
 	cmd := c.commands[c.i]
 	if cmd != name {
-		return fmt.Errorf("command not found: %s", name)
+		return nil, fmt.Errorf("command not found: %s", name)
 	}
 
 	c.i++
 	c.path = append(c.path, cmd)
 
-	if err := c.use(); err != nil {
-		return err
+	register, err := c.use()
+	if err != nil {
+		return nil, err
 	}
 
-	return nil
+	return register, nil
 }
 
 func (c *testCommander) Path() []string { return c.path }
 
 func TestParser_Parse_with_commands(t *testing.T) {
-	var parser DefaultParser
+	var (
+		register DefaultRegister
+		parser   DefaultParser
+	)
 
 	show := new(bool)
 	recreate := new(bool)
@@ -1750,34 +1811,36 @@ func TestParser_Parse_with_commands(t *testing.T) {
 
 	commander := testCommander{
 		commands: []string{"first", "second", "third", "fourth"},
-		use: func() error {
-			show = Bool(&parser, "show",
+		use: func() (Register, error) {
+			var register DefaultRegister
+
+			show = Bool(&register, "show",
 				WithShort("s"),
 				Usage("Show the resuld of the function"),
 			)
 
-			recreate = Bool(&parser, "recreate",
+			recreate = Bool(&register, "recreate",
 				Usage("Re-create the current user"),
 				Required,
 			)
 
-			update = Bool(&parser, "update",
+			update = Bool(&register, "update",
 				Usage("Update the DB"),
 			)
 
-			unused = Bool(&parser, "unused")
+			unused = Bool(&register, "unused")
 
-			count = Int(&parser, "count",
+			count = Int(&register, "count",
 				WithShort("c"),
 			)
 
-			userID = IntArg(&parser, "user-id",
+			userID = IntArg(&register, "user-id",
 				Usage("Current User ID"),
 			)
 
-			rest = RestStrings(&parser, "rest")
+			rest = RestStrings(&register, "rest")
 
-			return nil
+			return &register, nil
 		},
 	}
 
@@ -1787,7 +1850,7 @@ func TestParser_Parse_with_commands(t *testing.T) {
 		"other", "vals", "--update", "true", "in", "args",
 	}
 
-	if err := parser.Parse(&commander, args); err != nil {
+	if err := parser.Parse(&commander, &register, args); err != nil {
 		t.Fatalf("Parse(): failed to parse args: %s", err)
 	}
 
@@ -1843,15 +1906,18 @@ func TestParser_Parse_with_commands(t *testing.T) {
 }
 
 func TestParser_Parse_required_flag(t *testing.T) {
-	var parser DefaultParser
+	var (
+		register DefaultRegister
+		parser   DefaultParser
+	)
 
-	_ = Bool(&parser, "a")
-	_ = Bool(&parser, "b", Required)
-	_ = Bool(&parser, "c")
+	_ = Bool(&register, "a")
+	_ = Bool(&register, "b", Required)
+	_ = Bool(&register, "c")
 
 	args := []string{"-a"}
 
-	got := parser.Parse(nil, args)
+	got := parser.Parse(nil, &register, args)
 	want := &FlagError{Short: "b", Err: ErrNotProvided}
 	if !errors.Is(got, want) {
 		t.Fatalf("Parse(): got error = %q, want error = %q", got, want)
@@ -1859,17 +1925,20 @@ func TestParser_Parse_required_flag(t *testing.T) {
 }
 
 func TestParser_Parse_required_multi_flag(t *testing.T) {
-	var parser DefaultParser
+	var (
+		register DefaultRegister
+		parser   DefaultParser
+	)
 
-	_ = Bool(&parser, "a")
-	_ = Bools(&parser, "b")
-	_ = Bools(&parser, "c", Required)
-	_ = Bools(&parser, "d", Required)
-	_ = Bools(&parser, "e")
+	_ = Bool(&register, "a")
+	_ = Bools(&register, "b")
+	_ = Bools(&register, "c", Required)
+	_ = Bools(&register, "d", Required)
+	_ = Bools(&register, "e")
 
 	args := []string{"-a", "-c"}
 
-	got := parser.Parse(nil, args)
+	got := parser.Parse(nil, &register, args)
 	want := &FlagError{Short: "d", Err: ErrNotProvided}
 	if !errors.Is(got, want) {
 		t.Fatalf("Parse(): got error = %q, want error = %q", got, want)
@@ -1877,17 +1946,20 @@ func TestParser_Parse_required_multi_flag(t *testing.T) {
 }
 
 func TestParser_Parse_required_arg(t *testing.T) {
-	var parser DefaultParser
+	var (
+		register DefaultRegister
+		parser   DefaultParser
+	)
 
 	// Args are implicitly required.
-	_ = BoolArg(&parser, "a")
-	_ = BoolArg(&parser, "b")
-	_ = BoolArg(&parser, "c")
-	_ = BoolArg(&parser, "d")
+	_ = BoolArg(&register, "a")
+	_ = BoolArg(&register, "b")
+	_ = BoolArg(&register, "c")
+	_ = BoolArg(&register, "d")
 
 	args := []string{"true", "false"}
 
-	got := parser.Parse(nil, args)
+	got := parser.Parse(nil, &register, args)
 	want := &ArgError{Name: "c", Err: ErrNotProvided}
 	if !errors.Is(got, want) {
 		t.Fatalf("Parse(): got error = %q, want error = %q", got, want)
@@ -1895,32 +1967,38 @@ func TestParser_Parse_required_arg(t *testing.T) {
 }
 
 func TestParser_Parse_optional_arg(t *testing.T) {
-	var parser DefaultParser
+	var (
+		register DefaultRegister
+		parser   DefaultParser
+	)
 
 	// Args are implicitly required.
-	_ = BoolArg(&parser, "a")
-	_ = BoolArg(&parser, "b")
-	_ = BoolArg(&parser, "c", Optional)
-	_ = BoolArg(&parser, "d", Optional)
+	_ = BoolArg(&register, "a")
+	_ = BoolArg(&register, "b")
+	_ = BoolArg(&register, "c", Optional)
+	_ = BoolArg(&register, "d", Optional)
 
 	args := []string{"true", "false"}
 
-	if err := parser.Parse(nil, args); err != nil {
+	if err := parser.Parse(nil, &register, args); err != nil {
 		t.Fatalf("Parse(): failed to parse args: %s", err)
 	}
 }
 
 func TestParser_Parse_optional_arg_after_required(t *testing.T) {
-	var parser DefaultParser
+	var (
+		register DefaultRegister
+		parser   DefaultParser
+	)
 
-	_ = BoolArg(&parser, "a")
-	_ = BoolArg(&parser, "b", Optional)
-	_ = BoolArg(&parser, "c")
-	_ = BoolArg(&parser, "d", Optional)
+	_ = BoolArg(&register, "a")
+	_ = BoolArg(&register, "b", Optional)
+	_ = BoolArg(&register, "c")
+	_ = BoolArg(&register, "d", Optional)
 
 	args := []string{"true", "false", "true", "true"}
 
-	got := parser.Parse(nil, args)
+	got := parser.Parse(nil, &register, args)
 	want := &ArgError{Name: "c", Err: ErrRequiredAfterOptional}
 	if !errors.Is(got, want) {
 		t.Fatalf("Parse(): got error = %q, want error = %q", got, want)
@@ -1928,17 +2006,20 @@ func TestParser_Parse_optional_arg_after_required(t *testing.T) {
 }
 
 func TestParser_Parse_rest(t *testing.T) {
-	var parser DefaultParser
+	var (
+		register DefaultRegister
+		parser   DefaultParser
+	)
 
-	_ = BoolArg(&parser, "a")
-	_ = BoolArg(&parser, "b")
+	_ = BoolArg(&register, "a")
+	_ = BoolArg(&register, "b")
 
 	var rest []string
-	_ = RestStringsVar(&parser, &rest, "rest")
+	_ = RestStringsVar(&register, &rest, "rest")
 
 	args := []string{"true", "false", "c", "d", "1337", "false", "e,d,f", "g"}
 
-	if err := parser.Parse(nil, args); err != nil {
+	if err := parser.Parse(nil, &register, args); err != nil {
 		t.Fatalf("Parse(): failed to parse args: %s", err)
 	}
 
@@ -1992,11 +2073,11 @@ func TestRegisterInvalidNameRestArgs(t *testing.T) {
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			var parser DefaultParser
+			var register DefaultRegister
 
-			_ = RestStrings(&parser, tc.restArgs)
+			_ = RestStrings(&register, tc.restArgs)
 
-			got := parser.Parse(nil, nil)
+			got := register.Err()
 			if !errors.Is(got, tc.want) {
 				t.Fatalf("Parse(): got error = %q, want error = %q", got, tc.want)
 			}
@@ -2005,17 +2086,20 @@ func TestRegisterInvalidNameRestArgs(t *testing.T) {
 }
 
 func TestParser_Parse_rest_after_optional_arg(t *testing.T) {
-	var parser DefaultParser
+	var (
+		register DefaultRegister
+		parser   DefaultParser
+	)
 
-	_ = BoolArg(&parser, "a")
-	_ = BoolArg(&parser, "b", Optional)
+	_ = BoolArg(&register, "a")
+	_ = BoolArg(&register, "b", Optional)
 
 	var rest []string
-	_ = RestStringsVar(&parser, &rest, "rest")
+	_ = RestStringsVar(&register, &rest, "rest")
 
 	args := []string{"true", "false", "c", "d", "1337", "false", "e"}
 
-	if err := parser.Parse(nil, args); err != nil {
+	if err := parser.Parse(nil, &register, args); err != nil {
 		t.Fatalf("Parse(): failed to parse args: %s", err)
 	}
 
@@ -2026,12 +2110,12 @@ func TestParser_Parse_rest_after_optional_arg(t *testing.T) {
 }
 
 func TestParser_Parse_multi_rest(t *testing.T) {
-	var parser DefaultParser
+	var register DefaultRegister
 
-	_ = RestStrings(&parser, "rest")
-	_ = RestStrings(&parser, "other")
+	_ = RestStrings(&register, "rest")
+	_ = RestStrings(&register, "other")
 
-	got := parser.Parse(nil, nil)
+	got := register.Err()
 	want := &RestArgsError{Name: "other", Err: ErrDuplicate}
 	if !errors.Is(got, want) {
 		t.Fatalf("Parse(): got error = %q, want error = %q", got, want)
@@ -2039,13 +2123,13 @@ func TestParser_Parse_multi_rest(t *testing.T) {
 }
 
 func TestParser_Parse_arg_after_rest(t *testing.T) {
-	var parser DefaultParser
+	var register DefaultRegister
 
-	_ = BoolArg(&parser, "a")
-	_ = RestStrings(&parser, "rest")
-	_ = BoolArg(&parser, "b")
+	_ = BoolArg(&register, "a")
+	_ = RestStrings(&register, "rest")
+	_ = BoolArg(&register, "b")
 
-	got := parser.Parse(nil, nil)
+	got := register.Err()
 	want := &ArgError{Name: "b", Err: ErrArgAfterRest}
 	if !errors.Is(got, want) {
 		t.Fatalf("Parse(): got error = %q, want error = %q", got, want)
@@ -2053,13 +2137,13 @@ func TestParser_Parse_arg_after_rest(t *testing.T) {
 }
 
 func TestParser_Parse_optional_arg_after_rest(t *testing.T) {
-	var parser DefaultParser
+	var register DefaultRegister
 
-	_ = BoolArg(&parser, "a")
-	_ = RestStrings(&parser, "rest")
-	_ = BoolArg(&parser, "b", Optional)
+	_ = BoolArg(&register, "a")
+	_ = RestStrings(&register, "rest")
+	_ = BoolArg(&register, "b", Optional)
 
-	got := parser.Parse(nil, nil)
+	got := register.Err()
 	want := &ArgError{Name: "b", Err: ErrArgAfterRest}
 	if !errors.Is(got, want) {
 		t.Fatalf("Parse(): got error = %q, want error = %q", got, want)
@@ -2067,21 +2151,24 @@ func TestParser_Parse_optional_arg_after_rest(t *testing.T) {
 }
 
 func TestParser_Parse_flags_terminator(t *testing.T) {
-	var parser DefaultParser
+	var (
+		register DefaultRegister
+		parser   DefaultParser
+	)
 
-	a := Bool(&parser, "a")
-	b := Bool(&parser, "b")
-	c := StringArg(&parser, "c")
-	d := StringArg(&parser, "d")
+	a := Bool(&register, "a")
+	b := Bool(&register, "b")
+	c := StringArg(&register, "c")
+	d := StringArg(&register, "d")
 
 	var rest []string
-	_ = RestStringsVar(&parser, &rest, "rest")
+	_ = RestStringsVar(&register, &rest, "rest")
 
 	args := []string{
 		"-a", "true", "testC", "--", "-b", "-a=false", "-c", "--", "d",
 	}
 
-	if err := parser.Parse(nil, args); err != nil {
+	if err := parser.Parse(nil, &register, args); err != nil {
 		t.Fatalf("Parse(): failed to parse args: %s", err)
 	}
 

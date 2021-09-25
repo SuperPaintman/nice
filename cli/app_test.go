@@ -51,10 +51,10 @@ func TestCommanderInvalidNameCommand(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			cmdr := commander{
 				found: &Command{Name: tc.command},
-				use:   func(*Command) error { return nil },
+				use:   func(*Command) (Register, error) { return &DefaultRegister{}, nil },
 			}
 
-			got := cmdr.SetCommand(tc.command)
+			_, got := cmdr.SetCommand(tc.command)
 			if !errors.Is(got, tc.want) {
 				t.Fatalf("SetCommand(): got error = %q, want error = %q", got, tc.want)
 			}

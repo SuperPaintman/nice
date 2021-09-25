@@ -147,21 +147,274 @@ type Register interface {
 	RegisterFlag(flag Flag) error
 	RegisterArg(arg Arg) error
 	RegisterRestArgs(rest RestArgs) error
+	Arg(i int) (*Arg, bool)
+	ShortFlag(name string) (*Flag, bool)
+	LongFlag(name string) (*Flag, bool)
+	Args() []Arg
+	Rest() *RestArgs
+	Flags() []Flag
+	Err() error
+}
+
+var _ Register = (*DefaultRegister)(nil)
+
+type DefaultRegister struct {
+	flags               flags
+	args                args
+	rest                RestArgs // Other arguments (without named args).
+	lastArgOptional     bool     // Is last arg optional.
+	registerFlagErr     error    // RegisterFlag first error.
+	registerArgErr      error    // RegisterArg first error.
+	registerRestArgsErr error    // RegisterRestArgs first error.
+}
+
+func (r *DefaultRegister) RegisterFlag(flag Flag) (err error) {
+	defer func() {
+		if err != nil && r.registerFlagErr == nil {
+			r.registerFlagErr = err
+		}
+	}()
+
+	// Check if short of long net is set.
+	if flag.Short == "" && flag.Long == "" {
+		return &FlagError{Err: ErrMissingName}
+	}
+
+	// Validate short flag.
+	if flag.Short != "" {
+		if !validShortFlag(flag.Short) {
+			return &FlagError{
+				Short: flag.Short,
+				Long:  flag.Long,
+				Err:   ErrInvalidName,
+			}
+		}
+	}
+
+	// Validate long flag.
+	if flag.Long != "" {
+		if !validLongFlag(flag.Long) {
+			return &FlagError{
+				Short: flag.Short,
+				Long:  flag.Long,
+				Err:   ErrInvalidName,
+			}
+		}
+	}
+
+	if _, f, ok := r.flags.Find(flag.Long, flag.Short); ok {
+		return &FlagError{
+			Long:  f.Long,
+			Short: f.Short,
+			Err:   ErrDuplicate,
+		}
+	}
+
+	r.flags.Add(flag)
+
+	return nil
+}
+
+func validShortFlag(name string) bool {
+	if len(name) != 1 {
+		return false
+	}
+
+	if name[0] == '-' || name[0] == '=' || name[0] == ' ' || name[0] == ',' {
+		return false
+	}
+
+	return true
+}
+
+func validLongFlag(name string) bool {
+	if len(name) < 1 {
+		return false
+	}
+
+	if name[0] == '-' || name[0] == '=' || name[0] == ' ' || name[0] == ',' {
+		return false
+	}
+
+	// We need to iterate by bytes not by runes.
+	var foundValid bool
+	for i := 1; i < len(name); i++ {
+		c := name[i]
+
+		if !foundValid && c == '-' {
+			return false
+		}
+
+		if c == '=' || c == ' ' || c == ',' {
+			return false
+		}
+
+		foundValid = true
+	}
+
+	return true
+}
+
+func (r *DefaultRegister) RegisterArg(arg Arg) (err error) {
+	defer func() {
+		if err != nil && r.registerArgErr == nil {
+			r.registerArgErr = err
+		}
+	}()
+
+	if arg.Required() {
+		if r.lastArgOptional {
+			return &ArgError{
+				Name: arg.Name,
+				Err:  ErrRequiredAfterOptional,
+			}
+		}
+	} else {
+		r.lastArgOptional = true
+	}
+
+	if !r.rest.IsZero() {
+		return &ArgError{
+			Name: arg.Name,
+			Err:  ErrArgAfterRest,
+		}
+	}
+
+	if arg.Name == "" {
+		return &ArgError{Err: ErrMissingName}
+	}
+
+	if !validArg(arg.Name) {
+		return &ArgError{
+			Name: arg.Name,
+			Err:  ErrInvalidName,
+		}
+	}
+
+	if _, _, ok := r.args.Get(arg.Name); ok {
+		return &ArgError{
+			Name: arg.Name,
+			Err:  ErrDuplicate,
+		}
+	}
+
+	r.args.Add(arg)
+
+	return nil
+}
+
+func validArg(name string) bool {
+	if len(name) < 1 {
+		return false
+	}
+
+	if name[0] == '-' || name[0] == '=' || name[0] == ' ' || name[0] == ',' {
+		return false
+	}
+
+	// We need to iterate by bytes not by runes.
+	var foundValid bool
+	for i := 1; i < len(name); i++ {
+		c := name[i]
+
+		if !foundValid && c == '-' {
+			return false
+		}
+
+		if c == '=' || c == ' ' || c == ',' {
+			return false
+		}
+
+		foundValid = true
+	}
+
+	return true
+}
+
+func (r *DefaultRegister) RegisterRestArgs(rest RestArgs) (err error) {
+	defer func() {
+		if err != nil && r.registerRestArgsErr == nil {
+			r.registerRestArgsErr = err
+		}
+	}()
+
+	if rest.Name == "" {
+		return &RestArgsError{Err: ErrMissingName}
+	}
+
+	if !validRestArgs(rest.Name) {
+		return &RestArgsError{
+			Name: rest.Name,
+			Err:  ErrInvalidName,
+		}
+	}
+
+	if !r.rest.IsZero() {
+		return &RestArgsError{
+			Name: rest.Name,
+			Err:  ErrDuplicate,
+		}
+	}
+
+	r.rest = rest
+
+	return nil
+}
+
+func validRestArgs(name string) bool {
+	return validArg(name)
+}
+
+func (r *DefaultRegister) Arg(i int) (*Arg, bool) {
+	a, ok := r.args.Nth(i)
+	return a, ok
+}
+
+func (r *DefaultRegister) ShortFlag(name string) (*Flag, bool) {
+	_, f, ok := r.flags.ShortFlag(name)
+	return f, ok
+}
+
+func (r *DefaultRegister) LongFlag(name string) (*Flag, bool) {
+	_, f, ok := r.flags.LongFlag(name)
+	return f, ok
+}
+
+func (r *DefaultRegister) Args() []Arg {
+	return r.args.data
+}
+
+func (r *DefaultRegister) Rest() *RestArgs {
+	if r.rest.IsZero() {
+		return nil
+	}
+
+	return &r.rest
+}
+
+func (r *DefaultRegister) Flags() []Flag {
+	return r.flags.data
+}
+
+func (r *DefaultRegister) Err() error {
+	if r.registerFlagErr != nil {
+		return r.registerFlagErr
+	}
+
+	if r.registerArgErr != nil {
+		return r.registerArgErr
+	}
+
+	if r.registerRestArgsErr != nil {
+		return r.registerRestArgsErr
+	}
+
+	return nil
 }
 
 type Commander interface {
 	IsCommand(name string) bool
-	SetCommand(name string) error
-}
-
-type Parser interface {
-	Register
-	Parse(commander Commander, arguments []string) error
-	Args() []Arg
-	Rest() *RestArgs
-	Flags() []Flag
-	FormatLongFlag(name string) string
-	FormatShortFlag(name string) string
+	SetCommand(name string) (Register, error)
 }
 
 type flags struct {
@@ -171,7 +424,7 @@ type flags struct {
 	short map[string]int // Indexes of flags in the data. It contains all short names.
 }
 
-func (f *flags) GetLong(name string) (idx int, flag *Flag, ok bool) {
+func (f *flags) LongFlag(name string) (idx int, flag *Flag, ok bool) {
 	idx, ok = f.long[name]
 	if ok {
 		flag = &f.data[idx]
@@ -180,7 +433,7 @@ func (f *flags) GetLong(name string) (idx int, flag *Flag, ok bool) {
 	return
 }
 
-func (f *flags) GetShort(name string) (idx int, flag *Flag, ok bool) {
+func (f *flags) ShortFlag(name string) (idx int, flag *Flag, ok bool) {
 	idx, ok = f.short[name]
 	if ok {
 		flag = &f.data[idx]
@@ -288,6 +541,12 @@ func (a *args) Reset() {
 	a.index = nil
 }
 
+type Parser interface {
+	Parse(commander Commander, r Register, arguments []string) error
+	FormatLongFlag(name string) string
+	FormatShortFlag(name string) string
+}
+
 var _ Parser = (*DefaultParser)(nil)
 
 type DefaultParser struct {
@@ -297,224 +556,14 @@ type DefaultParser struct {
 	DisablePosixStyle  bool
 	DisableInlineValue bool
 
-	flags               flags
-	args                args
-	rest                RestArgs // Other arguments (without named args).
-	lastArgOptional     bool     // Is last arg optional.
-	registerFlagErr     error    // RegisterFlag first error.
-	registerArgErr      error    // RegisterArg first error.
-	registerRestArgsErr error    // RegisterRestArgs first error.
-
 	// TODO(SuperPaitnamn): allow access to the unknown flags.
 	// unknown []string // Unknown flags (without named flags).
 }
 
-func (p *DefaultParser) RegisterFlag(flag Flag) (err error) {
-	defer func() {
-		if err != nil && p.registerFlagErr == nil {
-			p.registerFlagErr = err
-		}
-	}()
-
-	// Check if short of long net is set.
-	if flag.Short == "" && flag.Long == "" {
-		return &FlagError{Err: ErrMissingName}
-	}
-
-	// Validate short flag.
-	if flag.Short != "" {
-		if !validShortFlag(flag.Short) {
-			return &FlagError{
-				Short: flag.Short,
-				Long:  flag.Long,
-				Err:   ErrInvalidName,
-			}
-		}
-	}
-
-	// Validate long flag.
-	if flag.Long != "" {
-		if !validLongFlag(flag.Long) {
-			return &FlagError{
-				Short: flag.Short,
-				Long:  flag.Long,
-				Err:   ErrInvalidName,
-			}
-		}
-	}
-
-	if _, f, ok := p.flags.Find(flag.Long, flag.Short); ok {
-		return &FlagError{
-			Long:  f.Long,
-			Short: f.Short,
-			Err:   ErrDuplicate,
-		}
-	}
-
-	p.flags.Add(flag)
-
-	return nil
-}
-
-func validShortFlag(name string) bool {
-	if len(name) != 1 {
-		return false
-	}
-
-	if name[0] == '-' || name[0] == '=' || name[0] == ' ' || name[0] == ',' {
-		return false
-	}
-
-	return true
-}
-
-func validLongFlag(name string) bool {
-	if len(name) < 1 {
-		return false
-	}
-
-	if name[0] == '-' || name[0] == '=' || name[0] == ' ' || name[0] == ',' {
-		return false
-	}
-
-	// We need to iterate by bytes not by runes.
-	var foundValid bool
-	for i := 1; i < len(name); i++ {
-		c := name[i]
-
-		if !foundValid && c == '-' {
-			return false
-		}
-
-		if c == '=' || c == ' ' || c == ',' {
-			return false
-		}
-
-		foundValid = true
-	}
-
-	return true
-}
-
-func (p *DefaultParser) RegisterArg(arg Arg) (err error) {
-	defer func() {
-		if err != nil && p.registerArgErr == nil {
-			p.registerArgErr = err
-		}
-	}()
-
-	if arg.Required() {
-		if p.lastArgOptional {
-			return &ArgError{
-				Name: arg.Name,
-				Err:  ErrRequiredAfterOptional,
-			}
-		}
-	} else {
-		p.lastArgOptional = true
-	}
-
-	if !p.rest.IsZero() {
-		return &ArgError{
-			Name: arg.Name,
-			Err:  ErrArgAfterRest,
-		}
-	}
-
-	if arg.Name == "" {
-		return &ArgError{Err: ErrMissingName}
-	}
-
-	if !validArg(arg.Name) {
-		return &ArgError{
-			Name: arg.Name,
-			Err:  ErrInvalidName,
-		}
-	}
-
-	if _, _, ok := p.args.Get(arg.Name); ok {
-		return &ArgError{
-			Name: arg.Name,
-			Err:  ErrDuplicate,
-		}
-	}
-
-	p.args.Add(arg)
-
-	return nil
-}
-
-func validArg(name string) bool {
-	if len(name) < 1 {
-		return false
-	}
-
-	if name[0] == '-' || name[0] == '=' || name[0] == ' ' || name[0] == ',' {
-		return false
-	}
-
-	// We need to iterate by bytes not by runes.
-	var foundValid bool
-	for i := 1; i < len(name); i++ {
-		c := name[i]
-
-		if !foundValid && c == '-' {
-			return false
-		}
-
-		if c == '=' || c == ' ' || c == ',' {
-			return false
-		}
-
-		foundValid = true
-	}
-
-	return true
-}
-
-func (p *DefaultParser) RegisterRestArgs(rest RestArgs) (err error) {
-	defer func() {
-		if err != nil && p.registerRestArgsErr == nil {
-			p.registerRestArgsErr = err
-		}
-	}()
-
-	if rest.Name == "" {
-		return &RestArgsError{Err: ErrMissingName}
-	}
-
-	if !validRestArgs(rest.Name) {
-		return &RestArgsError{
-			Name: rest.Name,
-			Err:  ErrInvalidName,
-		}
-	}
-
-	if !p.rest.IsZero() {
-		return &RestArgsError{
-			Name: rest.Name,
-			Err:  ErrDuplicate,
-		}
-	}
-
-	p.rest = rest
-
-	return nil
-}
-
-func validRestArgs(name string) bool {
-	return validArg(name)
-}
-
-func (p *DefaultParser) Parse(commander Commander, arguments []string) error {
-	if p.registerFlagErr != nil {
-		return p.registerFlagErr
-	}
-	if p.registerArgErr != nil {
-		return p.registerArgErr
-	}
-	if p.registerRestArgsErr != nil {
-		return p.registerRestArgsErr
+func (p *DefaultParser) Parse(commander Commander, r Register, arguments []string) error {
+	// If user has ignored errors return them here.
+	if err := r.Err(); err != nil {
+		return err
 	}
 
 	var (
@@ -535,31 +584,28 @@ func (p *DefaultParser) Parse(commander Commander, arguments []string) error {
 		if len(arg) == 0 || flagsTerminated || arg[0] != '-' || arg == "-" || isNumber(arg) || isDuration(arg) {
 			// Check if the arg is a command.
 			if !argMode && commander != nil && commander.IsCommand(arg) {
-				// Reset previous flags and args.
-				p.flags.Reset()
-				p.args.Reset()
-				p.rest = RestArgs{}
-
-				if err := commander.SetCommand(arg); err != nil {
+				register, err := commander.SetCommand(arg)
+				if err != nil {
 					return err
 				}
 
+				r = register
 				continue
 			}
 
 			// Parse rest as args.
 			argMode = true
 
-			a, ok := p.args.Nth(argIdx)
+			a, ok := r.Arg(argIdx)
 			if ok {
 				if err := a.Value.Set(arg); err != nil {
 					return err
 				}
 
-				// Mark the arg as set.
-				p.args.set[argIdx] = true
+				a.MarkSet()
 			} else {
-				if p.rest.IsZero() {
+				rest := r.Rest()
+				if rest == nil {
 					if p.IgnoreUnknownArgs {
 						argIdx++
 						continue
@@ -571,7 +617,7 @@ func (p *DefaultParser) Parse(commander Commander, arguments []string) error {
 					}
 				}
 
-				p.rest.Add(arg)
+				rest.Add(arg)
 			}
 
 			argIdx++
@@ -622,7 +668,6 @@ func (p *DefaultParser) Parse(commander Commander, arguments []string) error {
 		prevValue := value
 		for len(restName) > 0 {
 			var (
-				idx           int
 				flag          *Flag
 				knownflag     bool
 				lastShortFlag bool
@@ -641,7 +686,7 @@ func (p *DefaultParser) Parse(commander Commander, arguments []string) error {
 					value = ""
 				}
 
-				idx, flag, knownflag = p.flags.GetShort(name)
+				flag, knownflag = r.ShortFlag(name)
 
 				if knownflag {
 					// Parse Short-flag+parameter combining (-a parm -> -aparm).
@@ -665,9 +710,9 @@ func (p *DefaultParser) Parse(commander Commander, arguments []string) error {
 			} else {
 				restName = ""
 
-				idx, flag, knownflag = p.flags.GetLong(name)
+				flag, knownflag = r.LongFlag(name)
 				if !knownflag && p.Universal {
-					idx, flag, knownflag = p.flags.GetShort(name)
+					flag, knownflag = r.ShortFlag(name)
 				}
 			}
 
@@ -726,7 +771,7 @@ func (p *DefaultParser) Parse(commander Commander, arguments []string) error {
 			}
 
 			// Mark the flag as set.
-			p.flags.set[idx] = true
+			flag.MarkSet()
 		}
 	}
 
@@ -736,47 +781,33 @@ func (p *DefaultParser) Parse(commander Commander, arguments []string) error {
 	}
 
 	// Check required flags.
-	for idx, v := range p.flags.set {
-		if !v {
-			flag := &p.flags.data[idx]
+	flags := r.Flags()
+	for i := range flags {
+		flag := &flags[i]
 
-			if flag.Required() {
-				return &FlagError{
-					Short: flag.Short,
-					Long:  flag.Long,
-					Err:   ErrNotProvided,
-				}
+		if !flag.Set() && flag.Required() {
+			return &FlagError{
+				Short: flag.Short,
+				Long:  flag.Long,
+				Err:   ErrNotProvided,
 			}
 		}
 	}
 
 	// Check required args.
-	for idx, v := range p.args.set {
-		if !v {
-			arg := &p.args.data[idx]
+	args := r.Args()
+	for i := range args {
+		arg := &args[i]
 
-			if arg.Required() {
-				return &ArgError{
-					Name: arg.Name,
-					Err:  ErrNotProvided,
-				}
+		if !arg.Set() && arg.Required() {
+			return &ArgError{
+				Name: arg.Name,
+				Err:  ErrNotProvided,
 			}
 		}
 	}
 
 	return nil
-}
-
-func (p *DefaultParser) Args() []Arg {
-	return p.args.data
-}
-
-func (p *DefaultParser) Rest() *RestArgs {
-	return &p.rest
-}
-
-func (p *DefaultParser) Flags() []Flag {
-	return p.flags.data
 }
 
 func (p *DefaultParser) FormatLongFlag(name string) string {

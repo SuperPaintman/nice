@@ -7,6 +7,7 @@ type Flag struct {
 	Usage     Usager
 	Necessary Necessary
 
+	set         bool
 	commandFlag bool
 
 	// NOTE(SuperPaintman):
@@ -40,6 +41,14 @@ func (f *Flag) Type() string {
 
 func (f *Flag) Required() bool {
 	return f.Necessary == Required
+}
+
+func (f *Flag) Set() bool {
+	return f.set
+}
+
+func (f *Flag) MarkSet() {
+	f.set = true
 }
 
 func (f *Flag) String() string {
