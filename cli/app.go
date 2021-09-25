@@ -42,20 +42,20 @@ type commander struct {
 	use func(*Command) (Register, error)
 
 	command *Command
-	found   *Command
 }
 
 func (c *commander) IsCommand(name string) bool {
-	commands := c.app.Commands
+	var commands []Command
 	if c.command != nil {
 		commands = c.command.Commands
+	} else if c.app != nil {
+		commands = c.app.Commands
 	}
 
 	for i := range commands {
 		cmd := &commands[i]
 
 		if cmd.Name == name {
-			c.found = cmd
 			return true
 		}
 	}
@@ -75,13 +75,32 @@ func (c *commander) SetCommand(name string) (Register, error) {
 		}
 	}
 
-	if c.found.Name != name {
-		// Internal error. Something went wrong in IsCommand.
-		return nil, ErrCommandNotFound
+	// Find a command.
+	var commands []Command
+	if c.command != nil {
+		commands = c.command.Commands
+	} else if c.app != nil {
+		commands = c.app.Commands
 	}
 
-	c.command = c.found
-	c.found = nil
+	var found *Command
+	for i := range commands {
+		cmd := &commands[i]
+
+		if cmd.Name == name {
+			found = cmd
+			break
+		}
+	}
+
+	if found == nil {
+		return nil, &InvalidCommandError{
+			Name: name,
+			Err:  ErrUnknown,
+		}
+	}
+
+	c.command = found
 
 	register, err := c.use(c.command)
 	if err != nil {

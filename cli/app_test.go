@@ -343,8 +343,14 @@ func TestCommanderInvalidNameCommand(t *testing.T) {
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
 			cmdr := commander{
-				found: &Command{Name: tc.command},
-				use:   func(*Command) (Register, error) { return &DefaultRegister{}, nil },
+				command: &Command{
+					Name: tc.command,
+					Commands: []Command{
+						{Name: "go-help"},
+						{Name: "help-"},
+					},
+				},
+				use: func(*Command) (Register, error) { return &DefaultRegister{}, nil },
 			}
 
 			_, got := cmdr.SetCommand(tc.command)
@@ -352,5 +358,20 @@ func TestCommanderInvalidNameCommand(t *testing.T) {
 				t.Fatalf("SetCommand(): got error = %q, want error = %q", got, tc.want)
 			}
 		})
+	}
+}
+
+func TestCommanderUnknownCommand(t *testing.T) {
+	cmdr := commander{
+		command: &Command{
+			Name: "test",
+		},
+		use: func(*Command) (Register, error) { return &DefaultRegister{}, nil },
+	}
+
+	_, got := cmdr.SetCommand("help")
+	want := &InvalidCommandError{Name: "help", Err: ErrUnknown}
+	if !errors.Is(got, want) {
+		t.Fatalf("SetCommand(): got error = %q, want error = %q", got, want)
 	}
 }
