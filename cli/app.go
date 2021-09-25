@@ -23,11 +23,11 @@ func (e *InvalidCommandError) Error() string {
 		msg = e.Err.Error()
 	}
 
-	if e.Name != "" {
+	if e.Name == "" {
 		return fmt.Sprintf("broken command: %s", msg)
-	} else {
-		return fmt.Sprintf("broken command: '%s': %s", e.Name, msg)
 	}
+
+	return fmt.Sprintf("broken command: '%s': %s", e.Name, msg)
 }
 
 func (e *InvalidCommandError) Is(err error) bool {

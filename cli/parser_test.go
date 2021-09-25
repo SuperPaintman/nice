@@ -106,25 +106,25 @@ const (
 func intMaxOverflowValue() string {
 	if unsafe.Sizeof(int(0)) == unsafe.Sizeof(int32(0)) {
 		return int32MaxOverflowValue
-	} else {
-		return int64MaxOverflowValue
 	}
+
+	return int64MaxOverflowValue
 }
 
 func intMinOverflowValue() string {
 	if unsafe.Sizeof(int(0)) == unsafe.Sizeof(int32(0)) {
 		return int32MinOverflowValue
-	} else {
-		return int64MinOverflowValue
 	}
+
+	return int64MinOverflowValue
 }
 
 func uintMaxOverflowValue() string {
 	if unsafe.Sizeof(uint(0)) == unsafe.Sizeof(uint32(0)) {
 		return uint32MaxOverflowValue
-	} else {
-		return uint64MaxOverflowValue
 	}
+
+	return uint64MaxOverflowValue
 }
 
 var (

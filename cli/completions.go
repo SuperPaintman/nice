@@ -195,7 +195,7 @@ func (g *ZSHCompletionGenerator) generateCommand(cmd *Command, ew *easyWriter) e
 			arg := &args[i]
 
 			ew.Writef("            ")
-			if err := g.generateArgDef(cmd, i, arg, ew); err != nil {
+			if err := g.generateArgDef(i, arg, ew); err != nil {
 				return err
 			}
 			ew.Writef("\n")
@@ -212,7 +212,7 @@ func (g *ZSHCompletionGenerator) generateCommand(cmd *Command, ew *easyWriter) e
 		ew.Writef("\n")
 		ew.Writef("        rest=(\n")
 		ew.Writef("            ")
-		if err := g.generateRestDef(cmd, rest, ew); err != nil {
+		if err := g.generateRestDef(rest, ew); err != nil {
 			return err
 		}
 		ew.Writef("\n")
@@ -373,7 +373,7 @@ func (g *ZSHCompletionGenerator) generateFlagDef(cmd *Command, f *Flag, argsCoun
 	return nil
 }
 
-func (g *ZSHCompletionGenerator) generateArgDef(cmd *Command, i int, a *Arg, ew *easyWriter) error {
+func (g *ZSHCompletionGenerator) generateArgDef(i int, a *Arg, ew *easyWriter) error {
 	ew.Writef("'%d:", i+1)
 
 	if !a.Required() {
@@ -398,7 +398,7 @@ func (g *ZSHCompletionGenerator) generateArgDef(cmd *Command, i int, a *Arg, ew 
 	return nil
 }
 
-func (g *ZSHCompletionGenerator) generateRestDef(cmd *Command, ra *RestArgs, ew *easyWriter) error {
+func (g *ZSHCompletionGenerator) generateRestDef(ra *RestArgs, ew *easyWriter) error {
 	ew.Writef("'*::")
 
 	if ra.Name != "" {

@@ -87,9 +87,9 @@ func (e *FlagError) Error() string {
 
 	if name == "" {
 		return fmt.Sprintf("flag error: %s", msg)
-	} else {
-		return fmt.Sprintf("flag error: '%s': %s", name, msg)
 	}
+
+	return fmt.Sprintf("flag error: '%s': %s", name, msg)
 }
 
 func (e *FlagError) Is(err error) bool {
@@ -110,9 +110,9 @@ func (e *ArgError) Error() string {
 
 	if e.Name == "" {
 		return fmt.Sprintf("arg error: %s", msg)
-	} else {
-		return fmt.Sprintf("arg error: '%s': %s", e.Name, msg)
 	}
+
+	return fmt.Sprintf("arg error: '%s': %s", e.Name, msg)
 }
 
 func (e *ArgError) Is(err error) bool {
@@ -133,9 +133,9 @@ func (e *RestArgsError) Error() string {
 
 	if e.Name == "" {
 		return fmt.Sprintf("rest args error: %s", msg)
-	} else {
-		return fmt.Sprintf("rest args error: '%s': %s", e.Name, msg)
 	}
+
+	return fmt.Sprintf("rest args error: '%s': %s", e.Name, msg)
 }
 
 func (e *RestArgsError) Is(err error) bool {
@@ -617,7 +617,9 @@ func (p *DefaultParser) Parse(commander Commander, r Register, arguments []strin
 					}
 				}
 
-				rest.Add(arg)
+				if err := rest.Add(arg); err != nil {
+					return err
+				}
 			}
 
 			argIdx++
