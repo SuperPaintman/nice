@@ -24,8 +24,9 @@ var (
 )
 
 type ParseArgError struct {
-	Arg string
-	Err error
+	Arg   string
+	Index int
+	Err   error
 }
 
 func (e *ParseArgError) Error() string {
@@ -34,14 +35,35 @@ func (e *ParseArgError) Error() string {
 		msg = e.Err.Error()
 	}
 
-	return fmt.Sprintf("parse arg error: '%s': %s", e.Arg, msg)
+	return fmt.Sprintf("cli: parse arg error: %s arg '%s': %s", nthNumber(e.Index), e.Arg, msg)
 }
 
 func (e *ParseArgError) Unwrap() error { return e.Err }
 
 func (e *ParseArgError) Is(err error) bool {
 	pe, ok := err.(*ParseArgError)
-	return ok && pe.Arg == e.Arg && errors.Is(pe.Err, e.Err)
+	return ok && pe.Arg == e.Arg && pe.Index == e.Index && errors.Is(pe.Err, e.Err)
+}
+
+func nthNumber(n int) string {
+	if n < 0 {
+		return ""
+	}
+
+	n += 1
+	switch n {
+	case 1:
+		return "1st"
+
+	case 2:
+		return "2nd"
+
+	case 3:
+		return "3rd"
+
+	default:
+		return strconv.Itoa(n) + "th"
+	}
 }
 
 type ParseFlagError struct {
@@ -55,7 +77,7 @@ func (e *ParseFlagError) Error() string {
 		msg = e.Err.Error()
 	}
 
-	return fmt.Sprintf("parse flag error: '%s': %s", e.Name, msg)
+	return fmt.Sprintf("cli: parse flag error: '%s': %s", e.Name, msg)
 }
 
 func (e *ParseFlagError) Unwrap() error { return e.Err }
@@ -86,10 +108,10 @@ func (e *FlagError) Error() string {
 	}
 
 	if name == "" {
-		return fmt.Sprintf("flag error: %s", msg)
+		return fmt.Sprintf("cli: flag error: %s", msg)
 	}
 
-	return fmt.Sprintf("flag error: '%s': %s", name, msg)
+	return fmt.Sprintf("cli: flag error: '%s': %s", name, msg)
 }
 
 func (e *FlagError) Is(err error) bool {
@@ -98,8 +120,9 @@ func (e *FlagError) Is(err error) bool {
 }
 
 type ArgError struct {
-	Name string
-	Err  error
+	Name  string
+	Index int
+	Err   error
 }
 
 func (e *ArgError) Error() string {
@@ -109,15 +132,15 @@ func (e *ArgError) Error() string {
 	}
 
 	if e.Name == "" {
-		return fmt.Sprintf("arg error: %s", msg)
+		return fmt.Sprintf("cli: arg error: %s arg: %s", nthNumber(e.Index), msg)
 	}
 
-	return fmt.Sprintf("arg error: '%s': %s", e.Name, msg)
+	return fmt.Sprintf("cli: arg error: %s arg '%s': %s", nthNumber(e.Index), e.Name, msg)
 }
 
 func (e *ArgError) Is(err error) bool {
 	pe, ok := err.(*ArgError)
-	return ok && pe.Name == e.Name && errors.Is(pe.Err, e.Err)
+	return ok && pe.Name == e.Name && pe.Index == e.Index && errors.Is(pe.Err, e.Err)
 }
 
 type RestArgsError struct {
@@ -132,10 +155,10 @@ func (e *RestArgsError) Error() string {
 	}
 
 	if e.Name == "" {
-		return fmt.Sprintf("rest args error: %s", msg)
+		return fmt.Sprintf("cli: rest args error: %s", msg)
 	}
 
-	return fmt.Sprintf("rest args error: '%s': %s", e.Name, msg)
+	return fmt.Sprintf("cli: rest args error: '%s': %s", e.Name, msg)
 }
 
 func (e *RestArgsError) Is(err error) bool {
@@ -202,10 +225,10 @@ func (r *DefaultRegister) RegisterFlag(flag Flag) (err error) {
 		}
 	}
 
-	if _, f, ok := r.flags.Find(flag.Long, flag.Short); ok {
+	if _, _, ok := r.flags.Find(flag.Long, flag.Short); ok {
 		return &FlagError{
-			Long:  f.Long,
-			Short: f.Short,
+			Long:  flag.Long,
+			Short: flag.Short,
 			Err:   ErrDuplicate,
 		}
 	}
@@ -599,7 +622,11 @@ func (p *DefaultParser) Parse(commander Commander, r Register, arguments []strin
 			a, ok := r.Arg(argIdx)
 			if ok {
 				if err := a.Value.Set(arg); err != nil {
-					return err
+					return &ArgError{
+						Name:  a.Name,
+						Index: argIdx,
+						Err:   err,
+					}
 				}
 
 				a.MarkSet()
@@ -612,13 +639,18 @@ func (p *DefaultParser) Parse(commander Commander, r Register, arguments []strin
 					}
 
 					return &ParseArgError{
-						Arg: arg,
-						Err: ErrUnknown,
+						Arg:   arg,
+						Index: argIdx,
+						Err:   ErrUnknown,
 					}
 				}
 
 				if err := rest.Add(arg); err != nil {
-					return err
+					return &ArgError{
+						Name:  rest.Name,
+						Index: argIdx,
+						Err:   err,
+					}
 				}
 			}
 
@@ -723,8 +755,15 @@ func (p *DefaultParser) Parse(commander Commander, r Register, arguments []strin
 					continue
 				}
 
+				var fullName string
+				if shortFlag {
+					fullName = p.FormatShortFlag(name)
+				} else {
+					fullName = p.FormatLongFlag(name)
+				}
+
 				return &ParseFlagError{
-					Name: name,
+					Name: fullName,
 					Err:  ErrUnknown,
 				}
 			}
@@ -765,7 +804,11 @@ func (p *DefaultParser) Parse(commander Commander, r Register, arguments []strin
 			}
 
 			if err := flag.Value.Set(value); err != nil {
-				return err
+				return &FlagError{
+					Short: flag.Short,
+					Long:  flag.Long,
+					Err:   err,
+				}
 			}
 
 			if flag.commandFlag {

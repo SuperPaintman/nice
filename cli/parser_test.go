@@ -444,7 +444,10 @@ func TestParseFlags_broken_value(t *testing.T) {
 			tvs = append(tvs, testValue{
 				name: v.name + " value",
 				args: []string{"-t=" + v.value},
-				want: v.want,
+				want: &FlagError{
+					Short: "t",
+					Err:   v.want,
+				},
 			})
 		}
 
@@ -453,7 +456,10 @@ func TestParseFlags_broken_value(t *testing.T) {
 			tvs = append(tvs, testValue{
 				name: v.name + " next arg",
 				args: []string{"-t", v.value},
-				want: v.want,
+				want: &FlagError{
+					Short: "t",
+					Err:   v.want,
+				},
 			})
 		}
 
@@ -472,17 +478,23 @@ func TestParseFlags_broken_value(t *testing.T) {
 				{
 					name: "not bool-like value",
 					args: []string{"-t=abcd"},
-					want: &ParseValueError{
-						Type: "bool",
-						Err:  ErrSyntax,
+					want: &FlagError{
+						Short: "t",
+						Err: &ParseValueError{
+							Type: "bool",
+							Err:  ErrSyntax,
+						},
 					},
 				},
 				{
 					name: "not bool-like value 2",
 					args: []string{"-t=2"},
-					want: &ParseValueError{
-						Type: "bool",
-						Err:  ErrSyntax,
+					want: &FlagError{
+						Short: "t",
+						Err: &ParseValueError{
+							Type: "bool",
+							Err:  ErrSyntax,
+						},
 					},
 				},
 			},
@@ -495,9 +507,12 @@ func TestParseFlags_broken_value(t *testing.T) {
 					{
 						name: "without value",
 						args: []string{"-t"},
-						want: &ParseValueError{
-							Type: "float64",
-							Err:  ErrSyntax,
+						want: &FlagError{
+							Short: "t",
+							Err: &ParseValueError{
+								Type: "float64",
+								Err:  ErrSyntax,
+							},
 						},
 					},
 				},
@@ -512,9 +527,12 @@ func TestParseFlags_broken_value(t *testing.T) {
 					{
 						name: "without value",
 						args: []string{"-t"},
-						want: &ParseValueError{
-							Type: "int",
-							Err:  ErrSyntax,
+						want: &FlagError{
+							Short: "t",
+							Err: &ParseValueError{
+								Type: "int",
+								Err:  ErrSyntax,
+							},
 						},
 					},
 				},
@@ -529,9 +547,12 @@ func TestParseFlags_broken_value(t *testing.T) {
 					{
 						name: "without value",
 						args: []string{"-t"},
-						want: &ParseValueError{
-							Type: "uint",
-							Err:  ErrSyntax,
+						want: &FlagError{
+							Short: "t",
+							Err: &ParseValueError{
+								Type: "uint",
+								Err:  ErrSyntax,
+							},
 						},
 					},
 				},
@@ -550,9 +571,12 @@ func TestParseFlags_broken_value(t *testing.T) {
 					{
 						name: "without value",
 						args: []string{"-t"},
-						want: &ParseValueError{
-							Type: "time.Duration",
-							Err:  ErrSyntax,
+						want: &FlagError{
+							Short: "t",
+							Err: &ParseValueError{
+								Type: "time.Duration",
+								Err:  ErrSyntax,
+							},
 						},
 					},
 				},
@@ -778,7 +802,11 @@ func TestParseArgs_broken_value(t *testing.T) {
 			tvs = append(tvs, testValue{
 				name: v.name,
 				args: []string{v.value},
-				want: v.want,
+				want: &ArgError{
+					Name:  "t",
+					Index: 0,
+					Err:   v.want,
+				},
 			})
 		}
 
@@ -797,25 +825,37 @@ func TestParseArgs_broken_value(t *testing.T) {
 				{
 					name: "empty",
 					args: []string{""},
-					want: &ParseValueError{
-						Type: "bool",
-						Err:  ErrSyntax,
+					want: &ArgError{
+						Name:  "t",
+						Index: 0,
+						Err: &ParseValueError{
+							Type: "bool",
+							Err:  ErrSyntax,
+						},
 					},
 				},
 				{
 					name: "not bool-like",
 					args: []string{"abcd"},
-					want: &ParseValueError{
-						Type: "bool",
-						Err:  ErrSyntax,
+					want: &ArgError{
+						Name:  "t",
+						Index: 0,
+						Err: &ParseValueError{
+							Type: "bool",
+							Err:  ErrSyntax,
+						},
 					},
 				},
 				{
 					name: "not bool-like 2",
 					args: []string{"2"},
-					want: &ParseValueError{
-						Type: "bool",
-						Err:  ErrSyntax,
+					want: &ArgError{
+						Name:  "t",
+						Index: 0,
+						Err: &ParseValueError{
+							Type: "bool",
+							Err:  ErrSyntax,
+						},
 					},
 				},
 			},
@@ -1199,7 +1239,7 @@ func TestParse_Parse_posix_style_short_flags_unknown(t *testing.T) {
 	args := []string{"-a", "-deb", "-g"}
 
 	got := parser.Parse(nil, &register, args)
-	want := &ParseFlagError{Name: "e", Err: ErrUnknown}
+	want := &ParseFlagError{Name: "-e", Err: ErrUnknown}
 	if !errors.Is(got, want) {
 		t.Fatalf("Parse(): got error = %q, want error = %q", got, want)
 	}
@@ -1253,7 +1293,7 @@ func TestParse_Parse_disable_posix_style_short_flags(t *testing.T) {
 	args := []string{"-ab", "-def", "-g"}
 
 	got := parser.Parse(nil, &register, args)
-	want := &ParseFlagError{Name: "ab", Err: ErrUnknown}
+	want := &ParseFlagError{Name: "-ab", Err: ErrUnknown}
 	if !errors.Is(got, want) {
 		t.Fatalf("Parse(): got error = %q, want error = %q", got, want)
 	}
@@ -1276,7 +1316,7 @@ func TestParse_Parse_universal_and_posix_style_short_flags(t *testing.T) {
 	args := []string{"-ab", "-def", "-g"}
 
 	got := parser.Parse(nil, &register, args)
-	want := &ParseFlagError{Name: "ab", Err: ErrUnknown}
+	want := &ParseFlagError{Name: "-ab", Err: ErrUnknown}
 	if !errors.Is(got, want) {
 		t.Fatalf("Parse(): got error = %q, want error = %q", got, want)
 	}
@@ -1371,7 +1411,13 @@ func TestParse_Parse_short_flag_inline_value_with_invalid_value(t *testing.T) {
 	args := []string{"-c", "-aboot", "-d"}
 
 	got := parser.Parse(nil, &register, args)
-	want := &ParseValueError{Type: "int", Err: ErrSyntax}
+	want := &FlagError{
+		Short: "a",
+		Err: &ParseValueError{
+			Type: "int",
+			Err:  ErrSyntax,
+		},
+	}
 	if !errors.Is(got, want) {
 		t.Fatalf("Parse(): got error = %q, want error = %q", got, want)
 	}
@@ -1392,7 +1438,7 @@ func TestParse_Parse_disable_short_flag_inline_value(t *testing.T) {
 	args := []string{"-c", "-aboot", "-d"}
 
 	got := parser.Parse(nil, &register, args)
-	want := &ParseFlagError{Name: "o", Err: ErrUnknown}
+	want := &ParseFlagError{Name: "-o", Err: ErrUnknown}
 	if !errors.Is(got, want) {
 		t.Fatalf("Parse(): got error = %q, want error = %q", got, want)
 	}
@@ -1413,7 +1459,7 @@ func TestParse_Parse_universal_and_short_flag_inline_value(t *testing.T) {
 	args := []string{"-c", "-aboot", "-d"}
 
 	got := parser.Parse(nil, &register, args)
-	want := &ParseFlagError{Name: "aboot", Err: ErrUnknown}
+	want := &ParseFlagError{Name: "-aboot", Err: ErrUnknown}
 	if !errors.Is(got, want) {
 		t.Fatalf("Parse(): got error = %q, want error = %q", got, want)
 	}
@@ -1482,7 +1528,7 @@ func TestParse_Parse_disable_posix_style_and_short_flag_inline_value(t *testing.
 	args := []string{"-c", "-aboot", "-def"}
 
 	got := parser.Parse(nil, &register, args)
-	want := &ParseFlagError{Name: "def", Err: ErrUnknown}
+	want := &ParseFlagError{Name: "-def", Err: ErrUnknown}
 	if !errors.Is(got, want) {
 		t.Fatalf("Parse(): got error = %q, want error = %q", got, want)
 	}
@@ -1605,7 +1651,7 @@ func TestParser_Parse_unknown_flags(t *testing.T) {
 	args := []string{"-a", "-c", "false", "-d", "-b"}
 
 	got := parser.Parse(nil, &register, args)
-	want := &ParseFlagError{Name: "c", Err: ErrUnknown}
+	want := &ParseFlagError{Name: "-c", Err: ErrUnknown}
 	if !errors.Is(got, want) {
 		t.Fatalf("Parse(): got error = %q, want error = %q", got, want)
 	}
@@ -1631,7 +1677,7 @@ func TestParser_Parse_unknown_flags_with_value(t *testing.T) {
 	args := []string{"-a", "-c=100", "-d", "-b"}
 
 	got := parser.Parse(nil, &register, args)
-	want := &ParseFlagError{Name: "c", Err: ErrUnknown}
+	want := &ParseFlagError{Name: "-c", Err: ErrUnknown}
 	if !errors.Is(got, want) {
 		t.Fatalf("Parse(): got error = %q, want error = %q", got, want)
 	}
@@ -1679,7 +1725,7 @@ func TestParser_Parse_unknown_rest(t *testing.T) {
 	args := []string{"true", "false", "c", "d", "1337", "false", "e"}
 
 	got := parser.Parse(nil, &register, args)
-	want := &ParseArgError{Arg: "c", Err: ErrUnknown}
+	want := &ParseArgError{Arg: "c", Index: 2, Err: ErrUnknown}
 	if !errors.Is(got, want) {
 		t.Fatalf("Parse(): got error = %q, want error = %q", got, want)
 	}
