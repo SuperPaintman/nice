@@ -31,6 +31,15 @@ jobs:
               with:
                   go-version: ${{ matrix.go }}
 
+            - name: Download Go dependencies
+              run: go mod download
+
+            - name: Run Go linters
+              uses: golangci/golangci-lint-action@v2
+              with:
+                  version: v1.29
+                  skip-go-installation: true
+
             - name: Set up Cover cmd
               run: go get golang.org/x/tools/cmd/cover
 
