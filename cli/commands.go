@@ -1,14 +1,10 @@
 package cli
 
-import (
-	"os"
-)
-
 func HelpCommand() Command {
 	return Command{
 		Name:  "help",
 		Usage: Usage("Show information about a command"),
-		Action: ActionFunc(func(app *App, cmd *Command) ActionRunner {
+		Action: ActionFunc(func(cmd *Command) ActionRunner {
 			// Do not mutate the previous path.
 			path := cmd.Path()
 			newPath := make([]string, len(path)-1)
@@ -17,17 +13,13 @@ func HelpCommand() Command {
 
 			_ = RestStringsVar(cmd, &path, "command")
 
-			return func(app *App, cmd *Command) error {
-				cmd, err := app.Command(path...)
+			return func(cmd *Command) error {
+				cmd, err := cmd.App().Command(path...)
 				if err != nil {
 					return err
 				}
 
-				if app.Stdout == nil {
-					return app.Help(cmd, os.Stdout)
-				} else {
-					return app.Help(cmd, app.Stdout)
-				}
+				return cmd.App().Help(cmd, cmd.Stdout())
 			}
 		}),
 	}
@@ -38,12 +30,8 @@ func HelpCommandFlag() CommandFlag {
 		Long:  "help",
 		Short: "h",
 		Usage: Usage("Show information about a command"),
-		Action: ActionRunner(func(app *App, cmd *Command) error {
-			if app.Stdout == nil {
-				return app.Help(cmd, os.Stdout)
-			} else {
-				return app.Help(cmd, app.Stdout)
-			}
+		Action: ActionRunner(func(cmd *Command) error {
+			return cmd.App().Help(cmd, cmd.Stdout())
 		}),
 	}
 }
@@ -53,12 +41,12 @@ func VersionCommandFlag(version string) CommandFlag {
 		Long:  "version",
 		Short: "v",
 		Usage: Usage("Print version information and quit"),
-		Action: ActionRunner(func(app *App, cmd *Command) error {
-			if _, err := app.Printf(version); err != nil {
+		Action: ActionRunner(func(cmd *Command) error {
+			if _, err := cmd.Printf(version); err != nil {
 				return err
 			}
 
-			if _, err := app.Printf("\n"); err != nil {
+			if _, err := cmd.Printf("\n"); err != nil {
 				return err
 			}
 

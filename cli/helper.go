@@ -8,22 +8,22 @@ import (
 )
 
 type Helper interface {
-	Help(app *App, cmd *Command, w io.Writer) error
+	Help(cmd *Command, w io.Writer) error
 }
 
 var _ Helper = (HelperFunc)(nil)
 
-type HelperFunc func(app *App, cmd *Command, w io.Writer) error
+type HelperFunc func(cmd *Command, w io.Writer) error
 
-func (fn HelperFunc) Help(app *App, cmd *Command, w io.Writer) error {
-	return fn(app, cmd, w)
+func (fn HelperFunc) Help(cmd *Command, w io.Writer) error {
+	return fn(cmd, w)
 }
 
 var _ Helper = noopHelper{}
 
 type noopHelper struct{}
 
-func (n noopHelper) Help(app *App, cmd *Command, w io.Writer) error {
+func (n noopHelper) Help(cmd *Command, w io.Writer) error {
 	return nil
 }
 
@@ -35,7 +35,7 @@ var _ Helper = DefaultHelper{}
 
 type DefaultHelper struct{}
 
-func (h DefaultHelper) Help(app *App, cmd *Command, w io.Writer) error {
+func (h DefaultHelper) Help(cmd *Command, w io.Writer) error {
 	const (
 		colorName     = colors.Blue
 		colorCommand  = colors.Magenta
@@ -102,7 +102,7 @@ func (h DefaultHelper) Help(app *App, cmd *Command, w io.Writer) error {
 	if cmd.Usage != nil {
 		// TODO(SuperPaintman): optimize it.
 		var buf bytes.Buffer
-		if err := cmd.Usage.Usage(app, cmd, &buf); err != nil {
+		if err := cmd.Usage.Usage(cmd, &buf); err != nil {
 			return err
 		}
 		usage := string(buf.Bytes())
@@ -135,7 +135,7 @@ func (h DefaultHelper) Help(app *App, cmd *Command, w io.Writer) error {
 			if cmd.Usage != nil {
 				// TODO(SuperPaintman): optimize it.
 				var buf bytes.Buffer
-				if err := cmd.Usage.Usage(app, &cmd, &buf); err != nil {
+				if err := cmd.Usage.Usage(&cmd, &buf); err != nil {
 					return err
 				}
 				usage := string(buf.Bytes())
@@ -198,7 +198,7 @@ func (h DefaultHelper) Help(app *App, cmd *Command, w io.Writer) error {
 			if arg.Usage != nil {
 				// TODO(SuperPaintman): optimize it.
 				var buf bytes.Buffer
-				if err := arg.Usage.Usage(app, cmd, &buf); err != nil {
+				if err := arg.Usage.Usage(cmd, &buf); err != nil {
 					return err
 				}
 				usage := string(buf.Bytes())
@@ -267,7 +267,7 @@ func (h DefaultHelper) Help(app *App, cmd *Command, w io.Writer) error {
 		if rest.Usage != nil {
 			// TODO(SuperPaintman): optimize it.
 			var buf bytes.Buffer
-			if err := rest.Usage.Usage(app, cmd, &buf); err != nil {
+			if err := rest.Usage.Usage(cmd, &buf); err != nil {
 				return err
 			}
 			usage := string(buf.Bytes())
@@ -315,7 +315,7 @@ func (h DefaultHelper) Help(app *App, cmd *Command, w io.Writer) error {
 		for _, flag := range flags {
 			var l int
 			if flag.Short != "" {
-				shortLen := len(app.parser().FormatShortFlag(flag.Short))
+				shortLen := len(cmd.Parser().FormatShortFlag(flag.Short))
 
 				if shortLen > maxLenShort {
 					maxLenShort = shortLen
@@ -329,7 +329,7 @@ func (h DefaultHelper) Help(app *App, cmd *Command, w io.Writer) error {
 					l += 2
 				}
 
-				l += len(app.parser().FormatLongFlag(flag.Long))
+				l += len(cmd.Parser().FormatLongFlag(flag.Long))
 			}
 
 			if t := flag.Type(); t != "bool" {
@@ -352,7 +352,7 @@ func (h DefaultHelper) Help(app *App, cmd *Command, w io.Writer) error {
 			if flag.Short != "" {
 				ew.Writef("%s%s%s",
 					colorOption,
-					app.parser().FormatShortFlag(flag.Short),
+					cmd.Parser().FormatShortFlag(flag.Short),
 					colorOption.Reset(),
 				)
 				ew.Writef(", ")
@@ -370,7 +370,7 @@ func (h DefaultHelper) Help(app *App, cmd *Command, w io.Writer) error {
 			if flag.Long != "" {
 				ew.Writef("%s%s%s",
 					colorOption,
-					app.parser().FormatLongFlag(flag.Long),
+					cmd.Parser().FormatLongFlag(flag.Long),
 					colorOption.Reset(),
 				)
 			} else {
@@ -391,13 +391,13 @@ func (h DefaultHelper) Help(app *App, cmd *Command, w io.Writer) error {
 			if flag.Usage != nil {
 				// TODO(SuperPaintman): optimize it.
 				var buf bytes.Buffer
-				if err := flag.Usage.Usage(app, cmd, &buf); err != nil {
+				if err := flag.Usage.Usage(cmd, &buf); err != nil {
 					return err
 				}
 				usage := string(buf.Bytes())
 
 				if usage != "" {
-					l := len(app.parser().FormatShortFlag(flag.Short))
+					l := len(cmd.Parser().FormatShortFlag(flag.Short))
 					if l == 0 {
 						l += maxLenShort
 					}
@@ -407,7 +407,7 @@ func (h DefaultHelper) Help(app *App, cmd *Command, w io.Writer) error {
 							l += 2
 						}
 
-						l += len(app.parser().FormatLongFlag(flag.Long))
+						l += len(cmd.Parser().FormatLongFlag(flag.Long))
 					}
 
 					if t := flag.Type(); t != "bool" {
@@ -432,7 +432,7 @@ func (h DefaultHelper) Help(app *App, cmd *Command, w io.Writer) error {
 			// Default.
 			if value, empty := flag.Default(); !empty {
 				if !hasUsage {
-					l := len(app.parser().FormatShortFlag(flag.Short))
+					l := len(cmd.Parser().FormatShortFlag(flag.Short))
 					if l == 0 {
 						l += maxLenShort
 					}
@@ -442,7 +442,7 @@ func (h DefaultHelper) Help(app *App, cmd *Command, w io.Writer) error {
 							l += 2
 						}
 
-						l += len(app.parser().FormatLongFlag(flag.Long))
+						l += len(cmd.Parser().FormatLongFlag(flag.Long))
 					}
 
 					if t := flag.Type(); t != "bool" {
@@ -468,7 +468,7 @@ func (h DefaultHelper) Help(app *App, cmd *Command, w io.Writer) error {
 				}
 			} else if flag.Required() {
 				if !hasUsage {
-					l := len(app.parser().FormatShortFlag(flag.Short))
+					l := len(cmd.Parser().FormatShortFlag(flag.Short))
 					if l == 0 {
 						l += maxLenShort
 					}
@@ -478,7 +478,7 @@ func (h DefaultHelper) Help(app *App, cmd *Command, w io.Writer) error {
 							l += 2
 						}
 
-						l += len(app.parser().FormatLongFlag(flag.Long))
+						l += len(cmd.Parser().FormatLongFlag(flag.Long))
 					}
 
 					if t := flag.Type(); t != "bool" {

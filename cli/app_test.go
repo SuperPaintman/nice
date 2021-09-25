@@ -156,12 +156,12 @@ type actionSpy struct {
 	runned  int
 }
 
-func (as *actionSpy) Setup(app *App, cmd *Command) error {
+func (as *actionSpy) Setup(cmd *Command) error {
 	as.setuped++
 	return nil
 }
 
-func (as *actionSpy) Run(app *App, cmd *Command) error {
+func (as *actionSpy) Run(cmd *Command) error {
 	as.runned++
 	return nil
 }

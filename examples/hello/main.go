@@ -10,15 +10,15 @@ func main() {
 	app := cli.App{
 		Name:  "hello",
 		Usage: cli.Usage("Print a friendly greeting"),
-		Action: cli.ActionFunc(func(app *cli.App, cmd *cli.Command) cli.ActionRunner {
+		Action: cli.ActionFunc(func(cmd *cli.Command) cli.ActionRunner {
 			name := cli.StringArg(cmd, "name",
 				cli.Usage("Who we say hello to"),
 				cli.Optional,
 			)
 			*name = "Nice" // Default value.
 
-			return func(app *cli.App, cmd *cli.Command) error {
-				app.Printf("Hello, %s!\n", *name)
+			return func(cmd *cli.Command) error {
+				cmd.Printf("Hello, %s!\n", *name)
 
 				return nil
 			}

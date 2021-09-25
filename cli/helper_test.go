@@ -50,7 +50,7 @@ func TestDefaultHelper_Help(t *testing.T) {
 	app := App{
 		Name:  "simple",
 		Usage: Usage("Simple app for simple tasks"),
-		Action: ActionFunc(func(app *App, cmd *Command) ActionRunner {
+		Action: ActionFunc(func(cmd *Command) ActionRunner {
 			_ = StringArg(cmd, "name",
 				Usage("Name of the user"),
 			)
@@ -85,13 +85,13 @@ func TestDefaultHelper_Help(t *testing.T) {
 			)
 			*gid = 1000
 
-			return func(app *App, cmd *Command) error { panic("not implemented") }
+			return func(cmd *Command) error { panic("not implemented") }
 		}),
 		Commands: []Command{
 			{
 				Name:  "list-buckets",
 				Usage: Usage("Print buckets list for user"),
-				Action: ActionFunc(func(app *App, cmd *Command) ActionRunner {
+				Action: ActionFunc(func(cmd *Command) ActionRunner {
 					_ = StringArg(cmd, "name",
 						Usage("Name of the user"),
 					)
@@ -102,7 +102,7 @@ func TestDefaultHelper_Help(t *testing.T) {
 
 					_ = Bool(cmd, "show-hidden")
 
-					return func(app *App, cmd *Command) error { panic("not implemented") }
+					return func(cmd *Command) error { panic("not implemented") }
 				}),
 			},
 			HelpCommand(),
@@ -141,7 +141,7 @@ func TestDefaultHelper_Help(t *testing.T) {
 				helper DefaultHelper
 				buf    strings.Builder
 			)
-			if err := helper.Help(&app, cmd, &buf); err != nil {
+			if err := helper.Help(cmd, &buf); err != nil {
 				t.Fatalf("Help(): failed to write help: %s", err)
 			}
 

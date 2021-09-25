@@ -164,11 +164,11 @@ func (app *App) RunContext(ctx context.Context) error {
 			}
 
 			if f.Action != nil {
-				if err := f.Action.Setup(app, cmd); err != nil {
+				if err := f.Action.Setup(cmd); err != nil {
 					return err
 				}
 
-				if err := f.Action.Run(app, cmd); err != nil {
+				if err := f.Action.Run(cmd); err != nil {
 					return err
 				}
 			}
@@ -181,7 +181,7 @@ func (app *App) RunContext(ctx context.Context) error {
 
 	// Run action.
 	if cmd.Action != nil {
-		if err := cmd.Action.Run(app, cmd); err != nil {
+		if err := cmd.Action.Run(cmd); err != nil {
 			return err
 		}
 	}
@@ -233,34 +233,10 @@ func (app *App) Command(path ...string) (*Command, error) {
 
 func (app *App) Help(cmd *Command, w io.Writer) error {
 	if app.Helper != nil {
-		return app.Helper.Help(app, cmd, w)
+		return app.Helper.Help(cmd, w)
 	}
 
-	return (DefaultHelper{}).Help(app, cmd, w)
-}
-
-func (app *App) Printf(format string, a ...interface{}) (n int, err error) {
-	return fmt.Fprintf(app.stdout(), format, a...)
-}
-
-func (app *App) Print(a ...interface{}) (n int, err error) {
-	return fmt.Fprint(app.stdout(), a...)
-}
-
-func (app *App) Println(a ...interface{}) (n int, err error) {
-	return fmt.Fprintln(app.stdout(), a...)
-}
-
-func (app *App) Warnf(format string, a ...interface{}) (n int, err error) {
-	return fmt.Fprintf(app.stderr(), format, a...)
-}
-
-func (app *App) Warn(a ...interface{}) (n int, err error) {
-	return fmt.Fprint(app.stderr(), a...)
-}
-
-func (app *App) Warnln(a ...interface{}) (n int, err error) {
-	return fmt.Fprintln(app.stderr(), a...)
+	return (DefaultHelper{}).Help(cmd, w)
 }
 
 func (app *App) command() (*Command, error) {
@@ -369,6 +345,8 @@ type Command struct {
 	setuped    bool
 }
 
+func (c *Command) App() *App { return c.app }
+
 func (c *Command) Path() []string { return c.path }
 
 func (c *Command) Context() context.Context {
@@ -378,6 +356,8 @@ func (c *Command) Context() context.Context {
 
 	return c.ctx
 }
+
+func (c *Command) Parser() Parser { return c.app.parser() }
 
 func (c *Command) RegisterFlag(flag Flag) error {
 	return c.register.RegisterFlag(flag)
@@ -405,6 +385,36 @@ func (c *Command) Flags() []Flag { return c.register.Flags() }
 
 func (c *Command) Err() error { return c.register.Err() }
 
+func (c *Command) Stdout() io.Writer { return c.app.stdout() }
+
+func (c *Command) Stderr() io.Writer { return c.app.stderr() }
+
+func (c *Command) Stdin() io.Reader { return c.app.stdin() }
+
+func (c *Command) Printf(format string, a ...interface{}) (n int, err error) {
+	return fmt.Fprintf(c.app.stdout(), format, a...)
+}
+
+func (c *Command) Print(a ...interface{}) (n int, err error) {
+	return fmt.Fprint(c.app.stdout(), a...)
+}
+
+func (c *Command) Println(a ...interface{}) (n int, err error) {
+	return fmt.Fprintln(c.app.stdout(), a...)
+}
+
+func (c *Command) Warnf(format string, a ...interface{}) (n int, err error) {
+	return fmt.Fprintf(c.app.stderr(), format, a...)
+}
+
+func (c *Command) Warn(a ...interface{}) (n int, err error) {
+	return fmt.Fprint(c.app.stderr(), a...)
+}
+
+func (c *Command) Warnln(a ...interface{}) (n int, err error) {
+	return fmt.Fprintln(c.app.stderr(), a...)
+}
+
 func (c *Command) init(ctx context.Context, app *App, parent *Command, register Register, path []string) {
 	if c.initilized {
 		return
@@ -425,7 +435,7 @@ func (c *Command) setup() error {
 	}
 
 	if c.Action != nil {
-		if err := c.Action.Setup(c.app, c); err != nil {
+		if err := c.Action.Setup(c); err != nil {
 			return err
 		}
 	}
@@ -487,22 +497,22 @@ func (c *Command) setup() error {
 }
 
 type Action interface {
-	Setup(app *App, cmd *Command) error
-	Run(app *App, cmd *Command) error
+	Setup(cmd *Command) error
+	Run(cmd *Command) error
 }
 
 // TODO(SuperPaintman): add Before.
 // TODO(SuperPaintman): add After.
 
-type ActionRunner func(app *App, cmd *Command) error
+type ActionRunner func(cmd *Command) error
 
-type ActionBuilder func(app *App, cmd *Command) ActionRunner
+type ActionBuilder func(cmd *Command) ActionRunner
 
 var _ Action = (ActionRunner)(nil)
 
-func (fn ActionRunner) Setup(app *App, cmd *Command) error { return nil }
+func (fn ActionRunner) Setup(cmd *Command) error { return nil }
 
-func (fn ActionRunner) Run(app *App, cmd *Command) error { return fn(app, cmd) }
+func (fn ActionRunner) Run(cmd *Command) error { return fn(cmd) }
 
 var _ Action = (*actionFunc)(nil)
 
@@ -517,18 +527,18 @@ func ActionFunc(fn ActionBuilder) Action {
 	}
 }
 
-func (a *actionFunc) Setup(app *App, cmd *Command) error {
-	a.runner = a.builder(app, cmd)
+func (a *actionFunc) Setup(cmd *Command) error {
+	a.runner = a.builder(cmd)
 
 	return nil
 }
 
-func (a *actionFunc) Run(app *App, cmd *Command) error {
+func (a *actionFunc) Run(cmd *Command) error {
 	if a.runner == nil {
 		return nil
 	}
 
-	return a.runner(app, cmd)
+	return a.runner(cmd)
 }
 
 type CommandFlag struct {
