@@ -37,14 +37,10 @@ jobs:
             - name: Test
               run: go test -race -covermode=atomic -coverprofile=coverage -v ./cli/...
 
-            - name: Install goveralls
-              run: go install github.com/mattn/goveralls@latest
-
-            - name: Send coverage to Coveralls
-              env:
-                  COVERALLS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-              run: |
-                  goveralls -coverprofile=coverage -service=github \
-                      -jobid=my-jobid-1,my-jobid-2 \
-                      -jobnumber=my-jobnumber-1,my-jobnumber-2 \
-                      -flagname=my-flagname-1,my-flagname-2
+            - name: Codecov
+              uses: codecov/codecov-action@v2
+              with:
+                  files: ./coverage
+                  flags: unittests,${{ matrix.os }},go${{ matrix.go }}
+                  fail_ci_if_error: true
+                  verbose: true
