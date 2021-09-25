@@ -33,7 +33,7 @@ jobs:
             - name: Run Go linters
               uses: golangci/golangci-lint-action@v2
               with:
-                  version: v1.29
+                  version: v1.42
                   skip-go-installation: true
 
     test:
