@@ -4,48 +4,42 @@
 
 ### MVP
 
-- [ ] Core
+- [x] Core
 
-  - [ ] Before action
-  - [ ] After action
-  - [ ] Human friendly errors
-  - [ ] Long description for commands, flags and args
-  - [ ] Rest args
+  - [?] Before action
+  - [?] After action
+  - [x] Human friendly errors
+  - [x] Rest args
 
-- [ ] Help generator
+- [x] Help generator
 
-  - [ ] Format table
+  - [x] Format table
 
-- [ ] Parser
+- [x] Parser
 
-  - [ ] Errors if flags and args registred twice
-    - [ ] Show line and file where it was registred
-  - [ ] Global flags
-  - [ ] Required flags
-  - [ ] Optional args
-  - [ ] `"--"` bypass
-  - [ ] POSIX-style short flag combining (`-a -b -> -ab`)
-  - [ ] Short-flag+parameter combining (`-a parm -> -aparm`)
-  - [ ] Default value
+  - [x] Errors if flags and args registred twice
+    - [?] Show line and file where it was registred
+  - [?] Global flags
+  - [x] Required flags
+  - [x] Optional args
+  - [x] `"--"` bypass
+  - [x] POSIX-style short flag combining (`-a -b -> -ab`)
+  - [x] Short-flag+parameter combining (`-a parm -> -aparm`)
+  - [?] Default value
   - [x] Better `isBoolValue`
 
-- [ ] Documentation generator
+- [x] Completion generator
 
-  - [ ] Markdown
+  - [x] ZSH
 
-- [ ] Completion generator
+- [x] Commands
 
-  - [ ] Bash
-  - [ ] ZSH
+  - [x] Help
+  - [x] Completion generator
 
-- [ ] Commands
+- [x] Command flags
 
-  - [ ] Documentation generator
-  - [ ] Completion generator
-
-- [ ] Command flags
-
-  - [ ] Help
+  - [x] Help
 
 ### Dream release
 
@@ -64,17 +58,24 @@
   - [ ] Array types (`-i 1 -i 2 -i 3`)
   - [ ] Object types (`--a.b.c 2`)
   - [ ] "deprecated" option
+  - [ ] Long description for commands, flags and args
 
 - [ ] Documentation generator
 
+  - [ ] Markdown
   - [ ] Man
   - [ ] Org Mode
   - [ ] reStructuredText
 
 - [ ] Completion generator
 
+  - [ ] Bash
   - [ ] Fish
   - [ ] PowerShell
+
+- [ ] Commands
+
+  - [ ] Documentation generator
 
 ---
 
@@ -102,12 +103,12 @@
 - [ ] Github CI
 
   - [ ] Check generated files (regenerate them)
-  - [ ] Test runner
-  - [ ] Linter runner
+  - [x] Test runner
+  - [x] Linter runner
   - [ ] Build packages
   - [ ] Commit messages
 
-- [ ] Coveralls
+- [x] Codecov
 
 ### Dream release
 
@@ -142,19 +143,21 @@
 
 ### MVP
 
-- [ ] Logo
-- [ ] Github tags
-- [ ] Github thumbnail
+- [x] Logo
+- [x] Github tags
+- [x] Github thumbnail
 - [ ] Article on dev.to
 - [ ] Article on habr.com
 - [ ] Quick introduction on YouTube
-- [ ] Subreddit
+- [x] Subreddit
 - [ ] Twitter posts
+- [x] Custom domain
 
 ### Dream release
 
 - [ ] Article on medium
 - [ ] Who use Nice
+- [ ] Discourse forum
 
 ---
 
@@ -162,7 +165,9 @@
 
 ### MVP
 
-- [ ] Remove and move `escape` package into other branch
+- [x] Remove and move `escape` package into other branch
+
+### Dream release
 
 - [ ] Packages for OSes
 
