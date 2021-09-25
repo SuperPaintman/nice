@@ -7,8 +7,11 @@ type Flag struct {
 	Usage     Usager
 	Necessary Necessary
 
-	set         bool
-	commandFlag bool
+	set          bool
+	defaultSaved bool
+	defaultValue string
+	defaultEmpty bool
+	commandFlag  bool
 
 	// NOTE(SuperPaintman):
 	//     The first version had "Aliases" for flags. It's quite handy to have
@@ -49,6 +52,25 @@ func (f *Flag) Set() bool {
 
 func (f *Flag) MarkSet() {
 	f.set = true
+}
+
+func (f *Flag) Default() (v string, empty bool) {
+	if !f.defaultSaved {
+		return "", true
+	}
+
+	return f.defaultValue, f.defaultEmpty
+}
+
+func (f *Flag) SaveDefault() {
+	f.defaultValue = f.Value.String()
+	if ev, ok := f.Value.(Emptier); ok {
+		f.defaultEmpty = ev.Empty()
+	} else {
+		f.defaultEmpty = f.defaultValue == ""
+	}
+
+	f.defaultSaved = true
 }
 
 func (f *Flag) String() string {

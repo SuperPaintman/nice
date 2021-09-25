@@ -64,6 +64,11 @@ type Getter interface {
 	Get() interface{}
 }
 
+type Emptier interface {
+	Getter
+	Empty() bool
+}
+
 type Typer interface {
 	Value
 	Type() string

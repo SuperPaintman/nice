@@ -10,9 +10,10 @@ import (
 // bool
 
 var (
-	_ Value  = (*boolValue)(nil)
-	_ Getter = (*boolValue)(nil)
-	_ Typer  = (*boolValue)(nil)
+	_ Value   = (*boolValue)(nil)
+	_ Getter  = (*boolValue)(nil)
+	_ Emptier = (*boolValue)(nil)
+	_ Typer   = (*boolValue)(nil)
 )
 
 type boolValue bool
@@ -23,6 +24,8 @@ func newBoolValue(p *bool) *boolValue {
 
 func (v *boolValue) Get() interface{} { return bool(*v) }
 
+func (v *boolValue) Empty() bool { return *v == false }
+
 func (v *boolValue) String() string { return strconv.FormatBool(bool(*v)) }
 
 func (*boolValue) Type() string { return "bool" }
@@ -30,9 +33,10 @@ func (*boolValue) Type() string { return "bool" }
 // uint8
 
 var (
-	_ Value  = (*uint8Value)(nil)
-	_ Getter = (*uint8Value)(nil)
-	_ Typer  = (*uint8Value)(nil)
+	_ Value   = (*uint8Value)(nil)
+	_ Getter  = (*uint8Value)(nil)
+	_ Emptier = (*uint8Value)(nil)
+	_ Typer   = (*uint8Value)(nil)
 )
 
 type uint8Value uint8
@@ -43,6 +47,8 @@ func newUint8Value(p *uint8) *uint8Value {
 
 func (v *uint8Value) Get() interface{} { return uint8(*v) }
 
+func (v *uint8Value) Empty() bool { return *v == 0 }
+
 func (v *uint8Value) String() string { return strconv.FormatUint(uint64(*v), 10) }
 
 func (*uint8Value) Type() string { return "uint8" }
@@ -50,9 +56,10 @@ func (*uint8Value) Type() string { return "uint8" }
 // uint16
 
 var (
-	_ Value  = (*uint16Value)(nil)
-	_ Getter = (*uint16Value)(nil)
-	_ Typer  = (*uint16Value)(nil)
+	_ Value   = (*uint16Value)(nil)
+	_ Getter  = (*uint16Value)(nil)
+	_ Emptier = (*uint16Value)(nil)
+	_ Typer   = (*uint16Value)(nil)
 )
 
 type uint16Value uint16
@@ -63,6 +70,8 @@ func newUint16Value(p *uint16) *uint16Value {
 
 func (v *uint16Value) Get() interface{} { return uint16(*v) }
 
+func (v *uint16Value) Empty() bool { return *v == 0 }
+
 func (v *uint16Value) String() string { return strconv.FormatUint(uint64(*v), 10) }
 
 func (*uint16Value) Type() string { return "uint16" }
@@ -70,9 +79,10 @@ func (*uint16Value) Type() string { return "uint16" }
 // uint32
 
 var (
-	_ Value  = (*uint32Value)(nil)
-	_ Getter = (*uint32Value)(nil)
-	_ Typer  = (*uint32Value)(nil)
+	_ Value   = (*uint32Value)(nil)
+	_ Getter  = (*uint32Value)(nil)
+	_ Emptier = (*uint32Value)(nil)
+	_ Typer   = (*uint32Value)(nil)
 )
 
 type uint32Value uint32
@@ -83,6 +93,8 @@ func newUint32Value(p *uint32) *uint32Value {
 
 func (v *uint32Value) Get() interface{} { return uint32(*v) }
 
+func (v *uint32Value) Empty() bool { return *v == 0 }
+
 func (v *uint32Value) String() string { return strconv.FormatUint(uint64(*v), 10) }
 
 func (*uint32Value) Type() string { return "uint32" }
@@ -90,9 +102,10 @@ func (*uint32Value) Type() string { return "uint32" }
 // uint64
 
 var (
-	_ Value  = (*uint64Value)(nil)
-	_ Getter = (*uint64Value)(nil)
-	_ Typer  = (*uint64Value)(nil)
+	_ Value   = (*uint64Value)(nil)
+	_ Getter  = (*uint64Value)(nil)
+	_ Emptier = (*uint64Value)(nil)
+	_ Typer   = (*uint64Value)(nil)
 )
 
 type uint64Value uint64
@@ -103,6 +116,8 @@ func newUint64Value(p *uint64) *uint64Value {
 
 func (v *uint64Value) Get() interface{} { return uint64(*v) }
 
+func (v *uint64Value) Empty() bool { return *v == 0 }
+
 func (v *uint64Value) String() string { return strconv.FormatUint(uint64(*v), 10) }
 
 func (*uint64Value) Type() string { return "uint64" }
@@ -110,9 +125,10 @@ func (*uint64Value) Type() string { return "uint64" }
 // int8
 
 var (
-	_ Value  = (*int8Value)(nil)
-	_ Getter = (*int8Value)(nil)
-	_ Typer  = (*int8Value)(nil)
+	_ Value   = (*int8Value)(nil)
+	_ Getter  = (*int8Value)(nil)
+	_ Emptier = (*int8Value)(nil)
+	_ Typer   = (*int8Value)(nil)
 )
 
 type int8Value int8
@@ -123,6 +139,8 @@ func newInt8Value(p *int8) *int8Value {
 
 func (v *int8Value) Get() interface{} { return int8(*v) }
 
+func (v *int8Value) Empty() bool { return *v == 0 }
+
 func (v *int8Value) String() string { return strconv.FormatInt(int64(*v), 10) }
 
 func (*int8Value) Type() string { return "int8" }
@@ -130,9 +148,10 @@ func (*int8Value) Type() string { return "int8" }
 // int16
 
 var (
-	_ Value  = (*int16Value)(nil)
-	_ Getter = (*int16Value)(nil)
-	_ Typer  = (*int16Value)(nil)
+	_ Value   = (*int16Value)(nil)
+	_ Getter  = (*int16Value)(nil)
+	_ Emptier = (*int16Value)(nil)
+	_ Typer   = (*int16Value)(nil)
 )
 
 type int16Value int16
@@ -143,6 +162,8 @@ func newInt16Value(p *int16) *int16Value {
 
 func (v *int16Value) Get() interface{} { return int16(*v) }
 
+func (v *int16Value) Empty() bool { return *v == 0 }
+
 func (v *int16Value) String() string { return strconv.FormatInt(int64(*v), 10) }
 
 func (*int16Value) Type() string { return "int16" }
@@ -150,9 +171,10 @@ func (*int16Value) Type() string { return "int16" }
 // int32
 
 var (
-	_ Value  = (*int32Value)(nil)
-	_ Getter = (*int32Value)(nil)
-	_ Typer  = (*int32Value)(nil)
+	_ Value   = (*int32Value)(nil)
+	_ Getter  = (*int32Value)(nil)
+	_ Emptier = (*int32Value)(nil)
+	_ Typer   = (*int32Value)(nil)
 )
 
 type int32Value int32
@@ -163,6 +185,8 @@ func newInt32Value(p *int32) *int32Value {
 
 func (v *int32Value) Get() interface{} { return int32(*v) }
 
+func (v *int32Value) Empty() bool { return *v == 0 }
+
 func (v *int32Value) String() string { return strconv.FormatInt(int64(*v), 10) }
 
 func (*int32Value) Type() string { return "int32" }
@@ -170,9 +194,10 @@ func (*int32Value) Type() string { return "int32" }
 // int64
 
 var (
-	_ Value  = (*int64Value)(nil)
-	_ Getter = (*int64Value)(nil)
-	_ Typer  = (*int64Value)(nil)
+	_ Value   = (*int64Value)(nil)
+	_ Getter  = (*int64Value)(nil)
+	_ Emptier = (*int64Value)(nil)
+	_ Typer   = (*int64Value)(nil)
 )
 
 type int64Value int64
@@ -183,6 +208,8 @@ func newInt64Value(p *int64) *int64Value {
 
 func (v *int64Value) Get() interface{} { return int64(*v) }
 
+func (v *int64Value) Empty() bool { return *v == 0 }
+
 func (v *int64Value) String() string { return strconv.FormatInt(int64(*v), 10) }
 
 func (*int64Value) Type() string { return "int64" }
@@ -190,9 +217,10 @@ func (*int64Value) Type() string { return "int64" }
 // float32
 
 var (
-	_ Value  = (*float32Value)(nil)
-	_ Getter = (*float32Value)(nil)
-	_ Typer  = (*float32Value)(nil)
+	_ Value   = (*float32Value)(nil)
+	_ Getter  = (*float32Value)(nil)
+	_ Emptier = (*float32Value)(nil)
+	_ Typer   = (*float32Value)(nil)
 )
 
 type float32Value float32
@@ -203,6 +231,8 @@ func newFloat32Value(p *float32) *float32Value {
 
 func (v *float32Value) Get() interface{} { return float32(*v) }
 
+func (v *float32Value) Empty() bool { return *v == 0.0 }
+
 func (v *float32Value) String() string { return strconv.FormatFloat(float64(*v), 'g', -1, 32) }
 
 func (*float32Value) Type() string { return "float32" }
@@ -210,9 +240,10 @@ func (*float32Value) Type() string { return "float32" }
 // float64
 
 var (
-	_ Value  = (*float64Value)(nil)
-	_ Getter = (*float64Value)(nil)
-	_ Typer  = (*float64Value)(nil)
+	_ Value   = (*float64Value)(nil)
+	_ Getter  = (*float64Value)(nil)
+	_ Emptier = (*float64Value)(nil)
+	_ Typer   = (*float64Value)(nil)
 )
 
 type float64Value float64
@@ -223,6 +254,8 @@ func newFloat64Value(p *float64) *float64Value {
 
 func (v *float64Value) Get() interface{} { return float64(*v) }
 
+func (v *float64Value) Empty() bool { return *v == 0.0 }
+
 func (v *float64Value) String() string { return strconv.FormatFloat(float64(*v), 'g', -1, 64) }
 
 func (*float64Value) Type() string { return "float64" }
@@ -230,9 +263,10 @@ func (*float64Value) Type() string { return "float64" }
 // string
 
 var (
-	_ Value  = (*stringValue)(nil)
-	_ Getter = (*stringValue)(nil)
-	_ Typer  = (*stringValue)(nil)
+	_ Value   = (*stringValue)(nil)
+	_ Getter  = (*stringValue)(nil)
+	_ Emptier = (*stringValue)(nil)
+	_ Typer   = (*stringValue)(nil)
 )
 
 type stringValue string
@@ -243,6 +277,8 @@ func newStringValue(p *string) *stringValue {
 
 func (v *stringValue) Get() interface{} { return string(*v) }
 
+func (v *stringValue) Empty() bool { return *v == "" }
+
 func (v *stringValue) String() string { return string(*v) }
 
 func (*stringValue) Type() string { return "string" }
@@ -250,9 +286,10 @@ func (*stringValue) Type() string { return "string" }
 // int
 
 var (
-	_ Value  = (*intValue)(nil)
-	_ Getter = (*intValue)(nil)
-	_ Typer  = (*intValue)(nil)
+	_ Value   = (*intValue)(nil)
+	_ Getter  = (*intValue)(nil)
+	_ Emptier = (*intValue)(nil)
+	_ Typer   = (*intValue)(nil)
 )
 
 type intValue int
@@ -263,6 +300,8 @@ func newIntValue(p *int) *intValue {
 
 func (v *intValue) Get() interface{} { return int(*v) }
 
+func (v *intValue) Empty() bool { return *v == 0 }
+
 func (v *intValue) String() string { return strconv.Itoa(int(*v)) }
 
 func (*intValue) Type() string { return "int" }
@@ -270,9 +309,10 @@ func (*intValue) Type() string { return "int" }
 // uint
 
 var (
-	_ Value  = (*uintValue)(nil)
-	_ Getter = (*uintValue)(nil)
-	_ Typer  = (*uintValue)(nil)
+	_ Value   = (*uintValue)(nil)
+	_ Getter  = (*uintValue)(nil)
+	_ Emptier = (*uintValue)(nil)
+	_ Typer   = (*uintValue)(nil)
 )
 
 type uintValue uint
@@ -283,6 +323,8 @@ func newUintValue(p *uint) *uintValue {
 
 func (v *uintValue) Get() interface{} { return uint(*v) }
 
+func (v *uintValue) Empty() bool { return *v == 0 }
+
 func (v *uintValue) String() string { return strconv.FormatUint(uint64(*v), 10) }
 
 func (*uintValue) Type() string { return "uint" }
@@ -290,9 +332,10 @@ func (*uintValue) Type() string { return "uint" }
 // time.Duration
 
 var (
-	_ Value  = (*timeDurationValue)(nil)
-	_ Getter = (*timeDurationValue)(nil)
-	_ Typer  = (*timeDurationValue)(nil)
+	_ Value   = (*timeDurationValue)(nil)
+	_ Getter  = (*timeDurationValue)(nil)
+	_ Emptier = (*timeDurationValue)(nil)
+	_ Typer   = (*timeDurationValue)(nil)
 )
 
 type timeDurationValue time.Duration
@@ -302,6 +345,8 @@ func newDurationValue(p *time.Duration) *timeDurationValue {
 }
 
 func (v *timeDurationValue) Get() interface{} { return time.Duration(*v) }
+
+func (v *timeDurationValue) Empty() bool { return *v == 0 }
 
 func (v *timeDurationValue) String() string { return (*time.Duration)(v).String() }
 

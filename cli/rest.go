@@ -4,6 +4,10 @@ type RestArgs struct {
 	Values Value
 	Name   string
 	Usage  Usager
+
+	defaultSaved bool
+	defaultValue string
+	defaultEmpty bool
 }
 
 func newRest(values Value, opts RestOptions) RestArgs {
@@ -12,6 +16,16 @@ func newRest(values Value, opts RestOptions) RestArgs {
 		Name:   opts.Name,
 		Usage:  opts.Usage,
 	}
+}
+
+func (ra *RestArgs) Type() string {
+	if ra.Values != nil {
+		if t, ok := ra.Values.(Typer); ok {
+			return t.Type()
+		}
+	}
+
+	return ""
 }
 
 func (ra *RestArgs) IsZero() bool {
@@ -26,6 +40,27 @@ func (ra *RestArgs) Add(val string) error {
 	}
 
 	return nil
+}
+
+func (ra *RestArgs) Default() (v string, empty bool) {
+	if !ra.defaultSaved {
+		return "", true
+	}
+
+	return ra.defaultValue, ra.defaultEmpty
+}
+
+func (ra *RestArgs) SaveDefault() {
+	if ra.Values != nil {
+		ra.defaultValue = ra.Values.String()
+		if ev, ok := ra.Values.(Emptier); ok {
+			ra.defaultEmpty = ev.Empty()
+		} else {
+			ra.defaultEmpty = ra.defaultValue == ""
+		}
+	}
+
+	ra.defaultSaved = true
 }
 
 func RestVar(register Register, value Value, name string, options ...RestOptionApplyer) error {

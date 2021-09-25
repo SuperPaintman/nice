@@ -6,7 +6,10 @@ type Arg struct {
 	Usage     Usager
 	Necessary Necessary
 
-	set bool
+	set          bool
+	defaultSaved bool
+	defaultValue string
+	defaultEmpty bool
 }
 
 func newArg(value Value, opts ArgOptions) Arg {
@@ -37,6 +40,25 @@ func (a *Arg) Set() bool {
 
 func (a *Arg) MarkSet() {
 	a.set = true
+}
+
+func (a *Arg) Default() (v string, empty bool) {
+	if !a.defaultSaved {
+		return "", true
+	}
+
+	return a.defaultValue, a.defaultEmpty
+}
+
+func (a *Arg) SaveDefault() {
+	a.defaultValue = a.Value.String()
+	if ev, ok := a.Value.(Emptier); ok {
+		a.defaultEmpty = ev.Empty()
+	} else {
+		a.defaultEmpty = a.defaultValue == ""
+	}
+
+	a.defaultSaved = true
 }
 
 func (a *Arg) String() string {

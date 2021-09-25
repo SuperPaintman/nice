@@ -11,7 +11,7 @@ for pkg in imports:
     res += "\t\"%s\"\n" % pkg
 res += ")\n"
 
-for (typ, name, _) in types:
+for (typ, name, _, _) in types:
     res += "\n"
     res += "// %s\n" % typ
     res += "\n"

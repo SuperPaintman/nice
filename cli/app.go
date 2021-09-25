@@ -466,6 +466,21 @@ func (c *Command) setup() error {
 		return err
 	}
 
+	// Save default values.
+	flags := c.Flags()
+	for i := range flags {
+		flags[i].SaveDefault()
+	}
+
+	args := c.Args()
+	for i := range args {
+		args[i].SaveDefault()
+	}
+
+	if rest := c.Rest(); rest != nil {
+		rest.SaveDefault()
+	}
+
 	c.setuped = true
 
 	return nil

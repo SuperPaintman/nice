@@ -15,16 +15,17 @@ for pkg in sorted(imports + local_imports):
     res += "\t\"%s\"\n" % pkg
 res += ")\n"
 
-for (typ, name, _) in types:
+for (typ, name, _, _) in types:
     safe_typ = typ.replace(".", "")
 
     res += "\n"
     res += "// []%s\n" % typ
     res += "\n"
     res += "var (\n"
-    res += "\t_ Value  = (*%sValues)(nil)\n" % safe_typ
-    res += "\t_ Getter = (*%sValues)(nil)\n" % safe_typ
-    res += "\t_ Typer  = (*%sValues)(nil)\n" % safe_typ
+    res += "\t_ Value   = (*%sValues)(nil)\n" % safe_typ
+    res += "\t_ Getter  = (*%sValues)(nil)\n" % safe_typ
+    res += "\t_ Emptier = (*%sValues)(nil)\n" % safe_typ
+    res += "\t_ Typer   = (*%sValues)(nil)\n" % safe_typ
     res += ")\n"
     res += "\n"
     res += "type %sValues []%s\n" % (safe_typ, typ)
@@ -70,6 +71,8 @@ for (typ, name, _) in types:
     res += "\n"
     res += "\treturn buf.String()\n"
     res += "}\n"
+    res += "\n"
+    res += "func (v *%sValues) Empty() bool { return len(*v) == 0 }\n" % safe_typ
     res += "\n"
     res += "func (v *%sValues) Get() interface{} { return []%s(*v) }\n" % (safe_typ, typ)
     res += "\n"

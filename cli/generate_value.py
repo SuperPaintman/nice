@@ -11,16 +11,17 @@ for pkg in sorted(imports + imports_stringer):
     res += "\t\"%s\"\n" % pkg
 res += ")\n"
 
-for (typ, name, stringer) in types:
+for (typ, name, stringer, emptier) in types:
     safe_typ = typ.replace(".", "")
 
     res += "\n"
     res += "// %s\n" % typ
     res += "\n"
     res += "var (\n"
-    res += "\t_ Value  = (*%sValue)(nil)\n" % safe_typ
-    res += "\t_ Getter = (*%sValue)(nil)\n" % safe_typ
-    res += "\t_ Typer  = (*%sValue)(nil)\n" % safe_typ
+    res += "\t_ Value   = (*%sValue)(nil)\n" % safe_typ
+    res += "\t_ Getter  = (*%sValue)(nil)\n" % safe_typ
+    res += "\t_ Emptier = (*%sValue)(nil)\n" % safe_typ
+    res += "\t_ Typer   = (*%sValue)(nil)\n" % safe_typ
     res += ")\n"
     res += "\n"
     res += "type %sValue %s\n" % (safe_typ, typ)
@@ -30,6 +31,8 @@ for (typ, name, stringer) in types:
     res += "}\n"
     res += "\n"
     res += "func (v *%sValue) Get() interface{} { return %s(*v) }\n" % (safe_typ, typ)
+    res += "\n"
+    res += "func (v *%sValue) Empty() bool { return %s }\n" % (safe_typ, (emptier % "v"))
     res += "\n"
     res += "func (v *%sValue) String() string { return %s }\n" % (safe_typ, (stringer % "v"))
     res += "\n"
