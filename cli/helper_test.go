@@ -154,7 +154,7 @@ func assertStringsDiff(t *testing.T, got, want string) {
 	t.Helper()
 
 	if err := exec.Command("which", "diff").Run(); err == nil {
-		wantTMP, err := ioutil.TempFile(t.TempDir(), "want-*")
+		wantTMP, err := ioutil.TempFile("", "want-*")
 		if err != nil {
 			t.Errorf("Failed to create a temp file for want: %s", err)
 			return
@@ -166,7 +166,7 @@ func assertStringsDiff(t *testing.T, got, want string) {
 			return
 		}
 
-		gotTMP, err := ioutil.TempFile(t.TempDir(), "got-*")
+		gotTMP, err := ioutil.TempFile("", "got-*")
 		if err != nil {
 			t.Errorf("Failed to create a temp file for got: %s", err)
 			return
