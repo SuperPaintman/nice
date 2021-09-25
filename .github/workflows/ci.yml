@@ -43,4 +43,8 @@ jobs:
             - name: Send coverage to Coveralls
               env:
                   COVERALLS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-              run: goveralls -coverprofile=coverage -service=github
+              run: |
+                  goveralls -coverprofile=coverage -service=github \
+                      -jobid=my-jobid-1,my-jobid-2 \
+                      -jobnumber=my-jobnumber-1,my-jobnumber-2 \
+                      -flagname=my-flagname-1,my-flagname-2
