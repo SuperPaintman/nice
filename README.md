@@ -30,11 +30,7 @@ Then put this code into a file (`hello.go` for example):
 ```go
 package main
 
-import (
-	"log"
-
-	"github.com/SuperPaintman/nice/cli"
-)
+import "github.com/SuperPaintman/nice/cli"
 
 func main() {
 	app := cli.App{
@@ -59,9 +55,7 @@ func main() {
 		},
 	}
 
-	if err := app.Run(); err != nil {
-		log.Fatal(err)
-	}
+	app.HandleError(app.Run())
 }
 ```
 

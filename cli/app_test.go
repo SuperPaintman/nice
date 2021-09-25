@@ -140,10 +140,13 @@ func TestApp_Command_not_found(t *testing.T) {
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			_, got := app.Command(tc.path...)
-			want := ErrCommandNotFound
-			if !errors.Is(got, want) {
-				t.Fatalf("Command(%v): got error = %q, want error = %q", tc.path, got, want)
+			got, err := app.Command(tc.path...)
+			if err != nil {
+				t.Fatalf("Command(%v): failed to get command: %s", tc.path, err)
+			}
+
+			if got != nil {
+				t.Fatalf("Command(%v): got error = %#v, want error = %#v", tc.path, got, nil)
 			}
 		})
 	}

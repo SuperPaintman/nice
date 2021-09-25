@@ -6,10 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
-)
-
-var (
-	ErrCommandNotFound = fmt.Errorf("cli: command not found")
+	"strings"
 )
 
 type InvalidCommandError struct {
@@ -24,15 +21,64 @@ func (e *InvalidCommandError) Error() string {
 	}
 
 	if e.Name == "" {
-		return fmt.Sprintf("broken command: %s", msg)
+		return fmt.Sprintf("cli: broken command: %s", msg)
 	}
 
-	return fmt.Sprintf("broken command: '%s': %s", e.Name, msg)
+	return fmt.Sprintf("cli: broken command: '%s': %s", e.Name, msg)
 }
 
 func (e *InvalidCommandError) Is(err error) bool {
 	pe, ok := err.(*InvalidCommandError)
 	return ok && pe.Name == e.Name && errors.Is(pe.Err, e.Err)
+}
+
+type ExitCode int
+
+func (e ExitCode) Error() string {
+	return fmt.Sprintf("cli: exit code: %d", e)
+}
+
+type CommandError struct {
+	Command *Command
+	Err     error
+
+	exitCode ExitCode
+}
+
+func (e *CommandError) Error() string {
+	msg := "unknown error"
+	if e.Err != nil {
+		msg = e.Err.Error()
+	}
+
+	if e.Command == nil {
+		return fmt.Sprintf("cli: command error: %s", msg)
+	}
+
+	if path := e.Command.Path(); len(path) != 0 {
+		return fmt.Sprintf("cli: command error: '%s': %s", strings.Join(path, " "), msg)
+	}
+
+	if e.Command.Name == "" {
+		return fmt.Sprintf("cli: command error: %s", msg)
+	}
+
+	return fmt.Sprintf("cli: command error: '%s': %s", e.Command.Name, msg)
+}
+
+func (e *CommandError) Unwrap() error { return e.Err }
+
+func (e *CommandError) Is(err error) bool {
+	ce, ok := err.(*CommandError)
+	return ok && ce.Command == e.Command && ce.exitCode == e.exitCode && errors.Is(ce.Err, e.Err)
+}
+
+func (e *CommandError) ExitCode() ExitCode {
+	if e.exitCode == 0 {
+		return 1
+	}
+
+	return e.exitCode
 }
 
 var _ Commander = (*commander)(nil)
@@ -223,7 +269,7 @@ func (app *App) RootCommand(path ...string) (*Command, error) {
 
 func (app *App) Command(path ...string) (*Command, error) {
 	if len(path) == 0 || path[0] != app.Name {
-		return nil, ErrCommandNotFound
+		return nil, nil
 	}
 
 	cmd, err := app.command()
@@ -252,7 +298,7 @@ func (app *App) Command(path ...string) (*Command, error) {
 		}
 
 		if !found {
-			return nil, ErrCommandNotFound
+			return nil, nil
 		}
 	}
 
@@ -265,6 +311,193 @@ func (app *App) Help(cmd *Command, w io.Writer) error {
 	}
 
 	return (DefaultHelper{}).Help(cmd, w)
+}
+
+func (app *App) HandleError(err error) {
+	code := app.handleError(err, app.stderr())
+	if code != 0 {
+		os.Exit(int(code))
+	}
+}
+
+func (app *App) handleError(err error, w io.Writer) (exitCode ExitCode) {
+	if err == nil {
+		return
+	}
+
+	// TODO(SuperPaintman):
+	//     I think in might be better to add `Friendly()` method to call it
+	//     directly on the error.
+
+	exitCode = 1
+
+	ew := easyWriter{w: w}
+
+	// NOTE(SuperPaintman): ParseValueError is not a top level error.
+
+	cmdErr := &CommandError{}
+	invalidCommandErr := &InvalidCommandError{}
+	parseArgErr := &ParseArgError{}
+	parseFlagErr := &ParseFlagError{}
+	flagErr := &FlagError{}
+	argErr := &ArgError{}
+	restArgsErr := &RestArgsError{}
+	switch {
+	case errors.As(err, &exitCode):
+		// Nothing to do.
+
+	case errors.As(err, &cmdErr):
+		exitCode = cmdErr.ExitCode()
+
+	case errors.As(err, &invalidCommandErr):
+		switch {
+		case errors.Is(invalidCommandErr.Err, ErrMissingName):
+			ew.Writef("Missing command name\n")
+
+		case errors.Is(invalidCommandErr.Err, ErrInvalidName):
+			ew.Writef("Invalie command name: %s\n", invalidCommandErr.Name)
+
+		default:
+			ew.WriteString(err.Error())
+			ew.WriteString("\n")
+		}
+
+	case errors.As(err, &parseArgErr):
+		switch {
+		case errors.Is(parseArgErr.Err, ErrUnknown):
+			ew.Writef("Unknown %s argument: %s\n", nthNumber(parseArgErr.Index), parseArgErr.Arg)
+
+		default:
+			ew.WriteString(err.Error())
+			ew.WriteString("\n")
+		}
+
+	case errors.As(err, &parseFlagErr):
+		switch {
+		case errors.Is(parseFlagErr.Err, ErrSyntax):
+			ew.Writef("Invalid flag syntax: %s\n", parseFlagErr.Name)
+
+		case errors.Is(parseFlagErr.Err, ErrUnknown):
+			ew.Writef("Unknown flag: %s\n", parseFlagErr.Name)
+
+		default:
+			ew.WriteString(err.Error())
+			ew.WriteString("\n")
+		}
+
+	case errors.As(err, &flagErr):
+		parser := app.parser()
+		writeFlagName := func(short, long string) {
+			if long != "" {
+				if short != "" {
+					ew.WriteString(parser.FormatShortFlag(short))
+					ew.WriteString(" ")
+				}
+
+				ew.WriteString(parser.FormatLongFlag(long))
+			} else if short != "" {
+				ew.WriteString(parser.FormatShortFlag(short))
+			}
+		}
+
+		parseValueError := &ParseValueError{}
+		switch {
+		case errors.Is(flagErr.Err, ErrMissingName):
+			ew.Writef("Registred flag witout short nor long name\n")
+
+		case errors.Is(flagErr.Err, ErrInvalidName):
+			if flagErr.Long != "" {
+				ew.Writef("Registred flag with invalid long name: %s\n", flagErr.Long)
+			} else {
+				ew.Writef("Registred flag with invalid short name: %s\n", flagErr.Short)
+			}
+
+		case errors.Is(flagErr.Err, ErrDuplicate):
+			ew.WriteString("Registred duplicated flag: ")
+			writeFlagName(flagErr.Short, flagErr.Long)
+			ew.WriteString("\n")
+
+		case errors.Is(flagErr.Err, ErrNotProvided):
+			ew.WriteString("Flag is required: ")
+			writeFlagName(flagErr.Short, flagErr.Long)
+			ew.WriteString("\n")
+
+		case errors.As(flagErr.Err, &parseValueError):
+			ew.WriteString("Invalid ")
+			writeFlagName(flagErr.Short, flagErr.Long)
+			ew.WriteString(" flag value: ")
+			ew.WriteString(parseValueError.Error())
+			ew.WriteString("\n")
+
+		default:
+			ew.WriteString(err.Error())
+			ew.WriteString("\n")
+		}
+
+	case errors.As(err, &argErr):
+		parseValueError := &ParseValueError{}
+		switch {
+		case errors.Is(argErr.Err, ErrRequiredAfterOptional):
+			ew.Writef("Registred %s argument (%s) after the another optional argument\n",
+				nthNumber(argErr.Index), argErr.Name,
+			)
+
+		case errors.Is(argErr.Err, ErrArgAfterRest):
+			ew.Writef("Registred %s argument (%s) after the rest arguments\n",
+				nthNumber(argErr.Index), argErr.Name,
+			)
+
+		case errors.Is(argErr.Err, ErrMissingName):
+			ew.Writef("Registred %s argument witout name\n", nthNumber(argErr.Index))
+
+		case errors.Is(argErr.Err, ErrInvalidName):
+			ew.Writef("Registred %s argument with invalid name: %s\n",
+				nthNumber(argErr.Index), argErr.Name,
+			)
+
+		case errors.Is(argErr.Err, ErrDuplicate):
+			ew.Writef("Registred duplicated %s argument: %s\n",
+				nthNumber(argErr.Index), argErr.Name,
+			)
+
+		case errors.Is(argErr.Err, ErrNotProvided):
+			ew.Writef("%s argument (%s) is required\n",
+				nthNumber(argErr.Index), argErr.Name,
+			)
+
+		case errors.As(argErr.Err, &parseValueError):
+			ew.Writef("Invalid %s argument (%s) value: ",
+				nthNumber(argErr.Index), argErr.Name,
+			)
+			ew.WriteString(parseValueError.Error())
+			ew.WriteString("\n")
+
+		default:
+			ew.WriteString(err.Error())
+			ew.WriteString("\n")
+		}
+
+	case errors.As(err, &restArgsErr):
+		switch {
+		case errors.Is(restArgsErr.Err, ErrInvalidName):
+			ew.Writef("Registred the rest arguments with invalid name: %s\n",
+				restArgsErr.Name,
+			)
+
+		case errors.Is(restArgsErr.Err, ErrDuplicate):
+			ew.Writef("Registred another rest arguments: %s\n", restArgsErr.Name)
+
+		default:
+			ew.WriteString(err.Error())
+			ew.WriteString("\n")
+		}
+
+	default:
+		ew.WriteString(err.Error())
+		ew.WriteString("\n")
+	}
+
+	return
 }
 
 func (app *App) command() (*Command, error) {
@@ -441,6 +674,19 @@ func (c *Command) Warn(a ...interface{}) (n int, err error) {
 
 func (c *Command) Warnln(a ...interface{}) (n int, err error) {
 	return fmt.Fprintln(c.app.stderr(), a...)
+}
+
+func (c *Command) WrapError(err error) error {
+	if err == nil {
+		return nil
+	}
+
+	return &CommandError{
+		Command: c,
+		Err:     err,
+
+		exitCode: 1, // TODO
+	}
 }
 
 func (c *Command) init(ctx context.Context, app *App, parent *Command, register Register, path []string) {

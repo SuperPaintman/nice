@@ -24,6 +24,7 @@ func (e *ParseValueError) Error() string {
 		msg = e.Err.Error()
 	}
 
+	// Do not add "cli: " prefix. It's not a top level error.
 	return fmt.Sprintf("parse %s error: %s", e.Type, msg)
 }
 
