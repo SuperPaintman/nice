@@ -35,10 +35,12 @@ jobs:
               run: go get golang.org/x/tools/cmd/cover
 
             - name: Test
-              run: go test -race -covermode=atomic -coverprofile=coverage.out -v ./...
+              run: go test -race -covermode=atomic -coverprofile=coverage -v ./cli/...
 
-            - name: Coveralls
-              uses: coverallsapp/github-action@master
-              with:
-                  github-token: ${{ secrets.GITHUB_TOKEN }}
-                  path-to-lcov: coverage.out
+            - name: Install goveralls
+              run: go install github.com/mattn/goveralls@latest
+
+            - name: Send coverage to Coveralls
+              env:
+                  COVERALLS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              run: goveralls -coverprofile=coverage -service=github
