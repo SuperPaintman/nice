@@ -31,5 +31,16 @@ jobs:
               with:
                   go-version: ${{ matrix.go }}
 
+            - name: Set up Cover cmd
+              run: go get golang.org/x/tools/cmd/cover
+
             - name: Test
-              run: go test -v ./...
+              run: go test -race -covermode=atomic -coverprofile=coverage -v ./...
+
+            - name: Codecov
+              uses: codecov/codecov-action@v2
+              with:
+                  files: ./coverage
+                  flags: unittests,${{ matrix.os }},go${{ matrix.go }}
+                  fail_ci_if_error: true
+                  verbose: true

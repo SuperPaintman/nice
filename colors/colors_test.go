@@ -88,19 +88,13 @@ func TestBgANSI256(t *testing.T) {
 	}
 }
 
-const trueColorMax = 1<<24 - 1
-
-func trueColorTestStep() int {
-	if testing.Short() {
-		return 1<<8 - 1
-	}
-
-	return 1
-}
+const (
+	trueColorMax  = 1<<24 - 1
+	trueColorStep = 256 - 9 // We use this step to make move overlaps.
+)
 
 func TestTrueColor(t *testing.T) {
-	step := trueColorTestStep()
-	for i := 0; i < trueColorMax+1; i += step {
+	for i := 0; i < trueColorMax+1; i += trueColorStep {
 		r := uint8((i >> 0) & 255)
 		g := uint8((i >> 8) & 255)
 		b := uint8((i >> 16) & 255)
@@ -125,8 +119,7 @@ func TestTrueColor(t *testing.T) {
 }
 
 func TestBgTrueColor(t *testing.T) {
-	step := trueColorTestStep()
-	for i := 0; i < trueColorMax+1; i += step {
+	for i := 0; i < trueColorMax+1; i += trueColorStep {
 		r := uint8((i >> 0) & 255)
 		g := uint8((i >> 8) & 255)
 		b := uint8((i >> 16) & 255)
@@ -151,8 +144,7 @@ func TestBgTrueColor(t *testing.T) {
 }
 
 func TestTrueColorRGB(t *testing.T) {
-	step := trueColorTestStep()
-	for i := 0; i < trueColorMax+1; i += step {
+	for i := 0; i < trueColorMax+1; i += trueColorStep {
 		rgb := RGB{
 			R: uint8((i >> 0) & 255),
 			G: uint8((i >> 8) & 255),
@@ -179,8 +171,7 @@ func TestTrueColorRGB(t *testing.T) {
 }
 
 func TestBgTrueColorRGB(t *testing.T) {
-	step := trueColorTestStep()
-	for i := 0; i < trueColorMax+1; i += step {
+	for i := 0; i < trueColorMax+1; i += trueColorStep {
 		rgb := RGB{
 			R: uint8((i >> 0) & 255),
 			G: uint8((i >> 8) & 255),

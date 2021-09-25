@@ -84,7 +84,7 @@ $ go run . -h
 ## Tests
 
 ```sh
-$ go test ./... -test.short
+$ go test -race ./...
 ```
 
 ```sh
