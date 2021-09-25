@@ -105,6 +105,7 @@ const (
 )
 
 // TODO(SuperPaintman): replace it with setters to optimuze should* functions.
+
 var Colors Mode = Auto
 
 var (
@@ -139,8 +140,8 @@ func (a Attribute) String() string {
 
 //go:generate python ./generate_reset_attributes.py
 
-func (s Attribute) Reset() Attribute {
-	return resetAttributes[s]
+func (a Attribute) Reset() Attribute {
+	return resetAttributes[a]
 }
 
 const (

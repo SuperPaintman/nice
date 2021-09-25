@@ -9,7 +9,28 @@ on:
             - master
 
 jobs:
-    build:
+    lint:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v2
+
+            - name: Set up Go 1.17
+              uses: actions/setup-go@v2
+              with:
+                  go-version: "1.17"
+
+            - name: Download Go dependencies
+              run: go mod download
+
+            - name: Run Go linters
+              uses: golangci/golangci-lint-action@v2
+              with:
+                  version: v1.42
+                  skip-go-installation: true
+
+    test:
+        needs:
+            - lint
         runs-on: ${{ matrix.os }}
         strategy:
             matrix:
@@ -30,6 +51,9 @@ jobs:
               uses: actions/setup-go@v2
               with:
                   go-version: ${{ matrix.go }}
+
+            - name: Download Go dependencies
+              run: go mod download
 
             - name: Set up Cover cmd
               run: go get golang.org/x/tools/cmd/cover

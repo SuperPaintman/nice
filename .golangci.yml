@@ -1,0 +1,110 @@
+run:
+    modules-download-mode: mod
+
+linters-settings:
+    errcheck:
+        # report about not checking of errors in type assertions: `a := b.(MyStruct)`;
+        # default is false: such cases aren't reported by default.
+        check-type-assertions: true
+
+    errorlint:
+        # Check whether fmt.Errorf uses the %w verb for formatting errors. See the readme for caveats
+        errorf: true
+        # Check for plain type assertions and type switches
+        asserts: false
+        # Check for plain error comparisons
+        comparison: false
+
+    exhaustive:
+        # check switch statements in generated files also
+        check-generated: true
+        # indicates that switch statements are to be considered exhaustive if a
+        # 'default' case is present, even if all enum members aren't listed in the
+        # switch
+        default-signifies-exhaustive: true
+
+    godot:
+        # comments to be checked: `declarations`, `toplevel`, or `all`
+        scope: declarations
+        # check that each sentence starts with a capital letter
+        capital: true
+
+    gofmt:
+        # simplify code: gofmt with `-s` option, true by default
+        simplify: true
+
+    goimports:
+        # put imports beginning with prefix after 3rd-party packages;
+        # it's a comma-separated list of prefixes
+        local-prefixes: github.com/SuperPaintman/nice
+
+    gosec:
+
+    gosimple:
+        # Select the Go version to target. The default is '1.13'.
+        go: "1.15"
+        # https://staticcheck.io/docs/options#checks
+        checks: ["all"]
+
+    govet:
+        # report about shadowed variables
+        check-shadowing: true
+        # settings per analyzer
+        settings:
+        # enable or disable analyzers by name
+        # run `go tool vet help` to see all analyzers
+        enable-all: true
+        disable:
+            - shadow
+            - fieldalignment
+
+    lll:
+        # max line length, lines longer will be reported. Default is 120.
+        # '\t' is counted as 1 character by default, and can be changed with the tab-width option
+        line-length: 120
+        # tab width in spaces. Default to 1.
+        tab-width: 2
+
+    misspell:
+        # Correct spellings using locale preferences for US or UK.
+        # Default is to use a neutral variety of English.
+        # Setting locale to US will correct the British spelling of 'colour' to 'color'.
+        locale: US
+        ignore-words:
+            - someword
+
+    stylecheck:
+        # Select the Go version to target. The default is '1.13'.
+        go: "1.15"
+
+    unparam:
+        # Inspect exported functions, default is false. Set to true if no external program/library imports your code.
+        # XXX: if you enable this setting, unparam will report a lot of false-positives in text editors:
+        # if it's called for subdir of a project it can't find external interfaces. All text editor integrations
+        # with golangci-lint call it on a directory with the changed file.
+        check-exported: false
+
+    unused:
+        # Select the Go version to target. The default is '1.13'.
+        go: "1.15"
+
+linters:
+    disable-all: true
+    enable:
+        - errcheck
+        - errorlint
+        - exhaustive
+        - godot
+        - gofmt
+        - goimports
+        - gosec
+        - gosimple
+        - govet
+        - lll
+        - misspell
+        - stylecheck
+        - unparam
+        - unused
+
+severity:
+    default-severity: error

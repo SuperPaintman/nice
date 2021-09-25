@@ -105,7 +105,7 @@ func (h DefaultHelper) Help(cmd *Command, w io.Writer) error {
 		if err := cmd.Usage.Usage(cmd, &buf); err != nil {
 			return err
 		}
-		usage := string(buf.Bytes())
+		usage := buf.String()
 
 		ew.Writef("\n")
 		ew.Writef(usage)
@@ -127,7 +127,9 @@ func (h DefaultHelper) Help(cmd *Command, w io.Writer) error {
 			}
 		}
 
-		for _, cmd := range cmd.Commands {
+		for i := range cmd.Commands {
+			cmd := &cmd.Commands[i]
+
 			// Name.
 			ew.Writef("  %s%s%s", colorCommand, cmd.Name, colorCommand.Reset())
 
@@ -135,10 +137,10 @@ func (h DefaultHelper) Help(cmd *Command, w io.Writer) error {
 			if cmd.Usage != nil {
 				// TODO(SuperPaintman): optimize it.
 				var buf bytes.Buffer
-				if err := cmd.Usage.Usage(&cmd, &buf); err != nil {
+				if err := cmd.Usage.Usage(cmd, &buf); err != nil {
 					return err
 				}
-				usage := string(buf.Bytes())
+				usage := buf.String()
 
 				if usage != "" {
 					indent := 4 + maxLen - len(cmd.Name)
@@ -201,7 +203,7 @@ func (h DefaultHelper) Help(cmd *Command, w io.Writer) error {
 				if err := arg.Usage.Usage(cmd, &buf); err != nil {
 					return err
 				}
-				usage := string(buf.Bytes())
+				usage := buf.String()
 
 				if usage != "" {
 					indent := 4 + argMaxLen - (len(arg.Name) + 2 + len(arg.Type()) + 1)
@@ -244,10 +246,8 @@ func (h DefaultHelper) Help(cmd *Command, w io.Writer) error {
 			ew.Writef("Arguments:\n")
 		}
 
-		if rest != nil {
-			if l := len(rest.Name) + 2 + len(rest.Type()) + 1 + 3; l > argMaxLen {
-				argMaxLen = l
-			}
+		if l := len(rest.Name) + 2 + len(rest.Type()) + 1 + 3; l > argMaxLen {
+			argMaxLen = l
 		}
 
 		// Name.
@@ -270,7 +270,7 @@ func (h DefaultHelper) Help(cmd *Command, w io.Writer) error {
 			if err := rest.Usage.Usage(cmd, &buf); err != nil {
 				return err
 			}
-			usage := string(buf.Bytes())
+			usage := buf.String()
 
 			if usage != "" {
 				indent := 4 + argMaxLen - ((len(rest.Name) + 2 + len(rest.Type()) + 1) + 3)
@@ -394,7 +394,7 @@ func (h DefaultHelper) Help(cmd *Command, w io.Writer) error {
 				if err := flag.Usage.Usage(cmd, &buf); err != nil {
 					return err
 				}
-				usage := string(buf.Bytes())
+				usage := buf.String()
 
 				if usage != "" {
 					l := len(cmd.Parser().FormatShortFlag(flag.Short))

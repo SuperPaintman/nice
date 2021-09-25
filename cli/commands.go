@@ -41,7 +41,7 @@ func CompletionCommand() Command {
 					generator = &ZSHCompletionGenerator{}
 
 				default:
-					return fmt.Errorf("Unknown shell: '%s'", *shell)
+					return fmt.Errorf("unknown shell: '%s'", *shell)
 				}
 
 				root, err := cmd.App().RootCommand()

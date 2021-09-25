@@ -178,7 +178,9 @@ func assertStringsDiff(t *testing.T, got, want string) {
 			return
 		}
 
-		cmd := exec.Command("diff", "-u", wantTMP.Name(), gotTMP.Name())
+		wantName := wantTMP.Name()
+		gotName := gotTMP.Name()
+		cmd := exec.Command("diff", "-u", wantName, gotName)
 		cmd.Stdout = &logPipe{t}
 		cmd.Stderr = &logPipe{t}
 
