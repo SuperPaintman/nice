@@ -37,6 +37,8 @@ jobs:
                   skip-go-installation: true
 
     test:
+        needs:
+            - lint
         runs-on: ${{ matrix.os }}
         strategy:
             matrix:
