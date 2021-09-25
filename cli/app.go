@@ -212,6 +212,15 @@ func (app *App) Run() error {
 	return app.RunContext(context.Background())
 }
 
+func (app *App) RootCommand(path ...string) (*Command, error) {
+	cmd, err := app.command()
+	if err != nil {
+		return nil, err
+	}
+
+	return cmd, nil
+}
+
 func (app *App) Command(path ...string) (*Command, error) {
 	if len(path) == 0 || path[0] != app.Name {
 		return nil, ErrCommandNotFound
@@ -223,7 +232,7 @@ func (app *App) Command(path ...string) (*Command, error) {
 	}
 
 	for j, name := range path[1:] {
-		// Find a sub command.
+		// Find a subcommand.
 		var found bool
 		for i := range cmd.Commands {
 			c := &cmd.Commands[i]

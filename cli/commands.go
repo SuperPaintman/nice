@@ -1,5 +1,7 @@
 package cli
 
+import "fmt"
+
 func HelpCommand() Command {
 	return Command{
 		Name:  "help",
@@ -20,6 +22,34 @@ func HelpCommand() Command {
 				}
 
 				return cmd.App().Help(cmd, cmd.Stdout())
+			}
+		}),
+	}
+}
+
+func CompletionCommand() Command {
+	return Command{
+		Name:  "completion",
+		Usage: Usage("Generate completion script"),
+		Action: ActionFunc(func(cmd *Command) ActionRunner {
+			shell := StringArg(cmd, "shell")
+
+			return func(cmd *Command) error {
+				var generator CompletionGenerator
+				switch *shell {
+				case "zsh":
+					generator = &ZSHCompletionGenerator{}
+
+				default:
+					return fmt.Errorf("Unknown shell: '%s'", *shell)
+				}
+
+				root, err := cmd.App().RootCommand()
+				if err != nil {
+					return err
+				}
+
+				return generator.CompletionGenerate(root, cmd.Stdout())
 			}
 		}),
 	}
