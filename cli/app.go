@@ -265,7 +265,18 @@ func (app *App) Warnln(a ...interface{}) (n int, err error) {
 
 func (app *App) command() (*Command, error) {
 	if app.rootCmd == nil {
-		app.rootCmd = &Command{
+		if app.Name == "" {
+			return nil, &InvalidCommandError{Err: ErrMissingName}
+		}
+
+		if !validCommandName(app.Name) {
+			return nil, &InvalidCommandError{
+				Name: app.Name,
+				Err:  ErrInvalidName,
+			}
+		}
+
+		cmd := &Command{
 			Name:         app.Name,
 			Usage:        app.Usage,
 			Action:       app.Action,
@@ -273,12 +284,14 @@ func (app *App) command() (*Command, error) {
 			Commands:     app.Commands,
 		}
 
-		path := []string{app.Name}
-		app.rootCmd.init(app.ctx, app, nil, app.newRegister(), path)
+		path := []string{cmd.Name}
+		cmd.init(app.ctx, app, nil, app.newRegister(), path)
 
-		if err := app.rootCmd.setup(); err != nil {
+		if err := cmd.setup(); err != nil {
 			return nil, err
 		}
+
+		app.rootCmd = cmd
 	}
 
 	return app.rootCmd, nil
