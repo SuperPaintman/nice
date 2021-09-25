@@ -19,10 +19,10 @@ jobs:
                     - windows-latest
                 go:
                     - "1.17"
-                    - "1.16"
-                    - "1.15"
-                    - "1.14"
-                    - "1.13"
+                    # - "1.16"
+                    # - "1.15"
+                    # - "1.14"
+                    # - "1.13"
         steps:
             - uses: actions/checkout@v2
 
@@ -31,5 +31,14 @@ jobs:
               with:
                   go-version: ${{ matrix.go }}
 
+            - name: Set up Cover cmd
+              run: go get golang.org/x/tools/cmd/cover
+
             - name: Test
-              run: go test -v ./...
+              run: go test -race -covermode=atomic -coverprofile=coverage.out -v ./...
+
+            - name: Coveralls
+              uses: coverallsapp/github-action@master
+              with:
+                  github-token: ${{ secrets.GITHUB_TOKEN }}
+                  path-to-lcov: coverage.out
