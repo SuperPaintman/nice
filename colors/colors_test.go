@@ -7,12 +7,373 @@ import (
 
 func init() {
 	// TODO(SuperPaintman): add tests for cases when terminal does not support colors.
-	supportsColor = true
-	supportsANSI256 = true
-	supportsTrueColor = true
+	SetMode(Always | ForceANSI256 | ForceTrueColor)
+}
+
+func TestComputeShouldUse(t *testing.T) {
+	t.Parallel()
+
+	tt := []struct {
+		name          string
+		mode          Mode
+		supports      termSupports
+		wantColors    bool
+		wantANSI256   bool
+		wantTrueColor bool
+	}{
+		{
+			name:          "mode auto and term supports nothing",
+			mode:          Auto,
+			supports:      0,
+			wantColors:    false,
+			wantANSI256:   false,
+			wantTrueColor: false,
+		},
+		{
+			name:          "mode auto and term supports colors",
+			mode:          Auto,
+			supports:      supportsColor,
+			wantColors:    true,
+			wantANSI256:   false,
+			wantTrueColor: false,
+		},
+		{
+			name:          "mode auto and term supports ANSI256",
+			mode:          Auto,
+			supports:      supportsColor | supportsANSI256,
+			wantColors:    true,
+			wantANSI256:   true,
+			wantTrueColor: false,
+		},
+		{
+			name:          "mode auto and term supports true colors",
+			mode:          Auto,
+			supports:      supportsColor | supportsTrueColor,
+			wantColors:    true,
+			wantANSI256:   false,
+			wantTrueColor: true,
+		},
+		{
+			name:          "mode auto and term supports all",
+			mode:          Auto,
+			supports:      supportsColor | supportsANSI256 | supportsTrueColor,
+			wantColors:    true,
+			wantANSI256:   true,
+			wantTrueColor: true,
+		},
+		{
+			name:          "mode auto and term supports all",
+			mode:          Auto,
+			supports:      supportsColor | supportsANSI256 | supportsTrueColor,
+			wantColors:    true,
+			wantANSI256:   true,
+			wantTrueColor: true,
+		},
+		{
+			name:          "mode never and term supports all",
+			mode:          Never,
+			supports:      supportsColor | supportsANSI256 | supportsTrueColor,
+			wantColors:    false,
+			wantANSI256:   false,
+			wantTrueColor: false,
+		},
+		{
+			name:          "mode always and term supports nothing",
+			mode:          Always,
+			supports:      0,
+			wantColors:    true,
+			wantANSI256:   false,
+			wantTrueColor: false,
+		},
+		{
+			name:          "mode always and term supports nothing and force ANSI256",
+			mode:          Always | ForceANSI256,
+			supports:      0,
+			wantColors:    true,
+			wantANSI256:   true,
+			wantTrueColor: false,
+		},
+		{
+			name:          "mode always and term supports nothing and force true color",
+			mode:          Always | ForceTrueColor,
+			supports:      0,
+			wantColors:    true,
+			wantANSI256:   false,
+			wantTrueColor: true,
+		},
+		{
+			name:          "mode always and term supports nothing and force all",
+			mode:          Always | ForceANSI256 | ForceTrueColor,
+			supports:      0,
+			wantColors:    true,
+			wantANSI256:   true,
+			wantTrueColor: true,
+		},
+	}
+
+	for _, tc := range tt {
+		tc := tc
+
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			gotColors, gotANSI256, gotTrueColor := computeShouldUse(tc.mode, tc.supports)
+
+			if gotColors != tc.wantColors {
+				t.Errorf("computeShouldUse(%04b, %03b): gotColors: got = %v, want = %v",
+					tc.mode, tc.supports, gotColors, tc.wantColors,
+				)
+			}
+
+			if gotANSI256 != tc.wantANSI256 {
+				t.Errorf("computeShouldUse(%04b, %03b): gotANSI256: got = %v, want = %v",
+					tc.mode, tc.supports, gotANSI256, tc.wantANSI256,
+				)
+			}
+
+			if gotTrueColor != tc.wantTrueColor {
+				t.Errorf("computeShouldUse(%04b, %03b): gotTrueColor: got = %v, want = %v",
+					tc.mode, tc.supports, gotTrueColor, tc.wantTrueColor,
+				)
+			}
+		})
+	}
+}
+
+type testEnv map[string]string
+
+func (e testEnv) String() string {
+	buf := ""
+	for k, v := range e {
+		if buf != "" {
+			buf += " "
+		}
+
+		buf += k + "=" + v
+	}
+
+	return buf
+}
+
+func (e testEnv) LookupEnv(key string) (string, bool) {
+	v, ok := e[key]
+	return v, ok
+}
+
+func TestTerminalSupports(t *testing.T) {
+	tt := []struct {
+		name string
+		env  testEnv
+		want termSupports
+	}{
+		{
+			name: "TERM=dumb",
+			env: testEnv{
+				"TERM": "dumb",
+			},
+			want: 0,
+		},
+		{
+			name: "TERM=dumb with COLORTERM",
+			env: testEnv{
+				"TERM":      "dumb",
+				"COLORTERM": "truecolor",
+			},
+			want: 0,
+		},
+		{
+			name: "TERM=xterm",
+			env: testEnv{
+				"TERM": "xterm",
+			},
+			want: supportsColor,
+		},
+		{
+			name: "TERM=screen",
+			env: testEnv{
+				"TERM": "screen",
+			},
+			want: supportsColor,
+		},
+		{
+			name: "TERM=vt100",
+			env: testEnv{
+				"TERM": "vt100",
+			},
+			want: supportsColor,
+		},
+		{
+			name: "TERM=vt220",
+			env: testEnv{
+				"TERM": "vt220",
+			},
+			want: supportsColor,
+		},
+		{
+			name: "TERM=rxvt",
+			env: testEnv{
+				"TERM": "rxvt",
+			},
+			want: supportsColor,
+		},
+		{
+			name: "TERM=xterm-256color",
+			env: testEnv{
+				"TERM": "xterm-256color",
+			},
+			want: supportsColor | supportsANSI256,
+		},
+		{
+			name: "TERM=screen-256color",
+			env: testEnv{
+				"TERM": "screen-256color",
+			},
+			want: supportsColor | supportsANSI256,
+		},
+		{
+			name: "COLORTERM=<any>",
+			env: testEnv{
+				"COLORTERM": "test",
+			},
+			want: supportsColor,
+		},
+		{
+			name: "COLORTERM=truecolor",
+			env: testEnv{
+				"COLORTERM": "truecolor",
+			},
+			want: supportsColor | supportsANSI256 | supportsTrueColor,
+		},
+		{
+			name: "TERM_PROGRAM=iTerm.app TERM_PROGRAM_VERSION < 3",
+			env: testEnv{
+				"TERM_PROGRAM":         "iTerm.app",
+				"TERM_PROGRAM_VERSION": "2.9.3",
+			},
+			want: supportsColor | supportsANSI256,
+		},
+		{
+			name: "TERM_PROGRAM=iTerm.app TERM_PROGRAM_VERSION >= 3",
+			env: testEnv{
+				"TERM_PROGRAM":         "iTerm.app",
+				"TERM_PROGRAM_VERSION": "3.0.10",
+			},
+			want: supportsColor | supportsANSI256 | supportsTrueColor,
+		},
+		{
+			name: "TERM_PROGRAM=Apple_Terminal",
+			env: testEnv{
+				"TERM_PROGRAM": "Apple_Terminal",
+			},
+			want: supportsColor | supportsANSI256 | supportsTrueColor,
+		},
+		{
+			name: "CI=<any> TRAVIS=<any>",
+			env: testEnv{
+				"CI":     "test",
+				"TRAVIS": "test",
+			},
+			want: supportsColor,
+		},
+		{
+			name: "CI=<any> CIRCLECI=<any>",
+			env: testEnv{
+				"CI":       "test",
+				"CIRCLECI": "test",
+			},
+			want: supportsColor,
+		},
+		{
+			name: "CI=<any> APPVEYOR=<any>",
+			env: testEnv{
+				"CI":       "test",
+				"APPVEYOR": "test",
+			},
+			want: supportsColor,
+		},
+		{
+			name: "CI=<any> GITLAB_CI=<any>",
+			env: testEnv{
+				"CI":        "test",
+				"GITLAB_CI": "test",
+			},
+			want: supportsColor,
+		},
+		{
+			name: "CI=<any> GITHUB_ACTIONS=<any>",
+			env: testEnv{
+				"CI":             "test",
+				"GITHUB_ACTIONS": "test",
+			},
+			want: supportsColor,
+		},
+		{
+			name: "CI=<any> BUILDKITE=<any>",
+			env: testEnv{
+				"CI":        "test",
+				"BUILDKITE": "test",
+			},
+			want: supportsColor,
+		},
+		{
+			name: "CI=<any> DRONE=<any>",
+			env: testEnv{
+				"CI":    "test",
+				"DRONE": "test",
+			},
+			want: supportsColor,
+		},
+		{
+			name: "CI=<any> TRAVIS=<any>",
+			env: testEnv{
+				"CI":     "test",
+				"TRAVIS": "test",
+			},
+			want: supportsColor,
+		},
+		{
+			name: "CI=<any> CI_NAME=codeship",
+			env: testEnv{
+				"CI":      "test",
+				"CI_NAME": "codeship",
+			},
+			want: supportsColor,
+		},
+		{
+			name: "TEAMCITY_VERSION < 9.1",
+			env: testEnv{
+				"TEAMCITY_VERSION": "9.0.5 (build 123456)",
+			},
+			want: 0,
+		},
+		{
+			name: "TEAMCITY_VERSION >= 9.1",
+			env: testEnv{
+				"TEAMCITY_VERSION": "9.1.0 (build 123456)",
+			},
+			want: supportsColor,
+		},
+	}
+
+	for _, tc := range tt {
+		tc := tc
+
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			got := terminalSupports(tc.env.LookupEnv)
+			if got != tc.want {
+				t.Errorf("terminalSupports(%s): got = %03b, want = %03b",
+					tc.env, got, tc.want,
+				)
+			}
+		})
+	}
 }
 
 func TestAttribute_Reset(t *testing.T) {
+	t.Parallel()
+
 	tt := []struct {
 		name      string
 		attribute Attribute
@@ -41,7 +402,10 @@ func TestAttribute_Reset(t *testing.T) {
 	}
 
 	for _, tc := range tt {
+		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
 			got := tc.attribute.Reset()
 			if got != tc.want {
 				t.Errorf("Reset(): got = %q, want = %q", got, tc.want)
@@ -53,6 +417,8 @@ func TestAttribute_Reset(t *testing.T) {
 const maxUint8 = int(^uint8(0))
 
 func TestAttributeToString(t *testing.T) {
+	t.Parallel()
+
 	for i := 0; i < maxUint8+1; i++ {
 		got := attributeToString(uint8(i))
 
@@ -65,6 +431,8 @@ func TestAttributeToString(t *testing.T) {
 }
 
 func TestANSI256(t *testing.T) {
+	t.Parallel()
+
 	for i := 0; i < maxUint8+1; i++ {
 		got := ANSI256(uint8(i))
 
@@ -77,6 +445,8 @@ func TestANSI256(t *testing.T) {
 }
 
 func TestBgANSI256(t *testing.T) {
+	t.Parallel()
+
 	for i := 0; i < maxUint8+1; i++ {
 		got := BgANSI256(uint8(i))
 
@@ -94,6 +464,8 @@ const (
 )
 
 func TestTrueColor(t *testing.T) {
+	t.Parallel()
+
 	for i := 0; i < trueColorMax+1; i += trueColorStep {
 		r := uint8((i >> 0) & 255)
 		g := uint8((i >> 8) & 255)
@@ -119,6 +491,8 @@ func TestTrueColor(t *testing.T) {
 }
 
 func TestBgTrueColor(t *testing.T) {
+	t.Parallel()
+
 	for i := 0; i < trueColorMax+1; i += trueColorStep {
 		r := uint8((i >> 0) & 255)
 		g := uint8((i >> 8) & 255)
@@ -144,6 +518,8 @@ func TestBgTrueColor(t *testing.T) {
 }
 
 func TestTrueColorRGB(t *testing.T) {
+	t.Parallel()
+
 	for i := 0; i < trueColorMax+1; i += trueColorStep {
 		rgb := RGB{
 			R: uint8((i >> 0) & 255),
@@ -171,6 +547,8 @@ func TestTrueColorRGB(t *testing.T) {
 }
 
 func TestBgTrueColorRGB(t *testing.T) {
+	t.Parallel()
+
 	for i := 0; i < trueColorMax+1; i += trueColorStep {
 		rgb := RGB{
 			R: uint8((i >> 0) & 255),

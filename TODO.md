@@ -85,14 +85,14 @@
 
 - [ ] Core
 
-  - [ ] Supports colors checker
-  - [ ] Setters for color mode and optimize `should*`
+  - [x] Supports colors checker
+  - [x] Setters for color mode and optimize `should*`
   - [ ] Optimize uint8 to string
   - [ ] Optimize uint8 with prefixes to string
 
-- [ ] Tests
+- [x] Tests
 
-  - [ ] Cases when terminal does not support colors
+  - [x] Cases when terminal does not support colors
 
 ---
 
@@ -158,6 +158,7 @@
 - [ ] Article on medium
 - [ ] Who use Nice
 - [ ] Discourse forum
+- [ ] Issues on github
 
 ---
 

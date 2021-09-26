@@ -11,61 +11,91 @@ package colors
 
 import (
 	"os"
+	"regexp"
 	"strconv"
 
 	"github.com/mattn/go-isatty"
 )
 
-var (
-	supportsColor     bool
-	supportsANSI256   bool
-	supportsTrueColor bool
+type termSupports uint8
+
+const (
+	supportsColor termSupports = 1 << iota
+	supportsANSI256
+	supportsTrueColor
 )
 
-func init() {
-	// Check is TTY.
-	isTTY := isatty.IsTerminal(os.Stdout.Fd()) ||
-		isatty.IsCygwinTerminal(os.Stdout.Fd())
+// TODO(SuperPaintman):
+//     Remove using the regexp package. Because we need it only for one thing.
 
-	if !isTTY {
-		return
-	}
+var (
+	teamCityVersionRe = regexp.MustCompile(`^(9\.(0*[1-9]\d*)\.|\d{2,}\.)`)
+	termRe            = regexp.MustCompile(`(?i)^screen|^xterm|^vt100|^vt220|^rxvt`)
+	term256ColorRe    = regexp.MustCompile(`(?i)-256(color)?$`)
+	iTermAppVersionRe = regexp.MustCompile(`^(\d+)\.`)
+)
 
+func terminalSupports(lookup func(key string) (string, bool)) (s termSupports) {
 	// Terminals.
-	term := os.Getenv("TERM")
-
-	if term == "dumb" {
+	term, ok := lookup("TERM")
+	if ok && term == "dumb" {
 		return
 	}
 
-	if colorTerm, ok := os.LookupEnv("COLORTERM"); ok {
-		supportsColor = true
+	if colorTerm, ok := lookup("COLORTERM"); ok {
+		s |= supportsColor
 
 		if colorTerm == "truecolor" {
-			supportsANSI256 = true
-			supportsTrueColor = true
+			s |= supportsANSI256
+			s |= supportsTrueColor
 		}
 		return
 	}
 
-	if termProg, ok := os.LookupEnv("TERM_PROGRAM"); ok {
-		if termProg == "Apple_Terminal" {
-			supportsColor = true
-			supportsANSI256 = true
+	if termProg, ok := lookup("TERM_PROGRAM"); ok {
+		if termProg == "iTerm.app" {
+			s |= supportsColor
+			s |= supportsANSI256
+
+			if v, ok := lookup("TERM_PROGRAM_VERSION"); ok {
+				raw := iTermAppVersionRe.FindString(v)
+				if raw == "" {
+					return
+				}
+
+				version, err := strconv.Atoi(raw[:len(raw)-1]) // Eat '.'.
+				if err == nil && version >= 3 {
+					s |= supportsTrueColor
+				}
+			}
 			return
 		}
 
-		// TODO(SuperPaintman): add iTerm.app
+		if termProg == "Apple_Terminal" {
+			s |= supportsColor
+			s |= supportsANSI256
+			s |= supportsTrueColor
+			return
+		}
 	}
 
-	// TODO(SuperPaintman): /-256(color)?$/i
+	if term != "" {
+		if term256ColorRe.MatchString(term) {
+			s |= supportsColor
+			s |= supportsANSI256
+			return
+		}
 
-	// TODO(SuperPaintman): /^screen|^xterm|^vt100|^vt220|^rxvt|color|ansi|cygwin|linux/i
+		if termRe.MatchString(term) {
+			s |= supportsColor
+			return
+		}
+	}
 
 	// TODO(SuperPaintman): add win32 checker.
 
 	// CI.
-	if _, ok := os.LookupEnv("CI"); ok {
+	if _, ok := lookup("CI"); ok {
 		cis := [...]string{
 			"TRAVIS",
 			"CIRCLECI",
@@ -77,61 +107,86 @@ func init() {
 		}
 
 		for _, name := range cis {
-			if _, ok := os.LookupEnv(name); ok {
-				supportsColor = true
+			if _, ok := lookup(name); ok {
+				s |= supportsColor
 				return
 			}
 		}
 
-		if os.Getenv("CI_NAME") == "codeship" {
-			supportsColor = true
+		if name, ok := lookup("CI_NAME"); ok && name == "codeship" {
+			s |= supportsColor
 			return
 		}
 	}
 
-	// TODO(SuperPaintman): add TeamCity checker.
+	// TeamCity.
+	if version, ok := lookup("TEAMCITY_VERSION"); ok {
+		if teamCityVersionRe.MatchString(version) {
+			s |= supportsColor
+			return
+		}
+	}
+
+	// TODO(SuperPaintman): add cygwin.
+
+	return
 }
 
-func SupportsColor() bool     { return supportsColor }
-func SupportsANSI256() bool   { return supportsANSI256 }
-func SupportsTrueColor() bool { return supportsTrueColor }
+func SupportsColor() bool     { return supports&supportsColor != 0 }
+func SupportsANSI256() bool   { return supports&supportsANSI256 != 0 }
+func SupportsTrueColor() bool { return supports&supportsTrueColor != 0 }
 
 type Mode uint8
 
 const (
-	Auto Mode = iota
+	Auto Mode = 1 << iota >> 1
 	Never
 	Always
+	ForceANSI256
+	ForceTrueColor
 )
-
-// TODO(SuperPaintman): replace it with setters to optimuze should* functions.
-
-var Colors Mode = Auto
 
 var (
-	ForceANSI256   bool
-	ForceTrueColor bool
+	supports                                              termSupports
+	mode                                                  Mode
+	shouldUseColors, shouldUseANSI256, shouldUseTrueColor bool
 )
 
-func shouldUseColors(clrs Mode) bool {
-	return clrs == Always ||
-		(clrs == Auto && supportsColor)
+func init() {
+	// Check is TTY.
+	isTTY := isatty.IsTerminal(os.Stdout.Fd()) ||
+		isatty.IsCygwinTerminal(os.Stdout.Fd())
+
+	if isTTY {
+		supports = terminalSupports(os.LookupEnv)
+	}
+
+	shouldUseColors, shouldUseANSI256, shouldUseTrueColor = computeShouldUse(mode, supports)
 }
 
-func shouldUseANSI256(clrs Mode, force bool) bool {
-	return (supportsANSI256 || force) &&
-		shouldUseColors(clrs)
+func SetMode(m Mode) {
+	mode = m
+	shouldUseColors, shouldUseANSI256, shouldUseTrueColor = computeShouldUse(mode, supports)
 }
 
-func shouldUseTrueColor(clrs Mode, force bool) bool {
-	return (supportsTrueColor || force) &&
-		shouldUseColors(clrs)
+func computeShouldUse(m Mode, s termSupports) (colors bool, ansi256 bool, trueColor bool) {
+	if m&Never == 0 {
+		colors = m&Always != 0 || s&supportsColor != 0
+
+		ansi256 = colors &&
+			(s&supportsANSI256 != 0 || m&ForceANSI256 != 0)
+
+		trueColor = colors &&
+			(s&supportsTrueColor != 0 || m&ForceTrueColor != 0)
+	}
+
+	return
 }
 
 type Attribute uint8
 
 func (a Attribute) String() string {
-	if !shouldUseColors(Colors) {
+	if !shouldUseColors {
 		return ""
 	}
 
@@ -235,7 +290,7 @@ func attributeToString(i uint8) string {
 
 // TODO(SuperPaintman): make it inlinable.
 func ANSI256(color uint8) string {
-	if !shouldUseANSI256(Colors, ForceANSI256) {
+	if !shouldUseANSI256 {
 		return ""
 	}
 
@@ -245,7 +300,7 @@ func ANSI256(color uint8) string {
 
 // TODO(SuperPaintman): make it inlinable.
 func BgANSI256(color uint8) string {
-	if !shouldUseANSI256(Colors, ForceANSI256) {
+	if !shouldUseANSI256 {
 		return ""
 	}
 
@@ -255,7 +310,7 @@ func BgANSI256(color uint8) string {
 
 // 24-bit or truecolor or ANSI 16 millions.
 func TrueColor(r, g, b uint8) string {
-	if !shouldUseTrueColor(Colors, ForceTrueColor) {
+	if !shouldUseTrueColor {
 		return ""
 	}
 
@@ -267,7 +322,7 @@ func TrueColor(r, g, b uint8) string {
 }
 
 func BgTrueColor(r, g, b uint8) string {
-	if !shouldUseTrueColor(Colors, ForceTrueColor) {
+	if !shouldUseTrueColor {
 		return ""
 	}
 
