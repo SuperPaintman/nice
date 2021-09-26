@@ -403,17 +403,17 @@ func (app *App) handleError(err error, w io.Writer) (exitCode ExitCode) {
 		parseValueError := &ParseValueError{}
 		switch {
 		case errors.Is(flagErr.Err, ErrMissingName):
-			ew.Writef("Registred flag witout short nor long name\n")
+			ew.Writef("Unable to register a flag without a short or long name\n")
 
 		case errors.Is(flagErr.Err, ErrInvalidName):
 			if flagErr.Long != "" {
-				ew.Writef("Registred flag with invalid long name: %s\n", flagErr.Long)
+				ew.Writef("Unable to register a flag with an invalid long name: %s\n", flagErr.Long)
 			} else {
-				ew.Writef("Registred flag with invalid short name: %s\n", flagErr.Short)
+				ew.Writef("Unable to register a flag with an invalid short name: %s\n", flagErr.Short)
 			}
 
 		case errors.Is(flagErr.Err, ErrDuplicate):
-			ew.WriteString("Registred duplicated flag: ")
+			ew.WriteString("Unable to register a duplicate flag: ")
 			writeFlagName(flagErr.Short, flagErr.Long)
 			ew.WriteString("\n")
 
@@ -438,25 +438,25 @@ func (app *App) handleError(err error, w io.Writer) (exitCode ExitCode) {
 		parseValueError := &ParseValueError{}
 		switch {
 		case errors.Is(argErr.Err, ErrRequiredAfterOptional):
-			ew.Writef("Registred %s argument (%s) after the another optional argument\n",
+			ew.Writef("Unable to register a required %s argument (%s) after another optional argument",
 				nthNumber(argErr.Index), argErr.Name,
 			)
 
 		case errors.Is(argErr.Err, ErrArgAfterRest):
-			ew.Writef("Registred %s argument (%s) after the rest arguments\n",
+			ew.Writef("Unable to register the %s argument (%s) after the rest arguments\n",
 				nthNumber(argErr.Index), argErr.Name,
 			)
 
 		case errors.Is(argErr.Err, ErrMissingName):
-			ew.Writef("Registred %s argument witout name\n", nthNumber(argErr.Index))
+			ew.Writef("Unable to register the %s argument without a name\n", nthNumber(argErr.Index))
 
 		case errors.Is(argErr.Err, ErrInvalidName):
-			ew.Writef("Registred %s argument with invalid name: %s\n",
+			ew.Writef("Unable to register the %s argument with an invalid name: %s\n",
 				nthNumber(argErr.Index), argErr.Name,
 			)
 
 		case errors.Is(argErr.Err, ErrDuplicate):
-			ew.Writef("Registred duplicated %s argument: %s\n",
+			ew.Writef("Unable to register a duplicate %s argument: %s\n",
 				nthNumber(argErr.Index), argErr.Name,
 			)
 
@@ -480,12 +480,12 @@ func (app *App) handleError(err error, w io.Writer) (exitCode ExitCode) {
 	case errors.As(err, &restArgsErr):
 		switch {
 		case errors.Is(restArgsErr.Err, ErrInvalidName):
-			ew.Writef("Registred the rest arguments with invalid name: %s\n",
+			ew.Writef("Unable to register the rest arguments with an invalid name: %s\n",
 				restArgsErr.Name,
 			)
 
 		case errors.Is(restArgsErr.Err, ErrDuplicate):
-			ew.Writef("Registred another rest arguments: %s\n", restArgsErr.Name)
+			ew.Writef("Unable to register another rest arguments: %s\n", restArgsErr.Name)
 
 		default:
 			ew.WriteString(err.Error())
