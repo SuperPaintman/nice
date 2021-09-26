@@ -182,6 +182,55 @@ func TestTerminalSupports(t *testing.T) {
 			want: 0,
 		},
 		{
+			name: "TERM=xterm",
+			env: testEnv{
+				"TERM": "xterm",
+			},
+			want: supportsColor,
+		},
+		{
+			name: "TERM=screen",
+			env: testEnv{
+				"TERM": "screen",
+			},
+			want: supportsColor,
+		},
+		{
+			name: "TERM=vt100",
+			env: testEnv{
+				"TERM": "vt100",
+			},
+			want: supportsColor,
+		},
+		{
+			name: "TERM=vt220",
+			env: testEnv{
+				"TERM": "vt220",
+			},
+			want: supportsColor,
+		},
+		{
+			name: "TERM=rxvt",
+			env: testEnv{
+				"TERM": "rxvt",
+			},
+			want: supportsColor,
+		},
+		{
+			name: "TERM=xterm-256color",
+			env: testEnv{
+				"TERM": "xterm-256color",
+			},
+			want: supportsColor | supportsANSI256,
+		},
+		{
+			name: "TERM=screen-256color",
+			env: testEnv{
+				"TERM": "screen-256color",
+			},
+			want: supportsColor | supportsANSI256,
+		},
+		{
 			name: "COLORTERM=<any>",
 			env: testEnv{
 				"COLORTERM": "test",
@@ -192,6 +241,22 @@ func TestTerminalSupports(t *testing.T) {
 			name: "COLORTERM=truecolor",
 			env: testEnv{
 				"COLORTERM": "truecolor",
+			},
+			want: supportsColor | supportsANSI256 | supportsTrueColor,
+		},
+		{
+			name: "TERM_PROGRAM=iTerm.app TERM_PROGRAM_VERSION < 3",
+			env: testEnv{
+				"TERM_PROGRAM":         "iTerm.app",
+				"TERM_PROGRAM_VERSION": "2.9.3",
+			},
+			want: supportsColor | supportsANSI256,
+		},
+		{
+			name: "TERM_PROGRAM=iTerm.app TERM_PROGRAM_VERSION >= 3",
+			env: testEnv{
+				"TERM_PROGRAM":         "iTerm.app",
+				"TERM_PROGRAM_VERSION": "3.0.10",
 			},
 			want: supportsColor | supportsANSI256 | supportsTrueColor,
 		},
@@ -271,6 +336,20 @@ func TestTerminalSupports(t *testing.T) {
 			env: testEnv{
 				"CI":      "test",
 				"CI_NAME": "codeship",
+			},
+			want: supportsColor,
+		},
+		{
+			name: "TEAMCITY_VERSION < 9.1",
+			env: testEnv{
+				"TEAMCITY_VERSION": "9.0.5 (build 123456)",
+			},
+			want: 0,
+		},
+		{
+			name: "TEAMCITY_VERSION >= 9.1",
+			env: testEnv{
+				"TEAMCITY_VERSION": "9.1.0 (build 123456)",
 			},
 			want: supportsColor,
 		},

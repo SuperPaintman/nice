@@ -11,6 +11,7 @@ package colors
 
 import (
 	"os"
+	"regexp"
 	"strconv"
 
 	"github.com/mattn/go-isatty"
@@ -24,9 +25,17 @@ const (
 	supportsTrueColor
 )
 
+var (
+	teamCityVersionRe = regexp.MustCompile(`^(9\.(0*[1-9]\d*)\.|\d{2,}\.)`)
+	termRe            = regexp.MustCompile(`(?i)^screen|^xterm|^vt100|^vt220|^rxvt`)
+	term256ColorRe    = regexp.MustCompile(`(?i)-256(color)?$`)
+	iTermAppVersionRe = regexp.MustCompile(`^(\d+)\.`)
+)
+
 func terminalSupports(lookup func(key string) (string, bool)) (s termSupports) {
 	// Terminals.
-	if v, ok := lookup("TERM"); ok && v == "dumb" {
+	term, ok := lookup("TERM")
+	if ok && term == "dumb" {
 		return
 	}
 
@@ -41,19 +50,44 @@ func terminalSupports(lookup func(key string) (string, bool)) (s termSupports) {
 	}
 
 	if termProg, ok := lookup("TERM_PROGRAM"); ok {
+		if termProg == "iTerm.app" {
+			s |= supportsColor
+			s |= supportsANSI256
+
+			if v, ok := lookup("TERM_PROGRAM_VERSION"); ok {
+				raw := iTermAppVersionRe.FindString(v)
+				if raw == "" {
+					return
+				}
+
+				version, err := strconv.Atoi(raw[:len(raw)-1]) // Eat '.'.
+				if err == nil && version >= 3 {
+					s |= supportsTrueColor
+				}
+			}
+			return
+		}
+
 		if termProg == "Apple_Terminal" {
 			s |= supportsColor
 			s |= supportsANSI256
 			s |= supportsTrueColor
 			return
 		}
-
-		// TODO(SuperPaintman): add iTerm.app
 	}
 
-	// TODO(SuperPaintman): /-256(color)?$/i
+	if term != "" {
+		if term256ColorRe.MatchString(term) {
+			s |= supportsColor
+			s |= supportsANSI256
+			return
+		}
 
-	// TODO(SuperPaintman): /^screen|^xterm|^vt100|^vt220|^rxvt|color|ansi|cygwin|linux/i
+		if termRe.MatchString(term) {
+			s |= supportsColor
+			return
+		}
+	}
 
 	// TODO(SuperPaintman): add win32 checker.
 
@@ -76,13 +110,21 @@ func terminalSupports(lookup func(key string) (string, bool)) (s termSupports) {
 			}
 		}
 
-		if v, ok := lookup("CI_NAME"); ok && v == "codeship" {
+		if name, ok := lookup("CI_NAME"); ok && name == "codeship" {
 			s |= supportsColor
 			return
 		}
 	}
 
-	// TODO(SuperPaintman): add TeamCity checker.
+	// TeamCity.
+	if version, ok := lookup("TEAMCITY_VERSION"); ok {
+		if teamCityVersionRe.MatchString(version) {
+			s |= supportsColor
+			return
+		}
+	}
+
+	// TODO(SuperPaintman): add cygwin.
 
 	return
 }
