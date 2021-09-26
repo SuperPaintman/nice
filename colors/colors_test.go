@@ -7,12 +7,140 @@ import (
 
 func init() {
 	// TODO(SuperPaintman): add tests for cases when terminal does not support colors.
-	supportsColor = true
-	supportsANSI256 = true
-	supportsTrueColor = true
+	SetMode(Always | ForceANSI256 | ForceTrueColor)
+}
+
+func TestComputeShouldUse(t *testing.T) {
+	t.Parallel()
+
+	tt := []struct {
+		name          string
+		mode          Mode
+		supports      support
+		wantColors    bool
+		wantANSI256   bool
+		wantTrueColor bool
+	}{
+		{
+			name:          "mode auto and term supports nothing",
+			mode:          Auto,
+			supports:      0,
+			wantColors:    false,
+			wantANSI256:   false,
+			wantTrueColor: false,
+		},
+		{
+			name:          "mode auto and term supports colors",
+			mode:          Auto,
+			supports:      supportsColor,
+			wantColors:    true,
+			wantANSI256:   false,
+			wantTrueColor: false,
+		},
+		{
+			name:          "mode auto and term supports ANSI256",
+			mode:          Auto,
+			supports:      supportsColor | supportsANSI256,
+			wantColors:    true,
+			wantANSI256:   true,
+			wantTrueColor: false,
+		},
+		{
+			name:          "mode auto and term supports true colors",
+			mode:          Auto,
+			supports:      supportsColor | supportsTrueColor,
+			wantColors:    true,
+			wantANSI256:   false,
+			wantTrueColor: true,
+		},
+		{
+			name:          "mode auto and term supports all",
+			mode:          Auto,
+			supports:      supportsColor | supportsANSI256 | supportsTrueColor,
+			wantColors:    true,
+			wantANSI256:   true,
+			wantTrueColor: true,
+		},
+		{
+			name:          "mode auto and term supports all",
+			mode:          Auto,
+			supports:      supportsColor | supportsANSI256 | supportsTrueColor,
+			wantColors:    true,
+			wantANSI256:   true,
+			wantTrueColor: true,
+		},
+		{
+			name:          "mode never and term supports all",
+			mode:          Never,
+			supports:      supportsColor | supportsANSI256 | supportsTrueColor,
+			wantColors:    false,
+			wantANSI256:   false,
+			wantTrueColor: false,
+		},
+		{
+			name:          "mode always and term supports nothing",
+			mode:          Always,
+			supports:      0,
+			wantColors:    true,
+			wantANSI256:   false,
+			wantTrueColor: false,
+		},
+		{
+			name:          "mode always and term supports nothing and force ANSI256",
+			mode:          Always | ForceANSI256,
+			supports:      0,
+			wantColors:    true,
+			wantANSI256:   true,
+			wantTrueColor: false,
+		},
+		{
+			name:          "mode always and term supports nothing and force true color",
+			mode:          Always | ForceTrueColor,
+			supports:      0,
+			wantColors:    true,
+			wantANSI256:   false,
+			wantTrueColor: true,
+		},
+		{
+			name:          "mode always and term supports nothing and force all",
+			mode:          Always | ForceANSI256 | ForceTrueColor,
+			supports:      0,
+			wantColors:    true,
+			wantANSI256:   true,
+			wantTrueColor: true,
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			gotColors, gotANSI256, gotTrueColor := computeShouldUse(tc.mode, tc.supports)
+
+			if gotColors != tc.wantColors {
+				t.Errorf("computeShouldUse(%04b, %03b): gotColors: got = %v, want = %v",
+					tc.mode, tc.supports, gotColors, tc.wantColors,
+				)
+			}
+
+			if gotANSI256 != tc.wantANSI256 {
+				t.Errorf("computeShouldUse(%04b, %03b): gotANSI256: got = %v, want = %v",
+					tc.mode, tc.supports, gotANSI256, tc.wantANSI256,
+				)
+			}
+
+			if gotTrueColor != tc.wantTrueColor {
+				t.Errorf("computeShouldUse(%04b, %03b): gotTrueColor: got = %v, want = %v",
+					tc.mode, tc.supports, gotTrueColor, tc.wantTrueColor,
+				)
+			}
+		})
+	}
 }
 
 func TestAttribute_Reset(t *testing.T) {
+	t.Parallel()
+
 	tt := []struct {
 		name      string
 		attribute Attribute
@@ -42,6 +170,8 @@ func TestAttribute_Reset(t *testing.T) {
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
 			got := tc.attribute.Reset()
 			if got != tc.want {
 				t.Errorf("Reset(): got = %q, want = %q", got, tc.want)
@@ -53,6 +183,8 @@ func TestAttribute_Reset(t *testing.T) {
 const maxUint8 = int(^uint8(0))
 
 func TestAttributeToString(t *testing.T) {
+	t.Parallel()
+
 	for i := 0; i < maxUint8+1; i++ {
 		got := attributeToString(uint8(i))
 
@@ -65,6 +197,8 @@ func TestAttributeToString(t *testing.T) {
 }
 
 func TestANSI256(t *testing.T) {
+	t.Parallel()
+
 	for i := 0; i < maxUint8+1; i++ {
 		got := ANSI256(uint8(i))
 
@@ -77,6 +211,8 @@ func TestANSI256(t *testing.T) {
 }
 
 func TestBgANSI256(t *testing.T) {
+	t.Parallel()
+
 	for i := 0; i < maxUint8+1; i++ {
 		got := BgANSI256(uint8(i))
 
@@ -94,6 +230,8 @@ const (
 )
 
 func TestTrueColor(t *testing.T) {
+	t.Parallel()
+
 	for i := 0; i < trueColorMax+1; i += trueColorStep {
 		r := uint8((i >> 0) & 255)
 		g := uint8((i >> 8) & 255)
@@ -119,6 +257,8 @@ func TestTrueColor(t *testing.T) {
 }
 
 func TestBgTrueColor(t *testing.T) {
+	t.Parallel()
+
 	for i := 0; i < trueColorMax+1; i += trueColorStep {
 		r := uint8((i >> 0) & 255)
 		g := uint8((i >> 8) & 255)
@@ -144,6 +284,8 @@ func TestBgTrueColor(t *testing.T) {
 }
 
 func TestTrueColorRGB(t *testing.T) {
+	t.Parallel()
+
 	for i := 0; i < trueColorMax+1; i += trueColorStep {
 		rgb := RGB{
 			R: uint8((i >> 0) & 255),
@@ -171,6 +313,8 @@ func TestTrueColorRGB(t *testing.T) {
 }
 
 func TestBgTrueColorRGB(t *testing.T) {
+	t.Parallel()
+
 	for i := 0; i < trueColorMax+1; i += trueColorStep {
 		rgb := RGB{
 			R: uint8((i >> 0) & 255),

@@ -16,11 +16,15 @@ import (
 	"github.com/mattn/go-isatty"
 )
 
-var (
-	supportsColor     bool
-	supportsANSI256   bool
-	supportsTrueColor bool
+type support uint8
+
+const (
+	supportsColor support = 1 << iota
+	supportsANSI256
+	supportsTrueColor
 )
+
+var supports support
 
 func init() {
 	// Check is TTY.
@@ -39,19 +43,20 @@ func init() {
 	}
 
 	if colorTerm, ok := os.LookupEnv("COLORTERM"); ok {
-		supportsColor = true
+		supports |= supportsColor
 
 		if colorTerm == "truecolor" {
-			supportsANSI256 = true
-			supportsTrueColor = true
+			supports |= supportsANSI256
+			supports |= supportsTrueColor
 		}
 		return
 	}
 
 	if termProg, ok := os.LookupEnv("TERM_PROGRAM"); ok {
 		if termProg == "Apple_Terminal" {
-			supportsColor = true
-			supportsANSI256 = true
+			supports |= supportsColor
+			supports |= supportsANSI256
+			supports |= supportsTrueColor
 			return
 		}
 
@@ -78,13 +83,13 @@ func init() {
 
 		for _, name := range cis {
 			if _, ok := os.LookupEnv(name); ok {
-				supportsColor = true
+				supports |= supportsColor
 				return
 			}
 		}
 
 		if os.Getenv("CI_NAME") == "codeship" {
-			supportsColor = true
+			supports |= supportsColor
 			return
 		}
 	}
@@ -92,46 +97,49 @@ func init() {
 	// TODO(SuperPaintman): add TeamCity checker.
 }
 
-func SupportsColor() bool     { return supportsColor }
-func SupportsANSI256() bool   { return supportsANSI256 }
-func SupportsTrueColor() bool { return supportsTrueColor }
+func SupportsColor() bool     { return supports&supportsColor != 0 }
+func SupportsANSI256() bool   { return supports&supportsANSI256 != 0 }
+func SupportsTrueColor() bool { return supports&supportsTrueColor != 0 }
 
 type Mode uint8
 
 const (
-	Auto Mode = iota
+	Auto Mode = 1 << iota >> 1
 	Never
 	Always
+	ForceANSI256
+	ForceTrueColor
 )
-
-// TODO(SuperPaintman): replace it with setters to optimuze should* functions.
-
-var Colors Mode = Auto
 
 var (
-	ForceANSI256   bool
-	ForceTrueColor bool
+	mode Mode = Auto
+
+	shouldUseColors, shouldUseANSI256, shouldUseTrueColor = computeShouldUse(mode, supports)
 )
 
-func shouldUseColors(clrs Mode) bool {
-	return clrs == Always ||
-		(clrs == Auto && supportsColor)
+func SetMode(m Mode) {
+	mode = m
+	shouldUseColors, shouldUseANSI256, shouldUseTrueColor = computeShouldUse(mode, supports)
 }
 
-func shouldUseANSI256(clrs Mode, force bool) bool {
-	return (supportsANSI256 || force) &&
-		shouldUseColors(clrs)
-}
+func computeShouldUse(m Mode, s support) (colors bool, ansi256 bool, trueColor bool) {
+	if m&Never == 0 {
+		colors = m&Always != 0 || s&supportsColor != 0
 
-func shouldUseTrueColor(clrs Mode, force bool) bool {
-	return (supportsTrueColor || force) &&
-		shouldUseColors(clrs)
+		ansi256 = colors &&
+			(s&supportsANSI256 != 0 || m&ForceANSI256 != 0)
+
+		trueColor = colors &&
+			(s&supportsTrueColor != 0 || m&ForceTrueColor != 0)
+	}
+
+	return
 }
 
 type Attribute uint8
 
 func (a Attribute) String() string {
-	if !shouldUseColors(Colors) {
+	if !shouldUseColors {
 		return ""
 	}
 
@@ -235,7 +243,7 @@ func attributeToString(i uint8) string {
 
 // TODO(SuperPaintman): make it inlinable.
 func ANSI256(color uint8) string {
-	if !shouldUseANSI256(Colors, ForceANSI256) {
+	if !shouldUseANSI256 {
 		return ""
 	}
 
@@ -245,7 +253,7 @@ func ANSI256(color uint8) string {
 
 // TODO(SuperPaintman): make it inlinable.
 func BgANSI256(color uint8) string {
-	if !shouldUseANSI256(Colors, ForceANSI256) {
+	if !shouldUseANSI256 {
 		return ""
 	}
 
@@ -255,7 +263,7 @@ func BgANSI256(color uint8) string {
 
 // 24-bit or truecolor or ANSI 16 millions.
 func TrueColor(r, g, b uint8) string {
-	if !shouldUseTrueColor(Colors, ForceTrueColor) {
+	if !shouldUseTrueColor {
 		return ""
 	}
 
@@ -267,7 +275,7 @@ func TrueColor(r, g, b uint8) string {
 }
 
 func BgTrueColor(r, g, b uint8) string {
-	if !shouldUseTrueColor(Colors, ForceTrueColor) {
+	if !shouldUseTrueColor {
 		return ""
 	}
 
