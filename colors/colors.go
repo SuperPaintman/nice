@@ -25,6 +25,9 @@ const (
 	supportsTrueColor
 )
 
+// TODO(SuperPaintman):
+//     Remove using the regexp package. Because we need it only for one thing.
+
 var (
 	teamCityVersionRe = regexp.MustCompile(`^(9\.(0*[1-9]\d*)\.|\d{2,}\.)`)
 	termRe            = regexp.MustCompile(`(?i)^screen|^xterm|^vt100|^vt220|^rxvt`)
