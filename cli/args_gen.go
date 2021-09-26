@@ -8,10 +8,38 @@ import (
 
 // bool
 
+// BoolArgVar defines a bool argument with specified name.
+// The argument p points to a bool variable in which to store the value of the argument.
+// The return value will be an error from the register.RegisterArg if it
+// failed to register the argument.
+//
+// A usage may be set by passing a cli.Usage.
+//
+//   _ = cli.BoolArgVar(register, &p, "name", cli.Usage("The name of user"))
+//
+// The argument is required by default.
+// This may be changed by passing the cli.Optional.
+//
+//   _ = cli.BoolArgVar(register, &p, "name", cli.Optional)
+//
+// All options can be used together.
 func BoolArgVar(register Register, p *bool, name string, options ...ArgOptionApplyer) error {
 	return ArgVar(register, newBoolValue(p), name, options...)
 }
 
+// BoolArg defines a bool argument with specified name.
+// The return value is the address of a bool variable that stores the value of the argument.
+//
+// A usage may be set by passing a cli.Usage.
+//
+//   _ = cli.BoolArg(register, "name", cli.Usage("The name of user"))
+//
+// The argument is required by default.
+// This may be changed by passing the cli.Optional.
+//
+//   _ = cli.BoolArg(register, "name", cli.Optional)
+//
+// All options can be used together.
 func BoolArg(register Register, name string, options ...ArgOptionApplyer) *bool {
 	p := new(bool)
 	_ = BoolArgVar(register, p, name, options...)
@@ -20,10 +48,38 @@ func BoolArg(register Register, name string, options ...ArgOptionApplyer) *bool 
 
 // uint8
 
+// Uint8ArgVar defines a uint8 argument with specified name.
+// The argument p points to a uint8 variable in which to store the value of the argument.
+// The return value will be an error from the register.RegisterArg if it
+// failed to register the argument.
+//
+// A usage may be set by passing a cli.Usage.
+//
+//   _ = cli.Uint8ArgVar(register, &p, "name", cli.Usage("The name of user"))
+//
+// The argument is required by default.
+// This may be changed by passing the cli.Optional.
+//
+//   _ = cli.Uint8ArgVar(register, &p, "name", cli.Optional)
+//
+// All options can be used together.
 func Uint8ArgVar(register Register, p *uint8, name string, options ...ArgOptionApplyer) error {
 	return ArgVar(register, newUint8Value(p), name, options...)
 }
 
+// Uint8Arg defines a uint8 argument with specified name.
+// The return value is the address of a uint8 variable that stores the value of the argument.
+//
+// A usage may be set by passing a cli.Usage.
+//
+//   _ = cli.Uint8Arg(register, "name", cli.Usage("The name of user"))
+//
+// The argument is required by default.
+// This may be changed by passing the cli.Optional.
+//
+//   _ = cli.Uint8Arg(register, "name", cli.Optional)
+//
+// All options can be used together.
 func Uint8Arg(register Register, name string, options ...ArgOptionApplyer) *uint8 {
 	p := new(uint8)
 	_ = Uint8ArgVar(register, p, name, options...)
@@ -32,10 +88,38 @@ func Uint8Arg(register Register, name string, options ...ArgOptionApplyer) *uint
 
 // uint16
 
+// Uint16ArgVar defines a uint16 argument with specified name.
+// The argument p points to a uint16 variable in which to store the value of the argument.
+// The return value will be an error from the register.RegisterArg if it
+// failed to register the argument.
+//
+// A usage may be set by passing a cli.Usage.
+//
+//   _ = cli.Uint16ArgVar(register, &p, "name", cli.Usage("The name of user"))
+//
+// The argument is required by default.
+// This may be changed by passing the cli.Optional.
+//
+//   _ = cli.Uint16ArgVar(register, &p, "name", cli.Optional)
+//
+// All options can be used together.
 func Uint16ArgVar(register Register, p *uint16, name string, options ...ArgOptionApplyer) error {
 	return ArgVar(register, newUint16Value(p), name, options...)
 }
 
+// Uint16Arg defines a uint16 argument with specified name.
+// The return value is the address of a uint16 variable that stores the value of the argument.
+//
+// A usage may be set by passing a cli.Usage.
+//
+//   _ = cli.Uint16Arg(register, "name", cli.Usage("The name of user"))
+//
+// The argument is required by default.
+// This may be changed by passing the cli.Optional.
+//
+//   _ = cli.Uint16Arg(register, "name", cli.Optional)
+//
+// All options can be used together.
 func Uint16Arg(register Register, name string, options ...ArgOptionApplyer) *uint16 {
 	p := new(uint16)
 	_ = Uint16ArgVar(register, p, name, options...)
@@ -44,10 +128,38 @@ func Uint16Arg(register Register, name string, options ...ArgOptionApplyer) *uin
 
 // uint32
 
+// Uint32ArgVar defines a uint32 argument with specified name.
+// The argument p points to a uint32 variable in which to store the value of the argument.
+// The return value will be an error from the register.RegisterArg if it
+// failed to register the argument.
+//
+// A usage may be set by passing a cli.Usage.
+//
+//   _ = cli.Uint32ArgVar(register, &p, "name", cli.Usage("The name of user"))
+//
+// The argument is required by default.
+// This may be changed by passing the cli.Optional.
+//
+//   _ = cli.Uint32ArgVar(register, &p, "name", cli.Optional)
+//
+// All options can be used together.
 func Uint32ArgVar(register Register, p *uint32, name string, options ...ArgOptionApplyer) error {
 	return ArgVar(register, newUint32Value(p), name, options...)
 }
 
+// Uint32Arg defines a uint32 argument with specified name.
+// The return value is the address of a uint32 variable that stores the value of the argument.
+//
+// A usage may be set by passing a cli.Usage.
+//
+//   _ = cli.Uint32Arg(register, "name", cli.Usage("The name of user"))
+//
+// The argument is required by default.
+// This may be changed by passing the cli.Optional.
+//
+//   _ = cli.Uint32Arg(register, "name", cli.Optional)
+//
+// All options can be used together.
 func Uint32Arg(register Register, name string, options ...ArgOptionApplyer) *uint32 {
 	p := new(uint32)
 	_ = Uint32ArgVar(register, p, name, options...)
@@ -56,10 +168,38 @@ func Uint32Arg(register Register, name string, options ...ArgOptionApplyer) *uin
 
 // uint64
 
+// Uint64ArgVar defines a uint64 argument with specified name.
+// The argument p points to a uint64 variable in which to store the value of the argument.
+// The return value will be an error from the register.RegisterArg if it
+// failed to register the argument.
+//
+// A usage may be set by passing a cli.Usage.
+//
+//   _ = cli.Uint64ArgVar(register, &p, "name", cli.Usage("The name of user"))
+//
+// The argument is required by default.
+// This may be changed by passing the cli.Optional.
+//
+//   _ = cli.Uint64ArgVar(register, &p, "name", cli.Optional)
+//
+// All options can be used together.
 func Uint64ArgVar(register Register, p *uint64, name string, options ...ArgOptionApplyer) error {
 	return ArgVar(register, newUint64Value(p), name, options...)
 }
 
+// Uint64Arg defines a uint64 argument with specified name.
+// The return value is the address of a uint64 variable that stores the value of the argument.
+//
+// A usage may be set by passing a cli.Usage.
+//
+//   _ = cli.Uint64Arg(register, "name", cli.Usage("The name of user"))
+//
+// The argument is required by default.
+// This may be changed by passing the cli.Optional.
+//
+//   _ = cli.Uint64Arg(register, "name", cli.Optional)
+//
+// All options can be used together.
 func Uint64Arg(register Register, name string, options ...ArgOptionApplyer) *uint64 {
 	p := new(uint64)
 	_ = Uint64ArgVar(register, p, name, options...)
@@ -68,10 +208,38 @@ func Uint64Arg(register Register, name string, options ...ArgOptionApplyer) *uin
 
 // int8
 
+// Int8ArgVar defines a int8 argument with specified name.
+// The argument p points to a int8 variable in which to store the value of the argument.
+// The return value will be an error from the register.RegisterArg if it
+// failed to register the argument.
+//
+// A usage may be set by passing a cli.Usage.
+//
+//   _ = cli.Int8ArgVar(register, &p, "name", cli.Usage("The name of user"))
+//
+// The argument is required by default.
+// This may be changed by passing the cli.Optional.
+//
+//   _ = cli.Int8ArgVar(register, &p, "name", cli.Optional)
+//
+// All options can be used together.
 func Int8ArgVar(register Register, p *int8, name string, options ...ArgOptionApplyer) error {
 	return ArgVar(register, newInt8Value(p), name, options...)
 }
 
+// Int8Arg defines a int8 argument with specified name.
+// The return value is the address of a int8 variable that stores the value of the argument.
+//
+// A usage may be set by passing a cli.Usage.
+//
+//   _ = cli.Int8Arg(register, "name", cli.Usage("The name of user"))
+//
+// The argument is required by default.
+// This may be changed by passing the cli.Optional.
+//
+//   _ = cli.Int8Arg(register, "name", cli.Optional)
+//
+// All options can be used together.
 func Int8Arg(register Register, name string, options ...ArgOptionApplyer) *int8 {
 	p := new(int8)
 	_ = Int8ArgVar(register, p, name, options...)
@@ -80,10 +248,38 @@ func Int8Arg(register Register, name string, options ...ArgOptionApplyer) *int8 
 
 // int16
 
+// Int16ArgVar defines a int16 argument with specified name.
+// The argument p points to a int16 variable in which to store the value of the argument.
+// The return value will be an error from the register.RegisterArg if it
+// failed to register the argument.
+//
+// A usage may be set by passing a cli.Usage.
+//
+//   _ = cli.Int16ArgVar(register, &p, "name", cli.Usage("The name of user"))
+//
+// The argument is required by default.
+// This may be changed by passing the cli.Optional.
+//
+//   _ = cli.Int16ArgVar(register, &p, "name", cli.Optional)
+//
+// All options can be used together.
 func Int16ArgVar(register Register, p *int16, name string, options ...ArgOptionApplyer) error {
 	return ArgVar(register, newInt16Value(p), name, options...)
 }
 
+// Int16Arg defines a int16 argument with specified name.
+// The return value is the address of a int16 variable that stores the value of the argument.
+//
+// A usage may be set by passing a cli.Usage.
+//
+//   _ = cli.Int16Arg(register, "name", cli.Usage("The name of user"))
+//
+// The argument is required by default.
+// This may be changed by passing the cli.Optional.
+//
+//   _ = cli.Int16Arg(register, "name", cli.Optional)
+//
+// All options can be used together.
 func Int16Arg(register Register, name string, options ...ArgOptionApplyer) *int16 {
 	p := new(int16)
 	_ = Int16ArgVar(register, p, name, options...)
@@ -92,10 +288,38 @@ func Int16Arg(register Register, name string, options ...ArgOptionApplyer) *int1
 
 // int32
 
+// Int32ArgVar defines a int32 argument with specified name.
+// The argument p points to a int32 variable in which to store the value of the argument.
+// The return value will be an error from the register.RegisterArg if it
+// failed to register the argument.
+//
+// A usage may be set by passing a cli.Usage.
+//
+//   _ = cli.Int32ArgVar(register, &p, "name", cli.Usage("The name of user"))
+//
+// The argument is required by default.
+// This may be changed by passing the cli.Optional.
+//
+//   _ = cli.Int32ArgVar(register, &p, "name", cli.Optional)
+//
+// All options can be used together.
 func Int32ArgVar(register Register, p *int32, name string, options ...ArgOptionApplyer) error {
 	return ArgVar(register, newInt32Value(p), name, options...)
 }
 
+// Int32Arg defines a int32 argument with specified name.
+// The return value is the address of a int32 variable that stores the value of the argument.
+//
+// A usage may be set by passing a cli.Usage.
+//
+//   _ = cli.Int32Arg(register, "name", cli.Usage("The name of user"))
+//
+// The argument is required by default.
+// This may be changed by passing the cli.Optional.
+//
+//   _ = cli.Int32Arg(register, "name", cli.Optional)
+//
+// All options can be used together.
 func Int32Arg(register Register, name string, options ...ArgOptionApplyer) *int32 {
 	p := new(int32)
 	_ = Int32ArgVar(register, p, name, options...)
@@ -104,10 +328,38 @@ func Int32Arg(register Register, name string, options ...ArgOptionApplyer) *int3
 
 // int64
 
+// Int64ArgVar defines a int64 argument with specified name.
+// The argument p points to a int64 variable in which to store the value of the argument.
+// The return value will be an error from the register.RegisterArg if it
+// failed to register the argument.
+//
+// A usage may be set by passing a cli.Usage.
+//
+//   _ = cli.Int64ArgVar(register, &p, "name", cli.Usage("The name of user"))
+//
+// The argument is required by default.
+// This may be changed by passing the cli.Optional.
+//
+//   _ = cli.Int64ArgVar(register, &p, "name", cli.Optional)
+//
+// All options can be used together.
 func Int64ArgVar(register Register, p *int64, name string, options ...ArgOptionApplyer) error {
 	return ArgVar(register, newInt64Value(p), name, options...)
 }
 
+// Int64Arg defines a int64 argument with specified name.
+// The return value is the address of a int64 variable that stores the value of the argument.
+//
+// A usage may be set by passing a cli.Usage.
+//
+//   _ = cli.Int64Arg(register, "name", cli.Usage("The name of user"))
+//
+// The argument is required by default.
+// This may be changed by passing the cli.Optional.
+//
+//   _ = cli.Int64Arg(register, "name", cli.Optional)
+//
+// All options can be used together.
 func Int64Arg(register Register, name string, options ...ArgOptionApplyer) *int64 {
 	p := new(int64)
 	_ = Int64ArgVar(register, p, name, options...)
@@ -116,10 +368,38 @@ func Int64Arg(register Register, name string, options ...ArgOptionApplyer) *int6
 
 // float32
 
+// Float32ArgVar defines a float32 argument with specified name.
+// The argument p points to a float32 variable in which to store the value of the argument.
+// The return value will be an error from the register.RegisterArg if it
+// failed to register the argument.
+//
+// A usage may be set by passing a cli.Usage.
+//
+//   _ = cli.Float32ArgVar(register, &p, "name", cli.Usage("The name of user"))
+//
+// The argument is required by default.
+// This may be changed by passing the cli.Optional.
+//
+//   _ = cli.Float32ArgVar(register, &p, "name", cli.Optional)
+//
+// All options can be used together.
 func Float32ArgVar(register Register, p *float32, name string, options ...ArgOptionApplyer) error {
 	return ArgVar(register, newFloat32Value(p), name, options...)
 }
 
+// Float32Arg defines a float32 argument with specified name.
+// The return value is the address of a float32 variable that stores the value of the argument.
+//
+// A usage may be set by passing a cli.Usage.
+//
+//   _ = cli.Float32Arg(register, "name", cli.Usage("The name of user"))
+//
+// The argument is required by default.
+// This may be changed by passing the cli.Optional.
+//
+//   _ = cli.Float32Arg(register, "name", cli.Optional)
+//
+// All options can be used together.
 func Float32Arg(register Register, name string, options ...ArgOptionApplyer) *float32 {
 	p := new(float32)
 	_ = Float32ArgVar(register, p, name, options...)
@@ -128,10 +408,38 @@ func Float32Arg(register Register, name string, options ...ArgOptionApplyer) *fl
 
 // float64
 
+// Float64ArgVar defines a float64 argument with specified name.
+// The argument p points to a float64 variable in which to store the value of the argument.
+// The return value will be an error from the register.RegisterArg if it
+// failed to register the argument.
+//
+// A usage may be set by passing a cli.Usage.
+//
+//   _ = cli.Float64ArgVar(register, &p, "name", cli.Usage("The name of user"))
+//
+// The argument is required by default.
+// This may be changed by passing the cli.Optional.
+//
+//   _ = cli.Float64ArgVar(register, &p, "name", cli.Optional)
+//
+// All options can be used together.
 func Float64ArgVar(register Register, p *float64, name string, options ...ArgOptionApplyer) error {
 	return ArgVar(register, newFloat64Value(p), name, options...)
 }
 
+// Float64Arg defines a float64 argument with specified name.
+// The return value is the address of a float64 variable that stores the value of the argument.
+//
+// A usage may be set by passing a cli.Usage.
+//
+//   _ = cli.Float64Arg(register, "name", cli.Usage("The name of user"))
+//
+// The argument is required by default.
+// This may be changed by passing the cli.Optional.
+//
+//   _ = cli.Float64Arg(register, "name", cli.Optional)
+//
+// All options can be used together.
 func Float64Arg(register Register, name string, options ...ArgOptionApplyer) *float64 {
 	p := new(float64)
 	_ = Float64ArgVar(register, p, name, options...)
@@ -140,10 +448,38 @@ func Float64Arg(register Register, name string, options ...ArgOptionApplyer) *fl
 
 // string
 
+// StringArgVar defines a string argument with specified name.
+// The argument p points to a string variable in which to store the value of the argument.
+// The return value will be an error from the register.RegisterArg if it
+// failed to register the argument.
+//
+// A usage may be set by passing a cli.Usage.
+//
+//   _ = cli.StringArgVar(register, &p, "name", cli.Usage("The name of user"))
+//
+// The argument is required by default.
+// This may be changed by passing the cli.Optional.
+//
+//   _ = cli.StringArgVar(register, &p, "name", cli.Optional)
+//
+// All options can be used together.
 func StringArgVar(register Register, p *string, name string, options ...ArgOptionApplyer) error {
 	return ArgVar(register, newStringValue(p), name, options...)
 }
 
+// StringArg defines a string argument with specified name.
+// The return value is the address of a string variable that stores the value of the argument.
+//
+// A usage may be set by passing a cli.Usage.
+//
+//   _ = cli.StringArg(register, "name", cli.Usage("The name of user"))
+//
+// The argument is required by default.
+// This may be changed by passing the cli.Optional.
+//
+//   _ = cli.StringArg(register, "name", cli.Optional)
+//
+// All options can be used together.
 func StringArg(register Register, name string, options ...ArgOptionApplyer) *string {
 	p := new(string)
 	_ = StringArgVar(register, p, name, options...)
@@ -152,10 +488,38 @@ func StringArg(register Register, name string, options ...ArgOptionApplyer) *str
 
 // int
 
+// IntArgVar defines a int argument with specified name.
+// The argument p points to a int variable in which to store the value of the argument.
+// The return value will be an error from the register.RegisterArg if it
+// failed to register the argument.
+//
+// A usage may be set by passing a cli.Usage.
+//
+//   _ = cli.IntArgVar(register, &p, "name", cli.Usage("The name of user"))
+//
+// The argument is required by default.
+// This may be changed by passing the cli.Optional.
+//
+//   _ = cli.IntArgVar(register, &p, "name", cli.Optional)
+//
+// All options can be used together.
 func IntArgVar(register Register, p *int, name string, options ...ArgOptionApplyer) error {
 	return ArgVar(register, newIntValue(p), name, options...)
 }
 
+// IntArg defines a int argument with specified name.
+// The return value is the address of a int variable that stores the value of the argument.
+//
+// A usage may be set by passing a cli.Usage.
+//
+//   _ = cli.IntArg(register, "name", cli.Usage("The name of user"))
+//
+// The argument is required by default.
+// This may be changed by passing the cli.Optional.
+//
+//   _ = cli.IntArg(register, "name", cli.Optional)
+//
+// All options can be used together.
 func IntArg(register Register, name string, options ...ArgOptionApplyer) *int {
 	p := new(int)
 	_ = IntArgVar(register, p, name, options...)
@@ -164,10 +528,38 @@ func IntArg(register Register, name string, options ...ArgOptionApplyer) *int {
 
 // uint
 
+// UintArgVar defines a uint argument with specified name.
+// The argument p points to a uint variable in which to store the value of the argument.
+// The return value will be an error from the register.RegisterArg if it
+// failed to register the argument.
+//
+// A usage may be set by passing a cli.Usage.
+//
+//   _ = cli.UintArgVar(register, &p, "name", cli.Usage("The name of user"))
+//
+// The argument is required by default.
+// This may be changed by passing the cli.Optional.
+//
+//   _ = cli.UintArgVar(register, &p, "name", cli.Optional)
+//
+// All options can be used together.
 func UintArgVar(register Register, p *uint, name string, options ...ArgOptionApplyer) error {
 	return ArgVar(register, newUintValue(p), name, options...)
 }
 
+// UintArg defines a uint argument with specified name.
+// The return value is the address of a uint variable that stores the value of the argument.
+//
+// A usage may be set by passing a cli.Usage.
+//
+//   _ = cli.UintArg(register, "name", cli.Usage("The name of user"))
+//
+// The argument is required by default.
+// This may be changed by passing the cli.Optional.
+//
+//   _ = cli.UintArg(register, "name", cli.Optional)
+//
+// All options can be used together.
 func UintArg(register Register, name string, options ...ArgOptionApplyer) *uint {
 	p := new(uint)
 	_ = UintArgVar(register, p, name, options...)
@@ -176,10 +568,38 @@ func UintArg(register Register, name string, options ...ArgOptionApplyer) *uint 
 
 // time.Duration
 
+// DurationArgVar defines a time.Duration argument with specified name.
+// The argument p points to a time.Duration variable in which to store the value of the argument.
+// The return value will be an error from the register.RegisterArg if it
+// failed to register the argument.
+//
+// A usage may be set by passing a cli.Usage.
+//
+//   _ = cli.DurationArgVar(register, &p, "name", cli.Usage("The name of user"))
+//
+// The argument is required by default.
+// This may be changed by passing the cli.Optional.
+//
+//   _ = cli.DurationArgVar(register, &p, "name", cli.Optional)
+//
+// All options can be used together.
 func DurationArgVar(register Register, p *time.Duration, name string, options ...ArgOptionApplyer) error {
 	return ArgVar(register, newDurationValue(p), name, options...)
 }
 
+// DurationArg defines a time.Duration argument with specified name.
+// The return value is the address of a time.Duration variable that stores the value of the argument.
+//
+// A usage may be set by passing a cli.Usage.
+//
+//   _ = cli.DurationArg(register, "name", cli.Usage("The name of user"))
+//
+// The argument is required by default.
+// This may be changed by passing the cli.Optional.
+//
+//   _ = cli.DurationArg(register, "name", cli.Optional)
+//
+// All options can be used together.
 func DurationArg(register Register, name string, options ...ArgOptionApplyer) *time.Duration {
 	p := new(time.Duration)
 	_ = DurationArgVar(register, p, name, options...)
