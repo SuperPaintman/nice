@@ -8,10 +8,56 @@ import (
 
 // []bool
 
+// BoolsVar defines a []bool flag with specified name.
+// The argument p points to a []bool variable in which to store values of the flag.
+// The return value will be an error from the register.RegisterFlag if it
+// failed to register the flag.
+//
+// If a name contains only one rune, it will be a short name, otherwise a long name.
+// To set a short name, you pass a cli.WithShort.
+//
+//   _ = cli.BoolsVar(register, &p, "names", cli.WithShort("n"))
+//
+// To set a long name, you pass a cli.WithLong.
+//
+//   _ = cli.BoolsVar(register, &p, "n", cli.WithLong("names"))
+//
+// A usage may be set by passing a cli.Usage.
+//
+//   _ = cli.BoolsVar(register, &p, "names", cli.Usage("Names of users"))
+//
+// The flag is optional by default.
+// This may be changed by passing the cli.Required.
+//
+//   _ = cli.BoolsVar(register, &p, "names", cli.Required)
+//
+// All options can be used together.
 func BoolsVar(register Register, p *[]bool, name string, options ...FlagOptionApplyer) error {
 	return Var(register, newBoolValues(p), name, options...)
 }
 
+// Bools defines a []bool flag with specified name.
+// The return value is the address of a []bool variable that stores values of the flag.
+//
+// If a name contains only one rune, it will be a short name, otherwise a long name.
+// To set a short name, you pass a cli.WithShort.
+//
+//   _ = cli.Bools(register, "names", cli.WithShort("n"))
+//
+// To set a long name, you pass a cli.WithLong.
+//
+//   _ = cli.Bools(register, "n", cli.WithLong("names"))
+//
+// A usage may be set by passing a cli.Usage.
+//
+//   _ = cli.Bools(register, "names", cli.Usage("Names of users"))
+//
+// The flag is optional by default.
+// This may be changed by passing the cli.Required.
+//
+//   _ = cli.Bools(register, "names", cli.Required)
+//
+// All options can be used together.
 func Bools(register Register, name string, options ...FlagOptionApplyer) *[]bool {
 	p := new([]bool)
 	_ = BoolsVar(register, p, name, options...)
@@ -20,10 +66,56 @@ func Bools(register Register, name string, options ...FlagOptionApplyer) *[]bool
 
 // []uint8
 
+// Uint8sVar defines a []uint8 flag with specified name.
+// The argument p points to a []uint8 variable in which to store values of the flag.
+// The return value will be an error from the register.RegisterFlag if it
+// failed to register the flag.
+//
+// If a name contains only one rune, it will be a short name, otherwise a long name.
+// To set a short name, you pass a cli.WithShort.
+//
+//   _ = cli.Uint8sVar(register, &p, "names", cli.WithShort("n"))
+//
+// To set a long name, you pass a cli.WithLong.
+//
+//   _ = cli.Uint8sVar(register, &p, "n", cli.WithLong("names"))
+//
+// A usage may be set by passing a cli.Usage.
+//
+//   _ = cli.Uint8sVar(register, &p, "names", cli.Usage("Names of users"))
+//
+// The flag is optional by default.
+// This may be changed by passing the cli.Required.
+//
+//   _ = cli.Uint8sVar(register, &p, "names", cli.Required)
+//
+// All options can be used together.
 func Uint8sVar(register Register, p *[]uint8, name string, options ...FlagOptionApplyer) error {
 	return Var(register, newUint8Values(p), name, options...)
 }
 
+// Uint8s defines a []uint8 flag with specified name.
+// The return value is the address of a []uint8 variable that stores values of the flag.
+//
+// If a name contains only one rune, it will be a short name, otherwise a long name.
+// To set a short name, you pass a cli.WithShort.
+//
+//   _ = cli.Uint8s(register, "names", cli.WithShort("n"))
+//
+// To set a long name, you pass a cli.WithLong.
+//
+//   _ = cli.Uint8s(register, "n", cli.WithLong("names"))
+//
+// A usage may be set by passing a cli.Usage.
+//
+//   _ = cli.Uint8s(register, "names", cli.Usage("Names of users"))
+//
+// The flag is optional by default.
+// This may be changed by passing the cli.Required.
+//
+//   _ = cli.Uint8s(register, "names", cli.Required)
+//
+// All options can be used together.
 func Uint8s(register Register, name string, options ...FlagOptionApplyer) *[]uint8 {
 	p := new([]uint8)
 	_ = Uint8sVar(register, p, name, options...)
@@ -32,10 +124,56 @@ func Uint8s(register Register, name string, options ...FlagOptionApplyer) *[]uin
 
 // []uint16
 
+// Uint16sVar defines a []uint16 flag with specified name.
+// The argument p points to a []uint16 variable in which to store values of the flag.
+// The return value will be an error from the register.RegisterFlag if it
+// failed to register the flag.
+//
+// If a name contains only one rune, it will be a short name, otherwise a long name.
+// To set a short name, you pass a cli.WithShort.
+//
+//   _ = cli.Uint16sVar(register, &p, "names", cli.WithShort("n"))
+//
+// To set a long name, you pass a cli.WithLong.
+//
+//   _ = cli.Uint16sVar(register, &p, "n", cli.WithLong("names"))
+//
+// A usage may be set by passing a cli.Usage.
+//
+//   _ = cli.Uint16sVar(register, &p, "names", cli.Usage("Names of users"))
+//
+// The flag is optional by default.
+// This may be changed by passing the cli.Required.
+//
+//   _ = cli.Uint16sVar(register, &p, "names", cli.Required)
+//
+// All options can be used together.
 func Uint16sVar(register Register, p *[]uint16, name string, options ...FlagOptionApplyer) error {
 	return Var(register, newUint16Values(p), name, options...)
 }
 
+// Uint16s defines a []uint16 flag with specified name.
+// The return value is the address of a []uint16 variable that stores values of the flag.
+//
+// If a name contains only one rune, it will be a short name, otherwise a long name.
+// To set a short name, you pass a cli.WithShort.
+//
+//   _ = cli.Uint16s(register, "names", cli.WithShort("n"))
+//
+// To set a long name, you pass a cli.WithLong.
+//
+//   _ = cli.Uint16s(register, "n", cli.WithLong("names"))
+//
+// A usage may be set by passing a cli.Usage.
+//
+//   _ = cli.Uint16s(register, "names", cli.Usage("Names of users"))
+//
+// The flag is optional by default.
+// This may be changed by passing the cli.Required.
+//
+//   _ = cli.Uint16s(register, "names", cli.Required)
+//
+// All options can be used together.
 func Uint16s(register Register, name string, options ...FlagOptionApplyer) *[]uint16 {
 	p := new([]uint16)
 	_ = Uint16sVar(register, p, name, options...)
@@ -44,10 +182,56 @@ func Uint16s(register Register, name string, options ...FlagOptionApplyer) *[]ui
 
 // []uint32
 
+// Uint32sVar defines a []uint32 flag with specified name.
+// The argument p points to a []uint32 variable in which to store values of the flag.
+// The return value will be an error from the register.RegisterFlag if it
+// failed to register the flag.
+//
+// If a name contains only one rune, it will be a short name, otherwise a long name.
+// To set a short name, you pass a cli.WithShort.
+//
+//   _ = cli.Uint32sVar(register, &p, "names", cli.WithShort("n"))
+//
+// To set a long name, you pass a cli.WithLong.
+//
+//   _ = cli.Uint32sVar(register, &p, "n", cli.WithLong("names"))
+//
+// A usage may be set by passing a cli.Usage.
+//
+//   _ = cli.Uint32sVar(register, &p, "names", cli.Usage("Names of users"))
+//
+// The flag is optional by default.
+// This may be changed by passing the cli.Required.
+//
+//   _ = cli.Uint32sVar(register, &p, "names", cli.Required)
+//
+// All options can be used together.
 func Uint32sVar(register Register, p *[]uint32, name string, options ...FlagOptionApplyer) error {
 	return Var(register, newUint32Values(p), name, options...)
 }
 
+// Uint32s defines a []uint32 flag with specified name.
+// The return value is the address of a []uint32 variable that stores values of the flag.
+//
+// If a name contains only one rune, it will be a short name, otherwise a long name.
+// To set a short name, you pass a cli.WithShort.
+//
+//   _ = cli.Uint32s(register, "names", cli.WithShort("n"))
+//
+// To set a long name, you pass a cli.WithLong.
+//
+//   _ = cli.Uint32s(register, "n", cli.WithLong("names"))
+//
+// A usage may be set by passing a cli.Usage.
+//
+//   _ = cli.Uint32s(register, "names", cli.Usage("Names of users"))
+//
+// The flag is optional by default.
+// This may be changed by passing the cli.Required.
+//
+//   _ = cli.Uint32s(register, "names", cli.Required)
+//
+// All options can be used together.
 func Uint32s(register Register, name string, options ...FlagOptionApplyer) *[]uint32 {
 	p := new([]uint32)
 	_ = Uint32sVar(register, p, name, options...)
@@ -56,10 +240,56 @@ func Uint32s(register Register, name string, options ...FlagOptionApplyer) *[]ui
 
 // []uint64
 
+// Uint64sVar defines a []uint64 flag with specified name.
+// The argument p points to a []uint64 variable in which to store values of the flag.
+// The return value will be an error from the register.RegisterFlag if it
+// failed to register the flag.
+//
+// If a name contains only one rune, it will be a short name, otherwise a long name.
+// To set a short name, you pass a cli.WithShort.
+//
+//   _ = cli.Uint64sVar(register, &p, "names", cli.WithShort("n"))
+//
+// To set a long name, you pass a cli.WithLong.
+//
+//   _ = cli.Uint64sVar(register, &p, "n", cli.WithLong("names"))
+//
+// A usage may be set by passing a cli.Usage.
+//
+//   _ = cli.Uint64sVar(register, &p, "names", cli.Usage("Names of users"))
+//
+// The flag is optional by default.
+// This may be changed by passing the cli.Required.
+//
+//   _ = cli.Uint64sVar(register, &p, "names", cli.Required)
+//
+// All options can be used together.
 func Uint64sVar(register Register, p *[]uint64, name string, options ...FlagOptionApplyer) error {
 	return Var(register, newUint64Values(p), name, options...)
 }
 
+// Uint64s defines a []uint64 flag with specified name.
+// The return value is the address of a []uint64 variable that stores values of the flag.
+//
+// If a name contains only one rune, it will be a short name, otherwise a long name.
+// To set a short name, you pass a cli.WithShort.
+//
+//   _ = cli.Uint64s(register, "names", cli.WithShort("n"))
+//
+// To set a long name, you pass a cli.WithLong.
+//
+//   _ = cli.Uint64s(register, "n", cli.WithLong("names"))
+//
+// A usage may be set by passing a cli.Usage.
+//
+//   _ = cli.Uint64s(register, "names", cli.Usage("Names of users"))
+//
+// The flag is optional by default.
+// This may be changed by passing the cli.Required.
+//
+//   _ = cli.Uint64s(register, "names", cli.Required)
+//
+// All options can be used together.
 func Uint64s(register Register, name string, options ...FlagOptionApplyer) *[]uint64 {
 	p := new([]uint64)
 	_ = Uint64sVar(register, p, name, options...)
@@ -68,10 +298,56 @@ func Uint64s(register Register, name string, options ...FlagOptionApplyer) *[]ui
 
 // []int8
 
+// Int8sVar defines a []int8 flag with specified name.
+// The argument p points to a []int8 variable in which to store values of the flag.
+// The return value will be an error from the register.RegisterFlag if it
+// failed to register the flag.
+//
+// If a name contains only one rune, it will be a short name, otherwise a long name.
+// To set a short name, you pass a cli.WithShort.
+//
+//   _ = cli.Int8sVar(register, &p, "names", cli.WithShort("n"))
+//
+// To set a long name, you pass a cli.WithLong.
+//
+//   _ = cli.Int8sVar(register, &p, "n", cli.WithLong("names"))
+//
+// A usage may be set by passing a cli.Usage.
+//
+//   _ = cli.Int8sVar(register, &p, "names", cli.Usage("Names of users"))
+//
+// The flag is optional by default.
+// This may be changed by passing the cli.Required.
+//
+//   _ = cli.Int8sVar(register, &p, "names", cli.Required)
+//
+// All options can be used together.
 func Int8sVar(register Register, p *[]int8, name string, options ...FlagOptionApplyer) error {
 	return Var(register, newInt8Values(p), name, options...)
 }
 
+// Int8s defines a []int8 flag with specified name.
+// The return value is the address of a []int8 variable that stores values of the flag.
+//
+// If a name contains only one rune, it will be a short name, otherwise a long name.
+// To set a short name, you pass a cli.WithShort.
+//
+//   _ = cli.Int8s(register, "names", cli.WithShort("n"))
+//
+// To set a long name, you pass a cli.WithLong.
+//
+//   _ = cli.Int8s(register, "n", cli.WithLong("names"))
+//
+// A usage may be set by passing a cli.Usage.
+//
+//   _ = cli.Int8s(register, "names", cli.Usage("Names of users"))
+//
+// The flag is optional by default.
+// This may be changed by passing the cli.Required.
+//
+//   _ = cli.Int8s(register, "names", cli.Required)
+//
+// All options can be used together.
 func Int8s(register Register, name string, options ...FlagOptionApplyer) *[]int8 {
 	p := new([]int8)
 	_ = Int8sVar(register, p, name, options...)
@@ -80,10 +356,56 @@ func Int8s(register Register, name string, options ...FlagOptionApplyer) *[]int8
 
 // []int16
 
+// Int16sVar defines a []int16 flag with specified name.
+// The argument p points to a []int16 variable in which to store values of the flag.
+// The return value will be an error from the register.RegisterFlag if it
+// failed to register the flag.
+//
+// If a name contains only one rune, it will be a short name, otherwise a long name.
+// To set a short name, you pass a cli.WithShort.
+//
+//   _ = cli.Int16sVar(register, &p, "names", cli.WithShort("n"))
+//
+// To set a long name, you pass a cli.WithLong.
+//
+//   _ = cli.Int16sVar(register, &p, "n", cli.WithLong("names"))
+//
+// A usage may be set by passing a cli.Usage.
+//
+//   _ = cli.Int16sVar(register, &p, "names", cli.Usage("Names of users"))
+//
+// The flag is optional by default.
+// This may be changed by passing the cli.Required.
+//
+//   _ = cli.Int16sVar(register, &p, "names", cli.Required)
+//
+// All options can be used together.
 func Int16sVar(register Register, p *[]int16, name string, options ...FlagOptionApplyer) error {
 	return Var(register, newInt16Values(p), name, options...)
 }
 
+// Int16s defines a []int16 flag with specified name.
+// The return value is the address of a []int16 variable that stores values of the flag.
+//
+// If a name contains only one rune, it will be a short name, otherwise a long name.
+// To set a short name, you pass a cli.WithShort.
+//
+//   _ = cli.Int16s(register, "names", cli.WithShort("n"))
+//
+// To set a long name, you pass a cli.WithLong.
+//
+//   _ = cli.Int16s(register, "n", cli.WithLong("names"))
+//
+// A usage may be set by passing a cli.Usage.
+//
+//   _ = cli.Int16s(register, "names", cli.Usage("Names of users"))
+//
+// The flag is optional by default.
+// This may be changed by passing the cli.Required.
+//
+//   _ = cli.Int16s(register, "names", cli.Required)
+//
+// All options can be used together.
 func Int16s(register Register, name string, options ...FlagOptionApplyer) *[]int16 {
 	p := new([]int16)
 	_ = Int16sVar(register, p, name, options...)
@@ -92,10 +414,56 @@ func Int16s(register Register, name string, options ...FlagOptionApplyer) *[]int
 
 // []int32
 
+// Int32sVar defines a []int32 flag with specified name.
+// The argument p points to a []int32 variable in which to store values of the flag.
+// The return value will be an error from the register.RegisterFlag if it
+// failed to register the flag.
+//
+// If a name contains only one rune, it will be a short name, otherwise a long name.
+// To set a short name, you pass a cli.WithShort.
+//
+//   _ = cli.Int32sVar(register, &p, "names", cli.WithShort("n"))
+//
+// To set a long name, you pass a cli.WithLong.
+//
+//   _ = cli.Int32sVar(register, &p, "n", cli.WithLong("names"))
+//
+// A usage may be set by passing a cli.Usage.
+//
+//   _ = cli.Int32sVar(register, &p, "names", cli.Usage("Names of users"))
+//
+// The flag is optional by default.
+// This may be changed by passing the cli.Required.
+//
+//   _ = cli.Int32sVar(register, &p, "names", cli.Required)
+//
+// All options can be used together.
 func Int32sVar(register Register, p *[]int32, name string, options ...FlagOptionApplyer) error {
 	return Var(register, newInt32Values(p), name, options...)
 }
 
+// Int32s defines a []int32 flag with specified name.
+// The return value is the address of a []int32 variable that stores values of the flag.
+//
+// If a name contains only one rune, it will be a short name, otherwise a long name.
+// To set a short name, you pass a cli.WithShort.
+//
+//   _ = cli.Int32s(register, "names", cli.WithShort("n"))
+//
+// To set a long name, you pass a cli.WithLong.
+//
+//   _ = cli.Int32s(register, "n", cli.WithLong("names"))
+//
+// A usage may be set by passing a cli.Usage.
+//
+//   _ = cli.Int32s(register, "names", cli.Usage("Names of users"))
+//
+// The flag is optional by default.
+// This may be changed by passing the cli.Required.
+//
+//   _ = cli.Int32s(register, "names", cli.Required)
+//
+// All options can be used together.
 func Int32s(register Register, name string, options ...FlagOptionApplyer) *[]int32 {
 	p := new([]int32)
 	_ = Int32sVar(register, p, name, options...)
@@ -104,10 +472,56 @@ func Int32s(register Register, name string, options ...FlagOptionApplyer) *[]int
 
 // []int64
 
+// Int64sVar defines a []int64 flag with specified name.
+// The argument p points to a []int64 variable in which to store values of the flag.
+// The return value will be an error from the register.RegisterFlag if it
+// failed to register the flag.
+//
+// If a name contains only one rune, it will be a short name, otherwise a long name.
+// To set a short name, you pass a cli.WithShort.
+//
+//   _ = cli.Int64sVar(register, &p, "names", cli.WithShort("n"))
+//
+// To set a long name, you pass a cli.WithLong.
+//
+//   _ = cli.Int64sVar(register, &p, "n", cli.WithLong("names"))
+//
+// A usage may be set by passing a cli.Usage.
+//
+//   _ = cli.Int64sVar(register, &p, "names", cli.Usage("Names of users"))
+//
+// The flag is optional by default.
+// This may be changed by passing the cli.Required.
+//
+//   _ = cli.Int64sVar(register, &p, "names", cli.Required)
+//
+// All options can be used together.
 func Int64sVar(register Register, p *[]int64, name string, options ...FlagOptionApplyer) error {
 	return Var(register, newInt64Values(p), name, options...)
 }
 
+// Int64s defines a []int64 flag with specified name.
+// The return value is the address of a []int64 variable that stores values of the flag.
+//
+// If a name contains only one rune, it will be a short name, otherwise a long name.
+// To set a short name, you pass a cli.WithShort.
+//
+//   _ = cli.Int64s(register, "names", cli.WithShort("n"))
+//
+// To set a long name, you pass a cli.WithLong.
+//
+//   _ = cli.Int64s(register, "n", cli.WithLong("names"))
+//
+// A usage may be set by passing a cli.Usage.
+//
+//   _ = cli.Int64s(register, "names", cli.Usage("Names of users"))
+//
+// The flag is optional by default.
+// This may be changed by passing the cli.Required.
+//
+//   _ = cli.Int64s(register, "names", cli.Required)
+//
+// All options can be used together.
 func Int64s(register Register, name string, options ...FlagOptionApplyer) *[]int64 {
 	p := new([]int64)
 	_ = Int64sVar(register, p, name, options...)
@@ -116,10 +530,56 @@ func Int64s(register Register, name string, options ...FlagOptionApplyer) *[]int
 
 // []float32
 
+// Float32sVar defines a []float32 flag with specified name.
+// The argument p points to a []float32 variable in which to store values of the flag.
+// The return value will be an error from the register.RegisterFlag if it
+// failed to register the flag.
+//
+// If a name contains only one rune, it will be a short name, otherwise a long name.
+// To set a short name, you pass a cli.WithShort.
+//
+//   _ = cli.Float32sVar(register, &p, "names", cli.WithShort("n"))
+//
+// To set a long name, you pass a cli.WithLong.
+//
+//   _ = cli.Float32sVar(register, &p, "n", cli.WithLong("names"))
+//
+// A usage may be set by passing a cli.Usage.
+//
+//   _ = cli.Float32sVar(register, &p, "names", cli.Usage("Names of users"))
+//
+// The flag is optional by default.
+// This may be changed by passing the cli.Required.
+//
+//   _ = cli.Float32sVar(register, &p, "names", cli.Required)
+//
+// All options can be used together.
 func Float32sVar(register Register, p *[]float32, name string, options ...FlagOptionApplyer) error {
 	return Var(register, newFloat32Values(p), name, options...)
 }
 
+// Float32s defines a []float32 flag with specified name.
+// The return value is the address of a []float32 variable that stores values of the flag.
+//
+// If a name contains only one rune, it will be a short name, otherwise a long name.
+// To set a short name, you pass a cli.WithShort.
+//
+//   _ = cli.Float32s(register, "names", cli.WithShort("n"))
+//
+// To set a long name, you pass a cli.WithLong.
+//
+//   _ = cli.Float32s(register, "n", cli.WithLong("names"))
+//
+// A usage may be set by passing a cli.Usage.
+//
+//   _ = cli.Float32s(register, "names", cli.Usage("Names of users"))
+//
+// The flag is optional by default.
+// This may be changed by passing the cli.Required.
+//
+//   _ = cli.Float32s(register, "names", cli.Required)
+//
+// All options can be used together.
 func Float32s(register Register, name string, options ...FlagOptionApplyer) *[]float32 {
 	p := new([]float32)
 	_ = Float32sVar(register, p, name, options...)
@@ -128,10 +588,56 @@ func Float32s(register Register, name string, options ...FlagOptionApplyer) *[]f
 
 // []float64
 
+// Float64sVar defines a []float64 flag with specified name.
+// The argument p points to a []float64 variable in which to store values of the flag.
+// The return value will be an error from the register.RegisterFlag if it
+// failed to register the flag.
+//
+// If a name contains only one rune, it will be a short name, otherwise a long name.
+// To set a short name, you pass a cli.WithShort.
+//
+//   _ = cli.Float64sVar(register, &p, "names", cli.WithShort("n"))
+//
+// To set a long name, you pass a cli.WithLong.
+//
+//   _ = cli.Float64sVar(register, &p, "n", cli.WithLong("names"))
+//
+// A usage may be set by passing a cli.Usage.
+//
+//   _ = cli.Float64sVar(register, &p, "names", cli.Usage("Names of users"))
+//
+// The flag is optional by default.
+// This may be changed by passing the cli.Required.
+//
+//   _ = cli.Float64sVar(register, &p, "names", cli.Required)
+//
+// All options can be used together.
 func Float64sVar(register Register, p *[]float64, name string, options ...FlagOptionApplyer) error {
 	return Var(register, newFloat64Values(p), name, options...)
 }
 
+// Float64s defines a []float64 flag with specified name.
+// The return value is the address of a []float64 variable that stores values of the flag.
+//
+// If a name contains only one rune, it will be a short name, otherwise a long name.
+// To set a short name, you pass a cli.WithShort.
+//
+//   _ = cli.Float64s(register, "names", cli.WithShort("n"))
+//
+// To set a long name, you pass a cli.WithLong.
+//
+//   _ = cli.Float64s(register, "n", cli.WithLong("names"))
+//
+// A usage may be set by passing a cli.Usage.
+//
+//   _ = cli.Float64s(register, "names", cli.Usage("Names of users"))
+//
+// The flag is optional by default.
+// This may be changed by passing the cli.Required.
+//
+//   _ = cli.Float64s(register, "names", cli.Required)
+//
+// All options can be used together.
 func Float64s(register Register, name string, options ...FlagOptionApplyer) *[]float64 {
 	p := new([]float64)
 	_ = Float64sVar(register, p, name, options...)
@@ -140,10 +646,56 @@ func Float64s(register Register, name string, options ...FlagOptionApplyer) *[]f
 
 // []string
 
+// StringsVar defines a []string flag with specified name.
+// The argument p points to a []string variable in which to store values of the flag.
+// The return value will be an error from the register.RegisterFlag if it
+// failed to register the flag.
+//
+// If a name contains only one rune, it will be a short name, otherwise a long name.
+// To set a short name, you pass a cli.WithShort.
+//
+//   _ = cli.StringsVar(register, &p, "names", cli.WithShort("n"))
+//
+// To set a long name, you pass a cli.WithLong.
+//
+//   _ = cli.StringsVar(register, &p, "n", cli.WithLong("names"))
+//
+// A usage may be set by passing a cli.Usage.
+//
+//   _ = cli.StringsVar(register, &p, "names", cli.Usage("Names of users"))
+//
+// The flag is optional by default.
+// This may be changed by passing the cli.Required.
+//
+//   _ = cli.StringsVar(register, &p, "names", cli.Required)
+//
+// All options can be used together.
 func StringsVar(register Register, p *[]string, name string, options ...FlagOptionApplyer) error {
 	return Var(register, newStringValues(p), name, options...)
 }
 
+// Strings defines a []string flag with specified name.
+// The return value is the address of a []string variable that stores values of the flag.
+//
+// If a name contains only one rune, it will be a short name, otherwise a long name.
+// To set a short name, you pass a cli.WithShort.
+//
+//   _ = cli.Strings(register, "names", cli.WithShort("n"))
+//
+// To set a long name, you pass a cli.WithLong.
+//
+//   _ = cli.Strings(register, "n", cli.WithLong("names"))
+//
+// A usage may be set by passing a cli.Usage.
+//
+//   _ = cli.Strings(register, "names", cli.Usage("Names of users"))
+//
+// The flag is optional by default.
+// This may be changed by passing the cli.Required.
+//
+//   _ = cli.Strings(register, "names", cli.Required)
+//
+// All options can be used together.
 func Strings(register Register, name string, options ...FlagOptionApplyer) *[]string {
 	p := new([]string)
 	_ = StringsVar(register, p, name, options...)
@@ -152,10 +704,56 @@ func Strings(register Register, name string, options ...FlagOptionApplyer) *[]st
 
 // []int
 
+// IntsVar defines a []int flag with specified name.
+// The argument p points to a []int variable in which to store values of the flag.
+// The return value will be an error from the register.RegisterFlag if it
+// failed to register the flag.
+//
+// If a name contains only one rune, it will be a short name, otherwise a long name.
+// To set a short name, you pass a cli.WithShort.
+//
+//   _ = cli.IntsVar(register, &p, "names", cli.WithShort("n"))
+//
+// To set a long name, you pass a cli.WithLong.
+//
+//   _ = cli.IntsVar(register, &p, "n", cli.WithLong("names"))
+//
+// A usage may be set by passing a cli.Usage.
+//
+//   _ = cli.IntsVar(register, &p, "names", cli.Usage("Names of users"))
+//
+// The flag is optional by default.
+// This may be changed by passing the cli.Required.
+//
+//   _ = cli.IntsVar(register, &p, "names", cli.Required)
+//
+// All options can be used together.
 func IntsVar(register Register, p *[]int, name string, options ...FlagOptionApplyer) error {
 	return Var(register, newIntValues(p), name, options...)
 }
 
+// Ints defines a []int flag with specified name.
+// The return value is the address of a []int variable that stores values of the flag.
+//
+// If a name contains only one rune, it will be a short name, otherwise a long name.
+// To set a short name, you pass a cli.WithShort.
+//
+//   _ = cli.Ints(register, "names", cli.WithShort("n"))
+//
+// To set a long name, you pass a cli.WithLong.
+//
+//   _ = cli.Ints(register, "n", cli.WithLong("names"))
+//
+// A usage may be set by passing a cli.Usage.
+//
+//   _ = cli.Ints(register, "names", cli.Usage("Names of users"))
+//
+// The flag is optional by default.
+// This may be changed by passing the cli.Required.
+//
+//   _ = cli.Ints(register, "names", cli.Required)
+//
+// All options can be used together.
 func Ints(register Register, name string, options ...FlagOptionApplyer) *[]int {
 	p := new([]int)
 	_ = IntsVar(register, p, name, options...)
@@ -164,10 +762,56 @@ func Ints(register Register, name string, options ...FlagOptionApplyer) *[]int {
 
 // []uint
 
+// UintsVar defines a []uint flag with specified name.
+// The argument p points to a []uint variable in which to store values of the flag.
+// The return value will be an error from the register.RegisterFlag if it
+// failed to register the flag.
+//
+// If a name contains only one rune, it will be a short name, otherwise a long name.
+// To set a short name, you pass a cli.WithShort.
+//
+//   _ = cli.UintsVar(register, &p, "names", cli.WithShort("n"))
+//
+// To set a long name, you pass a cli.WithLong.
+//
+//   _ = cli.UintsVar(register, &p, "n", cli.WithLong("names"))
+//
+// A usage may be set by passing a cli.Usage.
+//
+//   _ = cli.UintsVar(register, &p, "names", cli.Usage("Names of users"))
+//
+// The flag is optional by default.
+// This may be changed by passing the cli.Required.
+//
+//   _ = cli.UintsVar(register, &p, "names", cli.Required)
+//
+// All options can be used together.
 func UintsVar(register Register, p *[]uint, name string, options ...FlagOptionApplyer) error {
 	return Var(register, newUintValues(p), name, options...)
 }
 
+// Uints defines a []uint flag with specified name.
+// The return value is the address of a []uint variable that stores values of the flag.
+//
+// If a name contains only one rune, it will be a short name, otherwise a long name.
+// To set a short name, you pass a cli.WithShort.
+//
+//   _ = cli.Uints(register, "names", cli.WithShort("n"))
+//
+// To set a long name, you pass a cli.WithLong.
+//
+//   _ = cli.Uints(register, "n", cli.WithLong("names"))
+//
+// A usage may be set by passing a cli.Usage.
+//
+//   _ = cli.Uints(register, "names", cli.Usage("Names of users"))
+//
+// The flag is optional by default.
+// This may be changed by passing the cli.Required.
+//
+//   _ = cli.Uints(register, "names", cli.Required)
+//
+// All options can be used together.
 func Uints(register Register, name string, options ...FlagOptionApplyer) *[]uint {
 	p := new([]uint)
 	_ = UintsVar(register, p, name, options...)
@@ -176,10 +820,56 @@ func Uints(register Register, name string, options ...FlagOptionApplyer) *[]uint
 
 // []time.Duration
 
+// DurationsVar defines a []time.Duration flag with specified name.
+// The argument p points to a []time.Duration variable in which to store values of the flag.
+// The return value will be an error from the register.RegisterFlag if it
+// failed to register the flag.
+//
+// If a name contains only one rune, it will be a short name, otherwise a long name.
+// To set a short name, you pass a cli.WithShort.
+//
+//   _ = cli.DurationsVar(register, &p, "names", cli.WithShort("n"))
+//
+// To set a long name, you pass a cli.WithLong.
+//
+//   _ = cli.DurationsVar(register, &p, "n", cli.WithLong("names"))
+//
+// A usage may be set by passing a cli.Usage.
+//
+//   _ = cli.DurationsVar(register, &p, "names", cli.Usage("Names of users"))
+//
+// The flag is optional by default.
+// This may be changed by passing the cli.Required.
+//
+//   _ = cli.DurationsVar(register, &p, "names", cli.Required)
+//
+// All options can be used together.
 func DurationsVar(register Register, p *[]time.Duration, name string, options ...FlagOptionApplyer) error {
 	return Var(register, newDurationValues(p), name, options...)
 }
 
+// Durations defines a []time.Duration flag with specified name.
+// The return value is the address of a []time.Duration variable that stores values of the flag.
+//
+// If a name contains only one rune, it will be a short name, otherwise a long name.
+// To set a short name, you pass a cli.WithShort.
+//
+//   _ = cli.Durations(register, "names", cli.WithShort("n"))
+//
+// To set a long name, you pass a cli.WithLong.
+//
+//   _ = cli.Durations(register, "n", cli.WithLong("names"))
+//
+// A usage may be set by passing a cli.Usage.
+//
+//   _ = cli.Durations(register, "names", cli.Usage("Names of users"))
+//
+// The flag is optional by default.
+// This may be changed by passing the cli.Required.
+//
+//   _ = cli.Durations(register, "names", cli.Required)
+//
+// All options can be used together.
 func Durations(register Register, name string, options ...FlagOptionApplyer) *[]time.Duration {
 	p := new([]time.Duration)
 	_ = DurationsVar(register, p, name, options...)

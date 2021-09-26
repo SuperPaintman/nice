@@ -15,10 +15,56 @@ for (typ, name, _, _) in types:
     res += "\n"
     res += "// %s\n" % typ
     res += "\n"
+    res += "// %sVar defines a %s flag with specified name.\n" % (name, typ)
+    res += "// The argument p points to a %s variable in which to store the value of the flag.\n" % typ
+    res += "// The return value will be an error from the register.RegisterFlag if it\n"
+    res += "// failed to register the flag.\n"
+    res += "//\n"
+    res += "// If a name contains only one rune, it will be a short name, otherwise a long name.\n"
+    res += "// To set a short name, you pass a cli.WithShort.\n"
+    res += "//\n"
+    res += "//   _ = cli.%sVar(register, &p, \"name\", cli.WithShort(\"n\"))\n" % name
+    res += "//\n"
+    res += "// To set a long name, you pass a cli.WithLong.\n"
+    res += "//\n"
+    res += "//   _ = cli.%sVar(register, &p, \"n\", cli.WithLong(\"name\"))\n" % name
+    res += "//\n"
+    res += "// A usage may be set by passing a cli.Usage.\n"
+    res += "//\n"
+    res += "//   _ = cli.%sVar(register, &p, \"name\", cli.Usage(\"The name of user\"))\n" % name
+    res += "//\n"
+    res += "// The flag is optional by default.\n"
+    res += "// This may be changed by passing the cli.Required.\n"
+    res += "//\n"
+    res += "//   _ = cli.%sVar(register, &p, \"name\", cli.Required)\n" % name
+    res += "//\n"
+    res += "// All options can be used together.\n"
     res += "func %sVar(register Register, p *%s, name string, options ...FlagOptionApplyer) error {\n" % (name, typ)
     res += "\treturn Var(register, new%sValue(p), name, options...)\n" % name
     res += "}\n"
     res += "\n"
+    res += "// %s defines a %s flag with specified name.\n" % (name, typ)
+    res += "// The return value is the address of a %s variable that stores the value of the flag.\n" % typ
+    res += "//\n"
+    res += "// If a name contains only one rune, it will be a short name, otherwise a long name.\n"
+    res += "// To set a short name, you pass a cli.WithShort.\n"
+    res += "//\n"
+    res += "//   _ = cli.%s(register, \"name\", cli.WithShort(\"n\"))\n" % name
+    res += "//\n"
+    res += "// To set a long name, you pass a cli.WithLong.\n"
+    res += "//\n"
+    res += "//   _ = cli.%s(register, \"n\", cli.WithLong(\"name\"))\n" % name
+    res += "//\n"
+    res += "// A usage may be set by passing a cli.Usage.\n"
+    res += "//\n"
+    res += "//   _ = cli.%s(register, \"name\", cli.Usage(\"The name of user\"))\n" % name
+    res += "//\n"
+    res += "// The flag is optional by default.\n"
+    res += "// This may be changed by passing the cli.Required.\n"
+    res += "//\n"
+    res += "//   _ = cli.%s(register, \"name\", cli.Required)\n" % name
+    res += "//\n"
+    res += "// All options can be used together.\n"
     res += "func %s(register Register, name string, options ...FlagOptionApplyer) *%s {\n" % (name, typ)
     res += "\tp := new(%s)\n" % typ
     res += "\t_ = %sVar(register, p, name, options...)\n" % name

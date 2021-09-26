@@ -8,10 +8,24 @@ import (
 
 // []bool
 
+// RestBoolsVar defines the []bool rest arguments with specified name.
+// The argument p points to a []bool variable in which to store values of arguments.
+// The return value will be an error from the register.RegisterRestArgs if it
+// failed to register the rest arguments.
+//
+// A usage may be set by passing a cli.Usage.
+//
+//   _ = cli.RestBoolsVar(register, &p, "names", cli.Usage("Names of users"))
 func RestBoolsVar(register Register, p *[]bool, name string, options ...RestOptionApplyer) error {
 	return RestVar(register, newBoolValues(p), name, options...)
 }
 
+// RestBools defines the []bool rest arguments with specified name.
+// The return value is the address of a []bool variable that stores values of arguments.
+//
+// A usage may be set by passing a cli.Usage.
+//
+//   _ = cli.RestBools(register, "names", cli.Usage("Names of users"))
 func RestBools(register Register, name string, options ...RestOptionApplyer) *[]bool {
 	p := new([]bool)
 	_ = RestBoolsVar(register, p, name, options...)
@@ -20,10 +34,24 @@ func RestBools(register Register, name string, options ...RestOptionApplyer) *[]
 
 // []uint8
 
+// RestUint8sVar defines the []uint8 rest arguments with specified name.
+// The argument p points to a []uint8 variable in which to store values of arguments.
+// The return value will be an error from the register.RegisterRestArgs if it
+// failed to register the rest arguments.
+//
+// A usage may be set by passing a cli.Usage.
+//
+//   _ = cli.RestUint8sVar(register, &p, "names", cli.Usage("Names of users"))
 func RestUint8sVar(register Register, p *[]uint8, name string, options ...RestOptionApplyer) error {
 	return RestVar(register, newUint8Values(p), name, options...)
 }
 
+// RestUint8s defines the []uint8 rest arguments with specified name.
+// The return value is the address of a []uint8 variable that stores values of arguments.
+//
+// A usage may be set by passing a cli.Usage.
+//
+//   _ = cli.RestUint8s(register, "names", cli.Usage("Names of users"))
 func RestUint8s(register Register, name string, options ...RestOptionApplyer) *[]uint8 {
 	p := new([]uint8)
 	_ = RestUint8sVar(register, p, name, options...)
@@ -32,10 +60,24 @@ func RestUint8s(register Register, name string, options ...RestOptionApplyer) *[
 
 // []uint16
 
+// RestUint16sVar defines the []uint16 rest arguments with specified name.
+// The argument p points to a []uint16 variable in which to store values of arguments.
+// The return value will be an error from the register.RegisterRestArgs if it
+// failed to register the rest arguments.
+//
+// A usage may be set by passing a cli.Usage.
+//
+//   _ = cli.RestUint16sVar(register, &p, "names", cli.Usage("Names of users"))
 func RestUint16sVar(register Register, p *[]uint16, name string, options ...RestOptionApplyer) error {
 	return RestVar(register, newUint16Values(p), name, options...)
 }
 
+// RestUint16s defines the []uint16 rest arguments with specified name.
+// The return value is the address of a []uint16 variable that stores values of arguments.
+//
+// A usage may be set by passing a cli.Usage.
+//
+//   _ = cli.RestUint16s(register, "names", cli.Usage("Names of users"))
 func RestUint16s(register Register, name string, options ...RestOptionApplyer) *[]uint16 {
 	p := new([]uint16)
 	_ = RestUint16sVar(register, p, name, options...)
@@ -44,10 +86,24 @@ func RestUint16s(register Register, name string, options ...RestOptionApplyer) *
 
 // []uint32
 
+// RestUint32sVar defines the []uint32 rest arguments with specified name.
+// The argument p points to a []uint32 variable in which to store values of arguments.
+// The return value will be an error from the register.RegisterRestArgs if it
+// failed to register the rest arguments.
+//
+// A usage may be set by passing a cli.Usage.
+//
+//   _ = cli.RestUint32sVar(register, &p, "names", cli.Usage("Names of users"))
 func RestUint32sVar(register Register, p *[]uint32, name string, options ...RestOptionApplyer) error {
 	return RestVar(register, newUint32Values(p), name, options...)
 }
 
+// RestUint32s defines the []uint32 rest arguments with specified name.
+// The return value is the address of a []uint32 variable that stores values of arguments.
+//
+// A usage may be set by passing a cli.Usage.
+//
+//   _ = cli.RestUint32s(register, "names", cli.Usage("Names of users"))
 func RestUint32s(register Register, name string, options ...RestOptionApplyer) *[]uint32 {
 	p := new([]uint32)
 	_ = RestUint32sVar(register, p, name, options...)
@@ -56,10 +112,24 @@ func RestUint32s(register Register, name string, options ...RestOptionApplyer) *
 
 // []uint64
 
+// RestUint64sVar defines the []uint64 rest arguments with specified name.
+// The argument p points to a []uint64 variable in which to store values of arguments.
+// The return value will be an error from the register.RegisterRestArgs if it
+// failed to register the rest arguments.
+//
+// A usage may be set by passing a cli.Usage.
+//
+//   _ = cli.RestUint64sVar(register, &p, "names", cli.Usage("Names of users"))
 func RestUint64sVar(register Register, p *[]uint64, name string, options ...RestOptionApplyer) error {
 	return RestVar(register, newUint64Values(p), name, options...)
 }
 
+// RestUint64s defines the []uint64 rest arguments with specified name.
+// The return value is the address of a []uint64 variable that stores values of arguments.
+//
+// A usage may be set by passing a cli.Usage.
+//
+//   _ = cli.RestUint64s(register, "names", cli.Usage("Names of users"))
 func RestUint64s(register Register, name string, options ...RestOptionApplyer) *[]uint64 {
 	p := new([]uint64)
 	_ = RestUint64sVar(register, p, name, options...)
@@ -68,10 +138,24 @@ func RestUint64s(register Register, name string, options ...RestOptionApplyer) *
 
 // []int8
 
+// RestInt8sVar defines the []int8 rest arguments with specified name.
+// The argument p points to a []int8 variable in which to store values of arguments.
+// The return value will be an error from the register.RegisterRestArgs if it
+// failed to register the rest arguments.
+//
+// A usage may be set by passing a cli.Usage.
+//
+//   _ = cli.RestInt8sVar(register, &p, "names", cli.Usage("Names of users"))
 func RestInt8sVar(register Register, p *[]int8, name string, options ...RestOptionApplyer) error {
 	return RestVar(register, newInt8Values(p), name, options...)
 }
 
+// RestInt8s defines the []int8 rest arguments with specified name.
+// The return value is the address of a []int8 variable that stores values of arguments.
+//
+// A usage may be set by passing a cli.Usage.
+//
+//   _ = cli.RestInt8s(register, "names", cli.Usage("Names of users"))
 func RestInt8s(register Register, name string, options ...RestOptionApplyer) *[]int8 {
 	p := new([]int8)
 	_ = RestInt8sVar(register, p, name, options...)
@@ -80,10 +164,24 @@ func RestInt8s(register Register, name string, options ...RestOptionApplyer) *[]
 
 // []int16
 
+// RestInt16sVar defines the []int16 rest arguments with specified name.
+// The argument p points to a []int16 variable in which to store values of arguments.
+// The return value will be an error from the register.RegisterRestArgs if it
+// failed to register the rest arguments.
+//
+// A usage may be set by passing a cli.Usage.
+//
+//   _ = cli.RestInt16sVar(register, &p, "names", cli.Usage("Names of users"))
 func RestInt16sVar(register Register, p *[]int16, name string, options ...RestOptionApplyer) error {
 	return RestVar(register, newInt16Values(p), name, options...)
 }
 
+// RestInt16s defines the []int16 rest arguments with specified name.
+// The return value is the address of a []int16 variable that stores values of arguments.
+//
+// A usage may be set by passing a cli.Usage.
+//
+//   _ = cli.RestInt16s(register, "names", cli.Usage("Names of users"))
 func RestInt16s(register Register, name string, options ...RestOptionApplyer) *[]int16 {
 	p := new([]int16)
 	_ = RestInt16sVar(register, p, name, options...)
@@ -92,10 +190,24 @@ func RestInt16s(register Register, name string, options ...RestOptionApplyer) *[
 
 // []int32
 
+// RestInt32sVar defines the []int32 rest arguments with specified name.
+// The argument p points to a []int32 variable in which to store values of arguments.
+// The return value will be an error from the register.RegisterRestArgs if it
+// failed to register the rest arguments.
+//
+// A usage may be set by passing a cli.Usage.
+//
+//   _ = cli.RestInt32sVar(register, &p, "names", cli.Usage("Names of users"))
 func RestInt32sVar(register Register, p *[]int32, name string, options ...RestOptionApplyer) error {
 	return RestVar(register, newInt32Values(p), name, options...)
 }
 
+// RestInt32s defines the []int32 rest arguments with specified name.
+// The return value is the address of a []int32 variable that stores values of arguments.
+//
+// A usage may be set by passing a cli.Usage.
+//
+//   _ = cli.RestInt32s(register, "names", cli.Usage("Names of users"))
 func RestInt32s(register Register, name string, options ...RestOptionApplyer) *[]int32 {
 	p := new([]int32)
 	_ = RestInt32sVar(register, p, name, options...)
@@ -104,10 +216,24 @@ func RestInt32s(register Register, name string, options ...RestOptionApplyer) *[
 
 // []int64
 
+// RestInt64sVar defines the []int64 rest arguments with specified name.
+// The argument p points to a []int64 variable in which to store values of arguments.
+// The return value will be an error from the register.RegisterRestArgs if it
+// failed to register the rest arguments.
+//
+// A usage may be set by passing a cli.Usage.
+//
+//   _ = cli.RestInt64sVar(register, &p, "names", cli.Usage("Names of users"))
 func RestInt64sVar(register Register, p *[]int64, name string, options ...RestOptionApplyer) error {
 	return RestVar(register, newInt64Values(p), name, options...)
 }
 
+// RestInt64s defines the []int64 rest arguments with specified name.
+// The return value is the address of a []int64 variable that stores values of arguments.
+//
+// A usage may be set by passing a cli.Usage.
+//
+//   _ = cli.RestInt64s(register, "names", cli.Usage("Names of users"))
 func RestInt64s(register Register, name string, options ...RestOptionApplyer) *[]int64 {
 	p := new([]int64)
 	_ = RestInt64sVar(register, p, name, options...)
@@ -116,10 +242,24 @@ func RestInt64s(register Register, name string, options ...RestOptionApplyer) *[
 
 // []float32
 
+// RestFloat32sVar defines the []float32 rest arguments with specified name.
+// The argument p points to a []float32 variable in which to store values of arguments.
+// The return value will be an error from the register.RegisterRestArgs if it
+// failed to register the rest arguments.
+//
+// A usage may be set by passing a cli.Usage.
+//
+//   _ = cli.RestFloat32sVar(register, &p, "names", cli.Usage("Names of users"))
 func RestFloat32sVar(register Register, p *[]float32, name string, options ...RestOptionApplyer) error {
 	return RestVar(register, newFloat32Values(p), name, options...)
 }
 
+// RestFloat32s defines the []float32 rest arguments with specified name.
+// The return value is the address of a []float32 variable that stores values of arguments.
+//
+// A usage may be set by passing a cli.Usage.
+//
+//   _ = cli.RestFloat32s(register, "names", cli.Usage("Names of users"))
 func RestFloat32s(register Register, name string, options ...RestOptionApplyer) *[]float32 {
 	p := new([]float32)
 	_ = RestFloat32sVar(register, p, name, options...)
@@ -128,10 +268,24 @@ func RestFloat32s(register Register, name string, options ...RestOptionApplyer) 
 
 // []float64
 
+// RestFloat64sVar defines the []float64 rest arguments with specified name.
+// The argument p points to a []float64 variable in which to store values of arguments.
+// The return value will be an error from the register.RegisterRestArgs if it
+// failed to register the rest arguments.
+//
+// A usage may be set by passing a cli.Usage.
+//
+//   _ = cli.RestFloat64sVar(register, &p, "names", cli.Usage("Names of users"))
 func RestFloat64sVar(register Register, p *[]float64, name string, options ...RestOptionApplyer) error {
 	return RestVar(register, newFloat64Values(p), name, options...)
 }
 
+// RestFloat64s defines the []float64 rest arguments with specified name.
+// The return value is the address of a []float64 variable that stores values of arguments.
+//
+// A usage may be set by passing a cli.Usage.
+//
+//   _ = cli.RestFloat64s(register, "names", cli.Usage("Names of users"))
 func RestFloat64s(register Register, name string, options ...RestOptionApplyer) *[]float64 {
 	p := new([]float64)
 	_ = RestFloat64sVar(register, p, name, options...)
@@ -140,10 +294,24 @@ func RestFloat64s(register Register, name string, options ...RestOptionApplyer) 
 
 // []string
 
+// RestStringsVar defines the []string rest arguments with specified name.
+// The argument p points to a []string variable in which to store values of arguments.
+// The return value will be an error from the register.RegisterRestArgs if it
+// failed to register the rest arguments.
+//
+// A usage may be set by passing a cli.Usage.
+//
+//   _ = cli.RestStringsVar(register, &p, "names", cli.Usage("Names of users"))
 func RestStringsVar(register Register, p *[]string, name string, options ...RestOptionApplyer) error {
 	return RestVar(register, newStringValues(p), name, options...)
 }
 
+// RestStrings defines the []string rest arguments with specified name.
+// The return value is the address of a []string variable that stores values of arguments.
+//
+// A usage may be set by passing a cli.Usage.
+//
+//   _ = cli.RestStrings(register, "names", cli.Usage("Names of users"))
 func RestStrings(register Register, name string, options ...RestOptionApplyer) *[]string {
 	p := new([]string)
 	_ = RestStringsVar(register, p, name, options...)
@@ -152,10 +320,24 @@ func RestStrings(register Register, name string, options ...RestOptionApplyer) *
 
 // []int
 
+// RestIntsVar defines the []int rest arguments with specified name.
+// The argument p points to a []int variable in which to store values of arguments.
+// The return value will be an error from the register.RegisterRestArgs if it
+// failed to register the rest arguments.
+//
+// A usage may be set by passing a cli.Usage.
+//
+//   _ = cli.RestIntsVar(register, &p, "names", cli.Usage("Names of users"))
 func RestIntsVar(register Register, p *[]int, name string, options ...RestOptionApplyer) error {
 	return RestVar(register, newIntValues(p), name, options...)
 }
 
+// RestInts defines the []int rest arguments with specified name.
+// The return value is the address of a []int variable that stores values of arguments.
+//
+// A usage may be set by passing a cli.Usage.
+//
+//   _ = cli.RestInts(register, "names", cli.Usage("Names of users"))
 func RestInts(register Register, name string, options ...RestOptionApplyer) *[]int {
 	p := new([]int)
 	_ = RestIntsVar(register, p, name, options...)
@@ -164,10 +346,24 @@ func RestInts(register Register, name string, options ...RestOptionApplyer) *[]i
 
 // []uint
 
+// RestUintsVar defines the []uint rest arguments with specified name.
+// The argument p points to a []uint variable in which to store values of arguments.
+// The return value will be an error from the register.RegisterRestArgs if it
+// failed to register the rest arguments.
+//
+// A usage may be set by passing a cli.Usage.
+//
+//   _ = cli.RestUintsVar(register, &p, "names", cli.Usage("Names of users"))
 func RestUintsVar(register Register, p *[]uint, name string, options ...RestOptionApplyer) error {
 	return RestVar(register, newUintValues(p), name, options...)
 }
 
+// RestUints defines the []uint rest arguments with specified name.
+// The return value is the address of a []uint variable that stores values of arguments.
+//
+// A usage may be set by passing a cli.Usage.
+//
+//   _ = cli.RestUints(register, "names", cli.Usage("Names of users"))
 func RestUints(register Register, name string, options ...RestOptionApplyer) *[]uint {
 	p := new([]uint)
 	_ = RestUintsVar(register, p, name, options...)
@@ -176,10 +372,24 @@ func RestUints(register Register, name string, options ...RestOptionApplyer) *[]
 
 // []time.Duration
 
+// RestDurationsVar defines the []time.Duration rest arguments with specified name.
+// The argument p points to a []time.Duration variable in which to store values of arguments.
+// The return value will be an error from the register.RegisterRestArgs if it
+// failed to register the rest arguments.
+//
+// A usage may be set by passing a cli.Usage.
+//
+//   _ = cli.RestDurationsVar(register, &p, "names", cli.Usage("Names of users"))
 func RestDurationsVar(register Register, p *[]time.Duration, name string, options ...RestOptionApplyer) error {
 	return RestVar(register, newDurationValues(p), name, options...)
 }
 
+// RestDurations defines the []time.Duration rest arguments with specified name.
+// The return value is the address of a []time.Duration variable that stores values of arguments.
+//
+// A usage may be set by passing a cli.Usage.
+//
+//   _ = cli.RestDurations(register, "names", cli.Usage("Names of users"))
 func RestDurations(register Register, name string, options ...RestOptionApplyer) *[]time.Duration {
 	p := new([]time.Duration)
 	_ = RestDurationsVar(register, p, name, options...)

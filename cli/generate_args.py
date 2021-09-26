@@ -15,10 +15,38 @@ for (typ, name, _, _) in types:
     res += "\n"
     res += "// %s\n" % typ
     res += "\n"
+    res += "// %sArgVar defines a %s argument with specified name.\n" % (name, typ)
+    res += "// The argument p points to a %s variable in which to store the value of the argument.\n" % typ
+    res += "// The return value will be an error from the register.RegisterArg if it\n"
+    res += "// failed to register the argument.\n"
+    res += "//\n"
+    res += "// A usage may be set by passing a cli.Usage.\n"
+    res += "//\n"
+    res += "//   _ = cli.%sArgVar(register, &p, \"name\", cli.Usage(\"The name of user\"))\n" % name
+    res += "//\n"
+    res += "// The argument is required by default.\n"
+    res += "// This may be changed by passing the cli.Optional.\n"
+    res += "//\n"
+    res += "//   _ = cli.%sArgVar(register, &p, \"name\", cli.Optional)\n" % name
+    res += "//\n"
+    res += "// All options can be used together.\n"
     res += "func %sArgVar(register Register, p *%s, name string, options ...ArgOptionApplyer) error {\n" % (name, typ)
     res += "\treturn ArgVar(register, new%sValue(p), name, options...)\n" % name
     res += "}\n"
     res += "\n"
+    res += "// %sArg defines a %s argument with specified name.\n" % (name, typ)
+    res += "// The return value is the address of a %s variable that stores the value of the argument.\n" % typ
+    res += "//\n"
+    res += "// A usage may be set by passing a cli.Usage.\n"
+    res += "//\n"
+    res += "//   _ = cli.%sArg(register, \"name\", cli.Usage(\"The name of user\"))\n" % name
+    res += "//\n"
+    res += "// The argument is required by default.\n"
+    res += "// This may be changed by passing the cli.Optional.\n"
+    res += "//\n"
+    res += "//   _ = cli.%sArg(register, \"name\", cli.Optional)\n" % name
+    res += "//\n"
+    res += "// All options can be used together.\n"
     res += "func %sArg(register Register, name string, options ...ArgOptionApplyer) *%s {\n" % (name, typ)
     res += "\tp := new(%s)\n" % typ
     res += "\t_ = %sArgVar(register, p, name, options...)\n" % name
