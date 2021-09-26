@@ -15,6 +15,13 @@ I hope you'll enjoy your nice CLI app!
 
 ---
 
+## Table of Contents
+
+- [Hello, Nice!](#hello-nice)
+- [Examples](#examples)
+
+---
+
 ## Hello, Nice!
 
 Let's start with your first Nice CLI app.
@@ -72,6 +79,12 @@ $ go run . -h
 ```
 
 ![Help example](./assets/help.png)
+
+---
+
+## Examples
+
+You can find [more examples in the `./examples` directory](./examples).
 
 ---
 
