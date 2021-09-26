@@ -16,47 +16,35 @@ import (
 	"github.com/mattn/go-isatty"
 )
 
-type support uint8
+type termSupports uint8
 
 const (
-	supportsColor support = 1 << iota
+	supportsColor termSupports = 1 << iota
 	supportsANSI256
 	supportsTrueColor
 )
 
-var supports support
-
-func init() {
-	// Check is TTY.
-	isTTY := isatty.IsTerminal(os.Stdout.Fd()) ||
-		isatty.IsCygwinTerminal(os.Stdout.Fd())
-
-	if !isTTY {
-		return
-	}
-
+func terminalSupports(lookup func(key string) (string, bool)) (s termSupports) {
 	// Terminals.
-	term := os.Getenv("TERM")
-
-	if term == "dumb" {
+	if v, ok := lookup("TERM"); ok && v == "dumb" {
 		return
 	}
 
-	if colorTerm, ok := os.LookupEnv("COLORTERM"); ok {
-		supports |= supportsColor
+	if colorTerm, ok := lookup("COLORTERM"); ok {
+		s |= supportsColor
 
 		if colorTerm == "truecolor" {
-			supports |= supportsANSI256
-			supports |= supportsTrueColor
+			s |= supportsANSI256
+			s |= supportsTrueColor
 		}
 		return
 	}
 
-	if termProg, ok := os.LookupEnv("TERM_PROGRAM"); ok {
+	if termProg, ok := lookup("TERM_PROGRAM"); ok {
 		if termProg == "Apple_Terminal" {
-			supports |= supportsColor
-			supports |= supportsANSI256
-			supports |= supportsTrueColor
+			s |= supportsColor
+			s |= supportsANSI256
+			s |= supportsTrueColor
 			return
 		}
 
@@ -70,7 +58,7 @@ func init() {
 	// TODO(SuperPaintman): add win32 checker.
 
 	// CI.
-	if _, ok := os.LookupEnv("CI"); ok {
+	if _, ok := lookup("CI"); ok {
 		cis := [...]string{
 			"TRAVIS",
 			"CIRCLECI",
@@ -82,19 +70,21 @@ func init() {
 		}
 
 		for _, name := range cis {
-			if _, ok := os.LookupEnv(name); ok {
-				supports |= supportsColor
+			if _, ok := lookup(name); ok {
+				s |= supportsColor
 				return
 			}
 		}
 
-		if os.Getenv("CI_NAME") == "codeship" {
-			supports |= supportsColor
+		if v, ok := lookup("CI_NAME"); ok && v == "codeship" {
+			s |= supportsColor
 			return
 		}
 	}
 
 	// TODO(SuperPaintman): add TeamCity checker.
+
+	return
 }
 
 func SupportsColor() bool     { return supports&supportsColor != 0 }
@@ -112,17 +102,29 @@ const (
 )
 
 var (
-	mode Mode = Auto
+	supports                                              termSupports
+	mode                                                  Mode
+	shouldUseColors, shouldUseANSI256, shouldUseTrueColor bool
+)
+
+func init() {
+	// Check is TTY.
+	isTTY := isatty.IsTerminal(os.Stdout.Fd()) ||
+		isatty.IsCygwinTerminal(os.Stdout.Fd())
+
+	if isTTY {
+		supports = terminalSupports(os.LookupEnv)
+	}
 
 	shouldUseColors, shouldUseANSI256, shouldUseTrueColor = computeShouldUse(mode, supports)
-)
+}
 
 func SetMode(m Mode) {
 	mode = m
 	shouldUseColors, shouldUseANSI256, shouldUseTrueColor = computeShouldUse(mode, supports)
 }
 
-func computeShouldUse(m Mode, s support) (colors bool, ansi256 bool, trueColor bool) {
+func computeShouldUse(m Mode, s termSupports) (colors bool, ansi256 bool, trueColor bool) {
 	if m&Never == 0 {
 		colors = m&Always != 0 || s&supportsColor != 0
 

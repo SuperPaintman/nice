@@ -16,7 +16,7 @@ func TestComputeShouldUse(t *testing.T) {
 	tt := []struct {
 		name          string
 		mode          Mode
-		supports      support
+		supports      termSupports
 		wantColors    bool
 		wantANSI256   bool
 		wantTrueColor bool
@@ -112,6 +112,8 @@ func TestComputeShouldUse(t *testing.T) {
 	}
 
 	for _, tc := range tt {
+		tc := tc
+
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -132,6 +134,158 @@ func TestComputeShouldUse(t *testing.T) {
 			if gotTrueColor != tc.wantTrueColor {
 				t.Errorf("computeShouldUse(%04b, %03b): gotTrueColor: got = %v, want = %v",
 					tc.mode, tc.supports, gotTrueColor, tc.wantTrueColor,
+				)
+			}
+		})
+	}
+}
+
+type testEnv map[string]string
+
+func (e testEnv) String() string {
+	buf := ""
+	for k, v := range e {
+		if buf != "" {
+			buf += " "
+		}
+
+		buf += k + "=" + v
+	}
+
+	return buf
+}
+
+func (e testEnv) LookupEnv(key string) (string, bool) {
+	v, ok := e[key]
+	return v, ok
+}
+
+func TestTerminalSupports(t *testing.T) {
+	tt := []struct {
+		name string
+		env  testEnv
+		want termSupports
+	}{
+		{
+			name: "TERM=dumb",
+			env: testEnv{
+				"TERM": "dumb",
+			},
+			want: 0,
+		},
+		{
+			name: "TERM=dumb with COLORTERM",
+			env: testEnv{
+				"TERM":      "dumb",
+				"COLORTERM": "truecolor",
+			},
+			want: 0,
+		},
+		{
+			name: "COLORTERM=<any>",
+			env: testEnv{
+				"COLORTERM": "test",
+			},
+			want: supportsColor,
+		},
+		{
+			name: "COLORTERM=truecolor",
+			env: testEnv{
+				"COLORTERM": "truecolor",
+			},
+			want: supportsColor | supportsANSI256 | supportsTrueColor,
+		},
+		{
+			name: "TERM_PROGRAM=Apple_Terminal",
+			env: testEnv{
+				"TERM_PROGRAM": "Apple_Terminal",
+			},
+			want: supportsColor | supportsANSI256 | supportsTrueColor,
+		},
+		{
+			name: "CI=<any> TRAVIS=<any>",
+			env: testEnv{
+				"CI":     "test",
+				"TRAVIS": "test",
+			},
+			want: supportsColor,
+		},
+		{
+			name: "CI=<any> CIRCLECI=<any>",
+			env: testEnv{
+				"CI":       "test",
+				"CIRCLECI": "test",
+			},
+			want: supportsColor,
+		},
+		{
+			name: "CI=<any> APPVEYOR=<any>",
+			env: testEnv{
+				"CI":       "test",
+				"APPVEYOR": "test",
+			},
+			want: supportsColor,
+		},
+		{
+			name: "CI=<any> GITLAB_CI=<any>",
+			env: testEnv{
+				"CI":        "test",
+				"GITLAB_CI": "test",
+			},
+			want: supportsColor,
+		},
+		{
+			name: "CI=<any> GITHUB_ACTIONS=<any>",
+			env: testEnv{
+				"CI":             "test",
+				"GITHUB_ACTIONS": "test",
+			},
+			want: supportsColor,
+		},
+		{
+			name: "CI=<any> BUILDKITE=<any>",
+			env: testEnv{
+				"CI":        "test",
+				"BUILDKITE": "test",
+			},
+			want: supportsColor,
+		},
+		{
+			name: "CI=<any> DRONE=<any>",
+			env: testEnv{
+				"CI":    "test",
+				"DRONE": "test",
+			},
+			want: supportsColor,
+		},
+		{
+			name: "CI=<any> TRAVIS=<any>",
+			env: testEnv{
+				"CI":     "test",
+				"TRAVIS": "test",
+			},
+			want: supportsColor,
+		},
+		{
+			name: "CI=<any> CI_NAME=codeship",
+			env: testEnv{
+				"CI":      "test",
+				"CI_NAME": "codeship",
+			},
+			want: supportsColor,
+		},
+	}
+
+	for _, tc := range tt {
+		tc := tc
+
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			got := terminalSupports(tc.env.LookupEnv)
+			if got != tc.want {
+				t.Errorf("terminalSupports(%s): got = %03b, want = %03b",
+					tc.env, got, tc.want,
 				)
 			}
 		})
@@ -169,6 +323,7 @@ func TestAttribute_Reset(t *testing.T) {
 	}
 
 	for _, tc := range tt {
+		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
