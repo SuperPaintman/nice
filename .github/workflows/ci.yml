@@ -32,6 +32,8 @@ jobs:
                       return examples;
 
     lint-example:
+        needs:
+            - examples-matrix
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v2
