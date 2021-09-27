@@ -10,8 +10,6 @@ on:
 
 jobs:
     examples-matrix:
-        # needs:
-        #     - lint
         runs-on: ubuntu-latest
         outputs:
             matrix: ${{ steps.set-matrix.outputs.result }}
@@ -35,6 +33,9 @@ jobs:
         needs:
             - examples-matrix
         runs-on: ubuntu-latest
+        strategy:
+            matrix:
+                example: ${{ fromJSON(needs.examples-matrix.outputs.matrix) }}
         steps:
             - uses: actions/checkout@v2
 
@@ -56,6 +57,7 @@ jobs:
 
     build-example:
         needs:
+            - lint-example
             - examples-matrix
         runs-on: ${{ matrix.os }}
         strategy:
