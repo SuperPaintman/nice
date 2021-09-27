@@ -61,5 +61,8 @@ jobs:
               run: |
                   pwd
                   ls
+
+                  echo ./examples/{{ matrix.example }}
+
+                  ls ./examples/{{ matrix.example }}
                   # go build .
-              working-directory: ./examples/{{ matrix.example }}
