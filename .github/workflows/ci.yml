@@ -52,7 +52,7 @@ jobs:
               with:
                   version: v1.42
                   skip-go-installation: true
-              working-directory: ./examples/${{ matrix.example }}
+                  working-directory: ./examples/${{ matrix.example }}
 
     build-example:
         needs:
