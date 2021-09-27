@@ -12,7 +12,7 @@ jobs:
     build-examples-matrix:
         runs-on: ubuntu-latest
         outputs:
-            matrix: ${{ steps.set-matrix.outputs.matrix }}
+            matrix: ${{ steps.set-matrix.outputs.result }}
         steps:
             - uses: actions/checkout@v2
 
@@ -26,6 +26,8 @@ jobs:
                       const readdirAsync = promisify(fs.readdir);
 
                       const examples = await readdirAsync('./examples');
+
+                      console.log(examples);
 
                       return {
                           include: examples.map((example) => ({ example }))
