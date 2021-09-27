@@ -10,8 +10,8 @@ on:
 
 jobs:
     examples-matrix:
-        needs:
-            - lint
+        # needs:
+        #     - lint
         runs-on: ubuntu-latest
         outputs:
             matrix: ${{ steps.set-matrix.outputs.result }}
