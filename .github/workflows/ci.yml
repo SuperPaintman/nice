@@ -58,5 +58,8 @@ jobs:
               run: go mod download
 
             - name: Build an example
-              run: go build .
+              run: |
+                  pwd
+                  ls
+                  # go build .
               working-directory: ./examples/{{ matrix.example }}
