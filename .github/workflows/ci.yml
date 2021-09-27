@@ -19,9 +19,6 @@ jobs:
               with:
                   go-version: "1.17"
 
-            - name: Download Go dependencies
-              run: go mod download
-
             - name: Run Go linters
               uses: golangci/golangci-lint-action@v2
               with:
@@ -103,10 +100,6 @@ jobs:
               uses: actions/setup-go@v2
               with:
                   go-version: "1.17"
-
-            - name: Download Go dependencies
-              run: go mod download
-              working-directory: ./examples/${{ matrix.example }}
 
             - name: Run Go linters
               uses: golangci/golangci-lint-action@v2
