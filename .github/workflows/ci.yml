@@ -69,15 +69,15 @@ jobs:
                   fail_ci_if_error: true
                   verbose: true
 
-    examples-matrix:
+    examples-list:
         runs-on: ubuntu-latest
         outputs:
-            matrix: ${{ steps.set-matrix.outputs.result }}
+            list: ${{ steps.list.outputs.result }}
         steps:
             - uses: actions/checkout@v2
 
             - uses: actions/github-script@v5
-              id: set-matrix
+              id: list
               with:
                   script: |
                       const fs = require('fs');
@@ -91,11 +91,11 @@ jobs:
 
     lint-example:
         needs:
-            - examples-matrix
+            - examples-list
         runs-on: ubuntu-latest
         strategy:
             matrix:
-                example: ${{ fromJSON(needs.examples-matrix.outputs.matrix) }}
+                example: ${{ fromJSON(needs.examples-list.outputs.list) }}
         steps:
             - uses: actions/checkout@v2
 
@@ -118,7 +118,7 @@ jobs:
     build-example:
         needs:
             - lint-example
-            - examples-matrix
+            - examples-list
         runs-on: ${{ matrix.os }}
         strategy:
             matrix:
@@ -132,7 +132,7 @@ jobs:
                     - "1.15"
                     - "1.14"
                     - "1.13"
-                example: ${{ fromJSON(needs.examples-matrix.outputs.matrix) }}
+                example: ${{ fromJSON(needs.examples-list.outputs.list) }}
         steps:
             - uses: actions/checkout@v2
 
