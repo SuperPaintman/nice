@@ -9,6 +9,66 @@ on:
             - master
 
 jobs:
+    lint:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v2
+
+            - name: Set up Go 1.17
+              uses: actions/setup-go@v2
+              with:
+                  go-version: "1.17"
+
+            - name: Download Go dependencies
+              run: go mod download
+
+            - name: Run Go linters
+              uses: golangci/golangci-lint-action@v2
+              with:
+                  version: v1.42
+                  skip-go-installation: true
+
+    test:
+        needs:
+            - lint
+        runs-on: ${{ matrix.os }}
+        strategy:
+            matrix:
+                os:
+                    - ubuntu-latest
+                    - macos-latest
+                    - windows-latest
+                go:
+                    - "1.17"
+                    - "1.16"
+                    - "1.15"
+                    - "1.14"
+                    - "1.13"
+        steps:
+            - uses: actions/checkout@v2
+
+            - name: Set up Go ${{ matrix.go }}
+              uses: actions/setup-go@v2
+              with:
+                  go-version: ${{ matrix.go }}
+
+            - name: Download Go dependencies
+              run: go mod download
+
+            - name: Set up Cover cmd
+              run: go get golang.org/x/tools/cmd/cover
+
+            - name: Test
+              run: go test -race -covermode=atomic -coverprofile=coverage -v ./...
+
+            - name: Codecov
+              uses: codecov/codecov-action@v2
+              with:
+                  files: ./coverage
+                  flags: unittests,${{ matrix.os }},go${{ matrix.go }}
+                  fail_ci_if_error: true
+                  verbose: true
+
     examples-matrix:
         runs-on: ubuntu-latest
         outputs:
