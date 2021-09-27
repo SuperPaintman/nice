@@ -23,7 +23,7 @@ jobs:
                       const fs = require('fs');
                       const { promisify } = require('util');
 
-                      const readdirAsync = promisify(fs.fs.readdir);
+                      const readdirAsync = promisify(fs.readdir);
 
                       const examples = await readdirAsync('./examples');
 
