@@ -9,7 +9,9 @@ on:
             - master
 
 jobs:
-    build-examples-matrix:
+    examples-matrix:
+        needs:
+            - lint
         runs-on: ubuntu-latest
         outputs:
             matrix: ${{ steps.set-matrix.outputs.result }}
@@ -29,9 +31,30 @@ jobs:
 
                       return examples;
 
-    build-examples:
+    lint-example:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v2
+
+            - name: Set up Go 1.17
+              uses: actions/setup-go@v2
+              with:
+                  go-version: "1.17"
+
+            - name: Download Go dependencies
+              run: go mod download
+              working-directory: ./examples/${{ matrix.example }}
+
+            - name: Run Go linters
+              uses: golangci/golangci-lint-action@v2
+              with:
+                  version: v1.42
+                  skip-go-installation: true
+              working-directory: ./examples/${{ matrix.example }}
+
+    build-example:
         needs:
-            - build-examples-matrix
+            - examples-matrix
         runs-on: ${{ matrix.os }}
         strategy:
             matrix:
@@ -45,7 +68,7 @@ jobs:
                     # - "1.15"
                     # - "1.14"
                     # - "1.13"
-                example: ${{ fromJSON(needs.build-examples-matrix.outputs.matrix) }}
+                example: ${{ fromJSON(needs.examples-matrix.outputs.matrix) }}
         steps:
             - uses: actions/checkout@v2
 
