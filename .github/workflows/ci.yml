@@ -27,16 +27,15 @@ jobs:
 
                       const examples = await readdirAsync('./examples');
 
-                      console.log(examples);
-
-                      return {
-                          include: examples.map((example) => ({ example }))
-                      };
+                      return examples;
 
     build-examples:
         runs-on: ubuntu-latest
         needs:
             - build-examples-matrix
+        strategy:
+            matrix:
+                example: ${{ fromJSON(needs.build-examples-matrix.outputs.matrix) }}
         steps:
             - run: |
-                  echo (${{ needs.build-examples-matrix.outputs.matrix }})
+                  echo (${{ matrix.example }})
