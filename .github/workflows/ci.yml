@@ -38,4 +38,3 @@ jobs:
         steps:
             - run: |
                   echo (${{ needs.build-examples-matrix.outputs.matrix }})
-                  echo (${{ fromJSON(needs.build-examples-matrix.outputs.matrix) }})
