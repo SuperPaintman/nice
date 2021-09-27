@@ -19,9 +19,6 @@ jobs:
               with:
                   go-version: "1.17"
 
-            - name: Download Go dependencies
-              run: go mod download
-
             - name: Run Go linters
               uses: golangci/golangci-lint-action@v2
               with:
@@ -68,3 +65,79 @@ jobs:
                   flags: unittests,${{ matrix.os }},go${{ matrix.go }}
                   fail_ci_if_error: true
                   verbose: true
+
+    examples-list:
+        runs-on: ubuntu-latest
+        outputs:
+            list: ${{ steps.list.outputs.result }}
+        steps:
+            - uses: actions/checkout@v2
+
+            - uses: actions/github-script@v5
+              id: list
+              with:
+                  script: |
+                      const fs = require('fs');
+                      const { promisify } = require('util');
+
+                      const readdirAsync = promisify(fs.readdir);
+
+                      const examples = await readdirAsync('./examples');
+
+                      return examples;
+
+    lint-example:
+        needs:
+            - examples-list
+        runs-on: ubuntu-latest
+        strategy:
+            matrix:
+                example: ${{ fromJSON(needs.examples-list.outputs.list) }}
+        steps:
+            - uses: actions/checkout@v2
+
+            - name: Set up Go 1.17
+              uses: actions/setup-go@v2
+              with:
+                  go-version: "1.17"
+
+            - name: Run Go linters
+              uses: golangci/golangci-lint-action@v2
+              with:
+                  version: v1.42
+                  skip-go-installation: true
+                  working-directory: ./examples/${{ matrix.example }}
+
+    build-example:
+        needs:
+            - lint-example
+            - examples-list
+        runs-on: ${{ matrix.os }}
+        strategy:
+            matrix:
+                os:
+                    - ubuntu-latest
+                    - macos-latest
+                    - windows-latest
+                go:
+                    - "1.17"
+                    - "1.16"
+                    - "1.15"
+                    - "1.14"
+                    - "1.13"
+                example: ${{ fromJSON(needs.examples-list.outputs.list) }}
+        steps:
+            - uses: actions/checkout@v2
+
+            - name: Set up Go ${{ matrix.go }}
+              uses: actions/setup-go@v2
+              with:
+                  go-version: ${{ matrix.go }}
+
+            - name: Download Go dependencies
+              run: go mod download
+              working-directory: ./examples/${{ matrix.example }}
+
+            - name: Build
+              run: go build .
+              working-directory: ./examples/${{ matrix.example }}
