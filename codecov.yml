@@ -1,7 +1,7 @@
 ignore:
     - "**/*_gen.go" # Generated files.
-    - "!cli/values_gen.go" # Do not ignore complicated generated files.
+    # - "!cli/values_gen.go" # Do not ignore complicated generated files
 
-# github_checks:
-#     annotations: false # TODO(SuperPaintman): set it true on release.
-#
+github_checks:
+    annotations: false # TODO(SuperPaintman): set it true on release.
+
