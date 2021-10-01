@@ -19,6 +19,9 @@ I hope you'll enjoy your nice CLI app!
 
 - [Hello, Nice!](#hello-nice)
 - [Examples](#examples)
+- [Packages](#packages)
+  - [🖥️ nice/cli](#package-nice-cli)
+  - [🖌️ nice/colors](#package-nice-colors)
 
 ---
 
@@ -85,6 +88,34 @@ $ go run . -h
 ## Examples
 
 You can find [more examples in the `./examples` directory](./examples).
+
+---
+
+## Packages
+
+<h3 id="package-nice-cli" href="#package-nice-cli">
+
+🖥️ `github.com/SuperPaintman/nice/cli`
+
+</h3>
+
+[Documentation](https://pkg.go.dev/github.com/SuperPaintman/nice/cli) • [Source](./cli)
+
+```go
+import "github.com/SuperPaintman/nice/cli"
+```
+
+<h3 id="package-nice-colors" href="#package-nice-colors">
+
+🖌️ `github.com/SuperPaintman/nice/colors`
+
+</h3>
+
+[Documentation](https://pkg.go.dev/github.com/SuperPaintman/nice/colors) • [Source](./colors)
+
+```go
+import "github.com/SuperPaintman/nice/colors"
+```
 
 ---
 
