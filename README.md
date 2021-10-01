@@ -99,6 +99,8 @@ You can find [more examples in the `./examples` directory](./examples).
 
 </h3>
 
+[Documentation](https://pkg.go.dev/github.com/SuperPaintman/nice/cli) • [Source](./cli)
+
 ```go
 import "github.com/SuperPaintman/nice/cli"
 ```
@@ -108,6 +110,8 @@ import "github.com/SuperPaintman/nice/cli"
 🖌️ `github.com/SuperPaintman/nice/colors`
 
 </h3>
+
+[Documentation](https://pkg.go.dev/github.com/SuperPaintman/nice/colors) • [Source](./colors)
 
 ```go
 import "github.com/SuperPaintman/nice/colors"
