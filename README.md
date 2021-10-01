@@ -93,7 +93,7 @@ You can find [more examples in the `./examples` directory](./examples).
 
 ## Packages
 
-<h3 id="package-nice-cli">
+<h3 id="package-nice-cli" href="#package-nice-cli">
 
 🖥️ `github.com/SuperPaintman/nice/cli`
 
@@ -103,7 +103,7 @@ You can find [more examples in the `./examples` directory](./examples).
 import "github.com/SuperPaintman/nice/cli"
 ```
 
-<h3 id="package-nice-colors">
+<h3 id="package-nice-colors" href="#package-nice-colors">
 
 🖌️ `github.com/SuperPaintman/nice/colors`
 
